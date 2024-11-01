@@ -3,7 +3,7 @@ const { initializeApp } = require("firebase/app");
 const { getDatabase } = require("firebase/database");
 
 const firebaseConfig = {
-  apiKey: "AIzaSyC2TbMyOo6htFDd6KrZbyLky3fLl7ZAmC4",
+  apiKey: process.env.API_KEY,
   authDomain: "online-course-b98be.firebaseapp.com",
   projectId: "online-course-b98be",
   storageBucket: "online-course-b98be.appspot.com",
