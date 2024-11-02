@@ -78,8 +78,6 @@
         "ignoreCase": false
       }
     ],
-    // unused-imports
-    // https://www.npmjs.com/package/eslint-plugin-unused-imports
     "unused-imports/no-unused-imports": 1,
     "unused-imports/no-unused-vars": [
       0,
