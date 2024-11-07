@@ -3,7 +3,7 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyD7Xahe92vTJ5krboDDVObBLdwWzZkFFD8",
+  apiKey: process.env.API_KEY,
   authDomain: "online-course-56226.firebaseapp.com",
   projectId: "online-course-56226",
   storageBucket: "online-course-56226.firebasestorage.app",
