@@ -17,6 +17,10 @@ app.use(
   })
 );
 
+app.all("*", (req, res, next) => {
+  next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
+});
+
 const apiUrlGroup = "/api/v1";
 
 app.use(`${apiUrlGroup}/auth`, authRouter);
