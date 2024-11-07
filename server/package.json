@@ -25,6 +25,8 @@
     "firebase": "^11.0.1",
     "morgan": "^1.10.0",
     "nodemon": "^3.1.7",
-    "prettier": "^3.3.3"
+    "prettier": "^3.3.3",
+    "yup": "^1.4.0",
+    "yup-password": "^0.4.0"
   }
 }
