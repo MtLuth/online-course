@@ -24,7 +24,7 @@ const registerParam = yup.object().shape({
     .string()
     .label("confirm password")
     .required(ErrorMessage.ConfirmPasswordIsRequired)
-    .oneOf([Yup.ref("password"), null], ErrorMessage.PasswordNotMatch),
+    .oneOf([yup.ref("password"), null], ErrorMessage.PasswordNotMatch),
   full_name: yup
     .string()
     .label("full name")

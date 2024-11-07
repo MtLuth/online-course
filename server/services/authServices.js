@@ -1,5 +1,4 @@
 import { signInWithEmailAndPassword } from "firebase/auth";
-import admin from "../firebase/firebaseAdmin.js";
 import { authClient } from "../firebase/firebaseClient.js";
 import AppError from "../utils/appError.js";
 import ErrorMessage from "../messages/errorMessage.js";

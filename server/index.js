@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 import app from "./app/app.js";
 
 dotenv.config({
-  path: "./.env",
+  path: "./config.env",
 });
 
 const port = process.env.PORT || 1999;
