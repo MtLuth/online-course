@@ -98,7 +98,7 @@ export default function LoginView() {
 
         <Link
           component={RouterLink}
-          href={paths.forgotPassword}
+          href={paths.forgotpassword}
           variant="body2"
           underline="always"
           color="text.secondary"

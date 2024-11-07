@@ -97,6 +97,7 @@ export const paths = {
   zoneStore: 'https://mui.com/store/items/zone-landing-page/',
   login: '/login',
   register: '/register',
+  forgotpassword: '/forgotpassword',
   figmaPreview:
     'https://www.figma.com/file/Zam9QBLhV4pZf5xtNs0Lf8/%5BPreview%5D-Zone_Web.v2.3.0?type=design&node-id=59%3A680507&mode=design&t=GCVeJci5zfUu5WCy-1',
 };
