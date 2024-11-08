@@ -4,6 +4,9 @@ import cors from "cors";
 import authRouter from "../routes/authRoutes.js";
 import AppError from "../utils/appError.js";
 import handleGlobalError from "../controllers/globalErrorHandler.js";
+import dotenv from "dotenv";
+
+dotenv.config("./../config.env");
 
 const app = express();
 

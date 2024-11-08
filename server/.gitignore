@@ -12,3 +12,4 @@ directory
 .eslintcache
 .node_repl_history
 .env*
+.firebase-admin.json

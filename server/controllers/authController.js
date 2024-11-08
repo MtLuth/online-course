@@ -2,8 +2,9 @@ import ErrorMessage from "../messages/errorMessage.js";
 import { User } from "../model/userModel.js";
 import authService from "../services/authServices.js";
 import catchAsync from "../utils/catchAsync.js";
-import yup from "yup";
+import yup, { bool } from "yup";
 import YupPassword from "yup-password";
+import { mailOptions, sendEmail } from "../services/emailService.js";
 
 YupPassword(yup);
 
@@ -61,12 +62,32 @@ class AuthController {
     console.log(fullName);
     console.log(email);
 
-    const user = new User(null, fullName, email);
+    const user = new User(null, fullName, email, "inactive");
 
     const newUser = await authService.createUser(password, user);
     return res.status(200).json({
       status: "Successfully",
       message: newUser,
+    });
+  });
+
+  static GetAccountByUid = catchAsync(async (req, res, next) => {
+    const uid = req.params.uid;
+    const user = await authService.activeUser(uid);
+    res.status(200).json({
+      status: "Successfully",
+      messsage: user,
+    });
+  });
+
+  static SendEmailActive = catchAsync(async (req, res, next) => {
+    const email = req.body.email;
+    console.log(email);
+    const options = mailOptions(email, "Test", "Hiiii");
+    await sendEmail(options);
+    return res.status(200).json({
+      status: "Successfully",
+      message: "OK",
     });
   });
 }
