@@ -67,17 +67,6 @@ class AuthService {
       throw new AppError(error, 500);
     }
   }
-
-  async resendEmailActive() {
-    try {
-      const user = authClient.currentUser;
-      if (user && !user.emailVerified) {
-        await sendEmailVerification(user);
-      }
-    } catch (error) {
-      throw new AppError(`Không thể gửi mail xác minh ${error.code}`);
-    }
-  }
 }
 
 export default new AuthService();
