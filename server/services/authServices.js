@@ -8,7 +8,7 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { firestore } from "../firebase/firebaseClient.js";
 import AppError from "../utils/appError.js";
 import ErrorMessage from "../messages/errorMessage.js";
-import { User, userConverter } from "../model/userModel.js";
+import { User, userConverter, UserRole } from "../model/userModel.js";
 
 class AuthService {
   async validateUser(email, password) {
@@ -55,7 +55,8 @@ class AuthService {
           userCredential.user.uid,
           newUser.fullName,
           newUser.email,
-          newUser.status
+          newUser.status,
+          UserRole.Student
         )
       );
       return {

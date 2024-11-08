@@ -71,15 +71,6 @@ class AuthController {
     });
   });
 
-  static GetAccountByUid = catchAsync(async (req, res, next) => {
-    const uid = req.params.uid;
-    const user = await authService.activeUser(uid);
-    res.status(200).json({
-      status: "Successfully",
-      messsage: user,
-    });
-  });
-
   static SendEmailActive = catchAsync(async (req, res, next) => {
     const email = req.body.email;
     console.log(email);
