@@ -4,7 +4,6 @@ import {
   sendEmailVerification,
 } from "firebase/auth";
 import { authClient } from "../firebase/firebaseClient.js";
-import admin from "./../firebase/firebaseAdmin.js";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { firestore } from "../firebase/firebaseClient.js";
 import AppError from "../utils/appError.js";
