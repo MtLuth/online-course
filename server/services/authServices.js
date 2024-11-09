@@ -56,13 +56,15 @@ class AuthService {
           newUser.fullName,
           newUser.email,
           newUser.status,
-          UserRole.Student
+          UserRole.Student,
+          newUser.phoneNumber
         )
       );
       return {
         uid: userCredential.user.uid,
         fullName: newUser.fullName,
         email: newUser.email,
+        phoneNumber: newUser.phoneNumber
       };
     } catch (error) {
       throw new AppError(error, 500);

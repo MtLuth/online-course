@@ -8,6 +8,10 @@ const ErrorMessage = {
   FullNameIsRequired: "Vui lòng nhập đầy đủ thông tin.",
   UserInactive:
     "Tài khoản chưa được kích hoạt vui lòng kiểm tra email để kích hoạt tài khoản!",
+  PhoneNumberIsRequired: "Vui lòng nhập số điện thoại",
+  PhoneNumberInvalid: "Số điện thoại chỉ bao gồm chữ số",
+  PhoneNumberTooShort: "Số điện thoại phải có ít nhất 10 chữ số",
+  PhoneNumberTooLong: "Số điện thoại không được quá 11 chữ số",
 };
 
 export default ErrorMessage;

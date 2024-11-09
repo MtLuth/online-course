@@ -20,10 +20,17 @@ import RouterLink from "@/routes/components/RouterLink";
 import { paths } from "@/routes/path";
 import FormProvider from "@/components/hook-form/FormProvider";
 import RHFTextField from "@/components/hook-form/RHFTextField";
+import { useRouter } from "@/routes/hooks/useRouter";
+import { useState } from 'react';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
 
 export default function RegisterView() {
   const passwordShow = useBoolean();
   const confirmPasswordShow = useBoolean();
+
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [openSnackbar, setOpenSnackbar] = useState(false);
 
   const RegisterSchema = Yup.object().shape({
     fullName: Yup.string()
@@ -31,6 +38,11 @@ export default function RegisterView() {
       .min(6, 'Tối thiểu 6 ký tự')
       .max(20, 'Tối đa 20 ký tự'),
     email: Yup.string().required('Vui lòng nhập email').email('Email không hợp lệ'),
+    phoneNumber: Yup.string()
+      .required('Vui lòng nhập số điện thoại')
+      .matches(/^[0-9]+$/, 'Số điện thoại chỉ bao gồm chữ số')
+      .min(10, 'Số điện thoại phải có ít nhất 10 chữ số')
+      .max(11, 'Số điện thoại không được quá 11 chữ số'),
     password: Yup.string()
       .required('Vui lòng nhập mật khẩu')
       .min(6, 'Mật khẩu cần ít nhất 6 ký tự'),
@@ -42,6 +54,7 @@ export default function RegisterView() {
   const defaultValues = {
     fullName: '',
     email: '',
+    phoneNumber: '',
     password: '',
     confirmPassword: '',
   };
@@ -58,14 +71,49 @@ export default function RegisterView() {
   } = methods;
 
   const onSubmit = handleSubmit(async (data) => {
+    console.log('Data being sent:', data); // Kiểm tra dữ liệu client gửi đi
+
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      reset();
-      console.log('DATA', data);
+      const response = await fetch('http://localhost:8080/api/v1/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        // Nếu đăng ký thành công
+        const result = await response.json();
+        console.log('Đăng ký thành công:', result);
+
+        setErrorMessage("Đăng ký thành công!");
+        setOpenSnackbar(true);
+
+        reset(); // Xóa form sau khi đăng ký thành công
+        // Điều hướng hoặc thực hiện hành động khác nếu cần
+      } else {
+        // Nếu đăng ký không thành công
+        const errorData = await response.json();
+        const errorMessage = errorData.message || 'Đăng ký không thành công';
+
+        console.error('Error:', errorMessage);
+        setErrorMessage(errorMessage);
+        setOpenSnackbar(true);
+      }
     } catch (error) {
-      console.error(error);
+      console.error('Đã xảy ra lỗi:', error);
+      setErrorMessage('Có lỗi xảy ra. Vui lòng thử lại sau.');
+      setOpenSnackbar(true);
     }
   });
+
+
+
+
+  const handleCloseSnackbar = () => {
+    setOpenSnackbar(false);
+  };
 
   const renderHead = (
     <Stack spacing={1} alignItems="center">
@@ -91,6 +139,8 @@ export default function RegisterView() {
     <FormProvider methods={methods} onSubmit={onSubmit}>
       <Stack spacing={2.5}>
         <RHFTextField name="fullName" label="Họ và tên" />
+
+        <RHFTextField name="phoneNumber" label="Số Điện Thoại" />
 
         <RHFTextField name="email" label="Địa chỉ email" />
 
@@ -146,6 +196,18 @@ export default function RegisterView() {
         <Divider sx={{ my: 2 }} />
         {renderForm}
       </CardContent>
+
+      {/* Hiển thị thông báo lỗi */}
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={3000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={errorMessage === "Đăng ký thành công!" ? "success" : "error"} sx={{ width: '100%' }}>
+          {errorMessage}
+        </Alert>
+      </Snackbar>
     </Card>
   );
 }
