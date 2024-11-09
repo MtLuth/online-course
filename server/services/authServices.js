@@ -85,8 +85,8 @@ class AuthService {
       setTimeout(async () => {
         await tokenServices.delete(resetToken);
       }, 1000 * 300);
-      // const mailtrap = mailOptions(email, "Reset Password", resetToken.value);
-      // await sendEmail(mailtrap);
+      const mailDialup = mailOptions(email, "Reset Password", resetToken.value);
+      await sendEmail(mailDialup);
       return ErrorMessage.SendEmailPasswordSuccessfully;
     } catch (error) {
       if (error.code === "auth/user-not-found") {
