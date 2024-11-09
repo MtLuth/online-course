@@ -11,21 +11,19 @@ class User {
     this.status = status;
     this.role = role;
   }
+  toFirestore() {
+    return {
+      fullName: this.fullName,
+      email: this.email,
+      status: this.status,
+      role: this.role,
+    };
+  }
+  fromFirestore(snapshot) {
+    const data = snapshot.data;
+    return new User(data.id, data.fullName, data.email, data.status, data.role);
+  }
 }
 
-const userConverter = {
-  toFirestore: (user) => {
-    return {
-      fullName: user.fullName,
-      email: user.email,
-      status: user.status,
-      role: user.role,
-    };
-  },
-  fromFirestore: (snapshot, options) => {
-    const data = snapshot.data(options);
-    return new User(data.id, data.fullName, data.email, data.status, data.role);
-  },
-};
-
-export { User, userConverter, UserRole };
+export default User;
+export { UserRole };

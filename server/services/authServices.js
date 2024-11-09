@@ -4,13 +4,16 @@ import {
   sendEmailVerification,
 } from "firebase/auth";
 import { authClient } from "../firebase/firebaseClient.js";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { firestore } from "../firebase/firebaseClient.js";
+import admin from "../firebase/firebaseAdmin.js";
 import AppError from "../utils/appError.js";
 import ErrorMessage from "../messages/errorMessage.js";
-import { User, userConverter, UserRole } from "../model/userModel.js";
+import User, { UserRole } from "../model/userModel.js";
 
 class AuthService {
+  constructor() {
+    this.authAdmin = admin.auth();
+    this.firestore = admin.firestore();
+  }
   async validateUser(email, password) {
     try {
       const userCredential = await signInWithEmailAndPassword(
@@ -30,43 +33,49 @@ class AuthService {
       } else if (error.code === "app/invalid-credential") {
         throw new AppError(ErrorMessage.UserInactive, 401);
       } else {
-        throw new AppError(`${error}`, 500);
+        throw new AppError(`${error.code}`, 500);
       }
     }
   }
 
   async createUser(password, newUser) {
     try {
-      console.log(newUser.email);
-      const userCredential = await createUserWithEmailAndPassword(
-        authClient,
-        newUser.email,
-        password
-      );
-      await sendEmailVerification(userCredential.user);
-      const ref = doc(
-        firestore,
-        "users",
-        userCredential.user.uid
-      ).withConverter(userConverter);
-      await setDoc(
-        ref,
-        new User(
-          userCredential.user.uid,
-          newUser.fullName,
-          newUser.email,
-          newUser.status,
-          UserRole.Student
-        )
-      );
-      return {
-        uid: userCredential.user.uid,
-        fullName: newUser.fullName,
+      const userRecord = await this.authAdmin.createUser({
         email: newUser.email,
+        password: password,
+        emailVerified: false,
+        displayName: newUser.fullName,
+      });
+
+      const emailLink = await this.authAdmin.generateEmailVerificationLink(
+        newUser.email
+      );
+
+      const userRef = this.firestore.collection("users").doc(userRecord.uid);
+      const user = new User(
+        userRecord.uid,
+        newUser.fullName,
+        newUser.email,
+        "inactive",
+        UserRole.Student
+      );
+      const userFirestore = user.toFirestore();
+      await userRef.set(userFirestore);
+      return {
+        user,
+        emailLink,
       };
     } catch (error) {
-      throw new AppError(error, 500);
+      if (error.code === "auth/email-already-exists") {
+        throw new AppError(ErrorMessage.EmailAlreadyExist, 500);
+      }
+      throw new AppError(ErrorMessage.Internal, 500);
     }
+  }
+
+  async resetPassword() {
+    try {
+    } catch (error) {}
   }
 }
 

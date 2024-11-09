@@ -1,5 +1,5 @@
 import ErrorMessage from "../messages/errorMessage.js";
-import { User } from "../model/userModel.js";
+import User from "../model/userModel.js";
 import authService from "../services/authServices.js";
 import catchAsync from "../utils/catchAsync.js";
 import yup, { bool } from "yup";
@@ -69,6 +69,10 @@ class AuthController {
       status: "Successfully",
       message: newUser,
     });
+  });
+
+  static GetCurrentUser = catchAsync(async (req, res, next) => {
+    res.json(await authService.resetPassword);
   });
 
   static SendEmailActive = catchAsync(async (req, res, next) => {

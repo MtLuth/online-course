@@ -8,6 +8,8 @@ const ErrorMessage = {
   FullNameIsRequired: "Vui lòng nhập đầy đủ thông tin.",
   UserInactive:
     "Tài khoản chưa được kích hoạt vui lòng kiểm tra email để kích hoạt tài khoản!",
+  EmailAlreadyExist: "Email này đã được sử dụng!",
+  Internal: "Lỗi hệ thống!",
 };
 
 export default ErrorMessage;
