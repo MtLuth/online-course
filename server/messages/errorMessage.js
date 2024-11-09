@@ -14,6 +14,9 @@ const ErrorMessage = {
   PhoneNumberInvalid: "Số điện thoại chỉ bao gồm chữ số",
   PhoneNumberTooShort: "Số điện thoại phải có ít nhất 10 chữ số",
   PhoneNumberTooLong: "Số điện thoại không được quá 11 chữ số",
+  SendEmailPasswordSuccessfully: "Đã gửi email đặt lại mật khẩu!",
+  LinkExpired: "Đường link đã hết hạn hoặc không chính xác!",
+  EmailNotFound: "Không tìm thấy email trên hệ thống!",
 };
 
 export default ErrorMessage;

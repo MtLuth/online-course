@@ -5,6 +5,7 @@ import catchAsync from "../utils/catchAsync.js";
 import yup, { bool } from "yup";
 import YupPassword from "yup-password";
 import { mailOptions, sendEmail } from "../services/emailService.js";
+import tokenServices from "../services/tokenServices.js";
 
 YupPassword(yup);
 
@@ -87,6 +88,33 @@ class AuthController {
     return res.status(200).json({
       status: "Successfully",
       message: "OK",
+    });
+  });
+
+  static ResetPassword = catchAsync(async (req, res, next) => {
+    const token = req.params.token;
+    const validatePassword = yup
+      .string()
+      .password()
+      .required(ErrorMessage.PasswordIsRequired);
+    const password = await validatePassword.validate(req.body.password);
+    const message = await authService.resetPassword(token, password);
+    res.status(200).json({
+      status: "Successfully",
+      message: message,
+    });
+  });
+
+  static SendEmailResetPassword = catchAsync(async (req, res, next) => {
+    const validateParam = yup
+      .string()
+      .required(ErrorMessage.EmailIsRequired)
+      .email(ErrorMessage.InvalidEmail);
+    const email = await validateParam.validate(req.body.email);
+    const message = await authService.sendEmailResetPassword(email);
+    res.status(200).json({
+      status: "Successfully",
+      message: message,
     });
   });
 }

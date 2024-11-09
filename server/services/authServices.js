@@ -8,6 +8,8 @@ import admin from "../firebase/firebaseAdmin.js";
 import AppError from "../utils/appError.js";
 import ErrorMessage from "../messages/errorMessage.js";
 import User, { UserRole } from "../model/userModel.js";
+import tokenServices from "./tokenServices.js";
+import { mailOptions, sendEmail } from "./emailService.js";
 
 class AuthService {
   constructor() {
@@ -75,13 +77,45 @@ class AuthService {
     }
   }
 
-  async resetPassword(email) {
+  async sendEmailResetPassword(email) {
     try {
-      const ref = this.firestore.doc("users");
-      const user = await ref.where("email", "==", email).get();
-      console.log(user.length());
+      const user = await this.authAdmin.getUserByEmail(email);
+      const resetToken = tokenServices.createToken(email, user.uid);
+      await tokenServices.save(resetToken);
+      setTimeout(async () => {
+        await tokenServices.delete(resetToken);
+      }, 1000 * 300);
+      // const mailtrap = mailOptions(email, "Reset Password", resetToken.value);
+      // await sendEmail(mailtrap);
+      return ErrorMessage.SendEmailPasswordSuccessfully;
     } catch (error) {
-      console.log(error.code);
+      if (error.code === "auth/user-not-found") {
+        throw new AppError(ErrorMessage.EmailNotFound, 400);
+      }
+      throw new AppError(`${ErrorMessage.Internal}: ${error}`, 500);
+    }
+  }
+
+  async resetPassword(token, password) {
+    try {
+      const validateToken = await tokenServices.findByValue(token);
+      if (validateToken === null) {
+        throw new AppError(ErrorMessage.LinkExpired, 400);
+      }
+      console.log(Date.now(), validateToken.expiredAt);
+      if (Date.now() > validateToken.expiredAt) {
+        throw new AppError(ErrorMessage.LinkExpired, 400);
+      }
+      const uid = validateToken.uid;
+      await this.authAdmin.updateUser(uid, {
+        password: password,
+      });
+      return "Thay đổi mật khẩu mới thành công";
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError(`${ErrorMessage.Internal}: ${error}`, 500);
     }
   }
 }
