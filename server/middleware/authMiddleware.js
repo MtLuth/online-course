@@ -1,15 +1,21 @@
 import catchAsync from "../utils/catchAsync.js";
 import firebaseAdmin from "../firebase/firebaseAdmin.js";
 import {} from "firebase/auth";
+import AppError from "../utils/appError.js";
+import ErrorMessage from "../messages/errorMessage.js";
 
 const validateUser = catchAsync(async (req, res, next) => {
-  const token = req.cookies.access_cookie;
-  if (token) {
-    console.log(token);
-    const test = await firebaseAdmin.auth().verifySessionCookie(req.cookies);
-    res.status(200).json({ test });
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
+  ) {
+    const token = req.headers.authorization.split(" ")[1];
+    const valid = await firebaseAdmin.auth().verifyIdToken(token);
+    req.uid = valid.sub;
+    next();
+  } else {
+    return next(new AppError(ErrorMessage.Unauthorizaton, 401));
   }
-  res.status(200).json({ aaaa: "hahaha" });
 });
 
 export { validateUser };

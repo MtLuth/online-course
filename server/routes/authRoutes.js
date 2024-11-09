@@ -11,5 +11,5 @@ authRouter.post(
   authController.SendEmailResetPassword
 );
 authRouter.post("/reset-password/:token", authController.ResetPassword);
-
+authRouter.route("/profile").get(validateUser);
 export default authRouter;

@@ -4,11 +4,10 @@ const UserRole = {
   Teacher: "teacher",
 };
 class User {
-  constructor(uid, fullName, email, status, role, phoneNumber) {
+  constructor(uid, fullName, email, role, phoneNumber) {
     this.uid = uid;
     this.fullName = fullName;
     this.email = email;
-    this.status = status;
     this.role = role;
     this.phoneNumber = phoneNumber;
   }
@@ -16,18 +15,16 @@ class User {
     return {
       fullName: this.fullName,
       email: this.email,
-      status: this.status,
       role: this.role,
       phoneNumber: this.phoneNumber,
     };
   }
-  fromFirestore(snapshot) {
-    const data = snapshot.data;
+  static fromFirestore(snapshot) {
+    const data = snapshot.data();
     return new User(
       data.id,
       data.fullName,
       data.email,
-      data.status,
       data.role,
       data.phoneNumber
     );

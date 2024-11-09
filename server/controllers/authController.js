@@ -65,7 +65,6 @@ class AuthController {
       null,
       fullName,
       email,
-      null,
       UserRole.Student,
       phoneNumber
     );

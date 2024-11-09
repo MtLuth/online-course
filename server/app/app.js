@@ -6,6 +6,7 @@ import AppError from "../utils/appError.js";
 import handleGlobalError from "../controllers/globalErrorHandler.js";
 import dotenv from "dotenv";
 import cookiesPareser from "cookie-parser";
+import userRouter from "../routes/userRoutes.js";
 
 dotenv.config("./../config.env");
 
@@ -17,14 +18,15 @@ app.use(morgan("dev"));
 app.use(
   cors({
     methods: ["GET", "POST", "PUT", "DELETE"],
-    origin: 'http://localhost:3000',
-    credentials: true
+    origin: "http://localhost:3000",
+    credentials: true,
   })
 );
 
 const apiUrlGroup = "/api/v1";
 
 app.use(`${apiUrlGroup}/auth`, authRouter);
+app.use(`${apiUrlGroup}/user`, userRouter);
 
 app.all("*", (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));

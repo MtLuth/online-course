@@ -17,6 +17,9 @@ const ErrorMessage = {
   SendEmailPasswordSuccessfully: "Đã gửi email đặt lại mật khẩu!",
   LinkExpired: "Đường link đã hết hạn hoặc không chính xác!",
   EmailNotFound: "Không tìm thấy email trên hệ thống!",
+  Unauthorizaton: "Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại!",
+  ClockedUser:
+    "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ admin để được hỗ trợ!",
 };
 
 export default ErrorMessage;

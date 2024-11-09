@@ -34,6 +34,8 @@ class AuthService {
         throw new AppError(ErrorMessage.UserNotFound, 404);
       } else if (error.code === "app/invalid-credential") {
         throw new AppError(ErrorMessage.UserInactive, 401);
+      } else if (error.code === "auth/user-disabled") {
+        throw new AppError(ErrorMessage.ClockedUser, 401);
       } else {
         throw new AppError(`${error.code}`, 500);
       }
@@ -59,7 +61,6 @@ class AuthService {
         userRecord.uid,
         newUser.fullName,
         newUser.email,
-        "inactive",
         UserRole.Student,
         newUser.phoneNumber
       );
