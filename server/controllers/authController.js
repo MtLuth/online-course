@@ -1,5 +1,5 @@
 import ErrorMessage from "../messages/errorMessage.js";
-import User from "../model/userModel.js";
+import User, { UserRole } from "../model/userModel.js";
 import authService from "../services/authServices.js";
 import catchAsync from "../utils/catchAsync.js";
 import yup, { bool } from "yup";
@@ -34,12 +34,8 @@ const registerParam = yup.object().shape({
   phoneNumber: yup
     .string()
     .label("phone number")
-    .required(ErrorMessage.PhoneNumberIsRequired)
-    .matches(/^[0-9]+$/, ErrorMessage.PhoneNumberInvalid)
-    .min(10, ErrorMessage.PhoneNumberTooShort)
-    .max(11, ErrorMessage.PhoneNumberTooLong),
+    .required(ErrorMessage.PhoneNumberIsRequired),
 });
-
 
 class AuthController {
   static Login = catchAsync(async (req, res, next) => {
@@ -61,33 +57,22 @@ class AuthController {
   });
 
   static Register = catchAsync(async (req, res, next) => {
-    try {
-      // In ra req.body để kiểm tra dữ liệu mà server nhận được từ client
-      console.log('Request Body:', req.body);
+    const { email, password, confirmPassword, fullName, phoneNumber } =
+      await registerParam.validate(req.body);
 
-      const { email, password, confirmPassword, fullName, phoneNumber } =
-        await registerParam.validate(req.body, {
-          abortEarly: true,
-          strict: true,
-        });
-
-      // Kiểm tra dữ liệu sau khi đã validate thành công
-      console.log('Validated Data:', { email, password, confirmPassword, fullName, phoneNumber });
-
-      const user = new User(null, fullName, email, "inactive", phoneNumber);
-      const newUser = await authService.createUser(password, user);
-
-      return res.status(200).json({
-        status: "Successfully",
-        message: newUser,
-      });
-    } catch (error) {
-      console.error('Error during registration:', error);
-      return res.status(500).json({
-        status: "error",
-        message: error.message || "Lỗi server",
-      });
-    }
+    const newUser = new User(
+      null,
+      fullName,
+      email,
+      null,
+      UserRole.Student,
+      phoneNumber
+    );
+    const registerUser = await authService.createUser(password, newUser);
+    res.status(200).json({
+      status: "Successfully!",
+      message: registerUser,
+    });
   });
 
   static GetCurrentUser = catchAsync(async (req, res, next) => {

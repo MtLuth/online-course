@@ -18,11 +18,19 @@ class User {
       email: this.email,
       status: this.status,
       role: this.role,
+      phoneNumber: this.phoneNumber,
     };
   }
   fromFirestore(snapshot) {
     const data = snapshot.data;
-    return new User(data.id, data.fullName, data.email, data.status, data.role);
+    return new User(
+      data.id,
+      data.fullName,
+      data.email,
+      data.status,
+      data.role,
+      data.phoneNumber
+    );
   }
 }
 

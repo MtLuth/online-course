@@ -45,6 +45,7 @@ class AuthService {
         password: password,
         emailVerified: false,
         displayName: newUser.fullName,
+        phoneNumber: newUser.phoneNumber,
       });
 
       const emailLink = await this.authAdmin.generateEmailVerificationLink(
@@ -57,7 +58,8 @@ class AuthService {
         newUser.fullName,
         newUser.email,
         "inactive",
-        UserRole.Student
+        UserRole.Student,
+        newUser.phoneNumber
       );
       const userFirestore = user.toFirestore();
       await userRef.set(userFirestore);
@@ -69,13 +71,18 @@ class AuthService {
       if (error.code === "auth/email-already-exists") {
         throw new AppError(ErrorMessage.EmailAlreadyExist, 500);
       }
-      throw new AppError(ErrorMessage.Internal, 500);
+      throw new AppError(error, 500);
     }
   }
 
-  async resetPassword() {
+  async resetPassword(email) {
     try {
-    } catch (error) {}
+      const ref = this.firestore.doc("users");
+      const user = await ref.where("email", "==", email).get();
+      console.log(user.length());
+    } catch (error) {
+      console.log(error.code);
+    }
   }
 }
 
