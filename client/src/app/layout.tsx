@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import LocalizationProvider from "@/utils/localization-provider";
+import ThemeProvider from "@/theme";
+import {MotionLazy} from "@/components/animate/MotionLazy";
+import ProgressBar from "@/components/progress-bar";
+import SettingsDrawer from "@/components/settings/drawer/SettingsDrawer";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -28,7 +33,15 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <LocalizationProvider>
+          <ThemeProvider>
+            <MotionLazy>
+              <ProgressBar />
+              <SettingsDrawer />
+              {children}
+            </MotionLazy>
+          </ThemeProvider>
+        </LocalizationProvider>
       </body>
     </html>
   );

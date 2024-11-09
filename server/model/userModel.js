@@ -4,12 +4,13 @@ const UserRole = {
   Teacher: "teacher",
 };
 class User {
-  constructor(uid, fullName, email, status, role) {
+  constructor(uid, fullName, email, status, role, phoneNumber) {
     this.uid = uid;
     this.fullName = fullName;
     this.email = email;
     this.status = status;
     this.role = role;
+    this.phoneNumber = phoneNumber;
   }
   toFirestore() {
     return {
