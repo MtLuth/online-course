@@ -1,8 +1,10 @@
 import ErrorMessage from "../messages/errorMessage.js";
+import { User } from "../model/userModel.js";
 import authService from "../services/authServices.js";
 import catchAsync from "../utils/catchAsync.js";
-import yup from "yup";
+import yup, { bool } from "yup";
 import YupPassword from "yup-password";
+import { mailOptions, sendEmail } from "../services/emailService.js";
 
 YupPassword(yup);
 
@@ -25,7 +27,7 @@ const registerParam = yup.object().shape({
     .label("confirm password")
     .required(ErrorMessage.ConfirmPasswordIsRequired)
     .oneOf([yup.ref("password"), null], ErrorMessage.PasswordNotMatch),
-  full_name: yup
+  fullName: yup
     .string()
     .label("full name")
     .required(ErrorMessage.FullNameIsRequired),
@@ -56,6 +58,28 @@ class AuthController {
         abortEarly: true,
         strict: true,
       });
+
+    console.log(fullName);
+    console.log(email);
+
+    const user = new User(null, fullName, email, "inactive");
+
+    const newUser = await authService.createUser(password, user);
+    return res.status(200).json({
+      status: "Successfully",
+      message: newUser,
+    });
+  });
+
+  static SendEmailActive = catchAsync(async (req, res, next) => {
+    const email = req.body.email;
+    console.log(email);
+    const options = mailOptions(email, "Test", "Hiiii");
+    await sendEmail(options);
+    return res.status(200).json({
+      status: "Successfully",
+      message: "OK",
+    });
   });
 }
 
