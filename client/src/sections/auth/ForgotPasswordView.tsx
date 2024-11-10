@@ -1,11 +1,8 @@
-'use client';
-
+"use client"
 import * as Yup from 'yup';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { useBoolean } from '@/hook/useBoolean';
-import { paths } from '@/routes/path';
-
+import { useState } from 'react';
 import {
     Box,
     Card,
@@ -13,43 +10,53 @@ import {
     Stack,
     Typography,
     TextField,
-    Link,
+    Snackbar,
+    Alert
 } from '@mui/material';
 import LoadingButton from '@mui/lab/LoadingButton';
-import RouterLink from '@/routes/components/RouterLink';
+import { useRouter } from 'next/navigation';
 
 const ForgotPasswordView = () => {
-    const emailSent = useBoolean();
-
     const ForgotPasswordSchema = Yup.object().shape({
         email: Yup.string().required('Please enter your email').email('Invalid email address'),
     });
 
-    const defaultValues = {
-        email: '',
-    };
-
+    const router = useRouter();
     const methods = useForm({
         resolver: yupResolver(ForgotPasswordSchema),
-        defaultValues,
+        defaultValues: { email: '' },
     });
 
-    const {
-        reset,
-        handleSubmit,
-        formState: { isSubmitting },
-    } = methods;
+    const { handleSubmit, formState: { isSubmitting } } = methods;
+    const [successMessageOpen, setSuccessMessageOpen] = useState(false); // State to control snackbar visibility
 
-    const onSubmit = handleSubmit(async (data) => {
+    const handleSendCode = async () => {
+        const email = methods.getValues('email');
         try {
-            await new Promise((resolve) => setTimeout(resolve, 500));
-            reset();
-            emailSent.onTrue();
-            console.log('EMAIL SENT', data);
+            const response = await fetch('http://localhost:8080/api/v1/auth/send-email/reset-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Reset code sent successfully:', data.resetToken);
+                setSuccessMessageOpen(true); // Show success snackbar
+                setTimeout(() => {
+                    router.push('/resetpassword');
+                }, 2000);
+            } else {
+                console.error('Failed to send reset code');
+            }
         } catch (error) {
-            console.error(error);
+            console.error('Error sending reset code:', error);
         }
-    });
+    };
+
+    const handleCloseSnackbar = () => {
+        setSuccessMessageOpen(false);
+    };
 
     return (
         <Box
@@ -61,50 +68,34 @@ const ForgotPasswordView = () => {
                 backgroundColor: '#f4f6f8',
             }}
         >
-            <Card sx={{ maxWidth: 1000, width: '100%', mx: 2, boxShadow: 3, borderRadius: 3, padding: 4 }}>
+            <Card sx={{ maxWidth: 600, width: '100%', mx: 2, boxShadow: 3, borderRadius: 3, padding: 4 }}>
                 <Stack direction="row" spacing={2}>
-
                     {/* Form Section */}
-                    <CardContent sx={{ flex: 2 }}>
+                    <CardContent sx={{ flex: 1 }}>
                         <Stack spacing={2}>
                             <Typography variant="subtitle1">Email</Typography>
                             <TextField
                                 placeholder="Enter your email"
                                 fullWidth
                                 {...methods.register('email')}
-                                InputProps={{
-                                    sx: {
-                                        height: 50, // Điều chỉnh độ cao của TextField
-                                        display: 'flex',
-                                        alignItems: 'center', // Căn giữa placeholder theo chiều dọc
-                                    },
-                                }}
                             />
-
                             <LoadingButton
                                 fullWidth
                                 color="inherit"
                                 size="large"
-                                type="submit"
                                 variant="contained"
                                 loading={isSubmitting}
-                                onClick={onSubmit}
+                                onClick={handleSubmit(handleSendCode)}
                             >
                                 Send Password Reset Link
                             </LoadingButton>
-                            <Typography variant="body2" sx={{ textAlign: 'center', marginTop: 2 }}>
-                                Login to your account from{' '}
-                                <Link component={RouterLink} href={paths.login} underline="always">
-                                    here
-                                </Link>
-                            </Typography>
                         </Stack>
                     </CardContent>
 
                     {/* Instruction Section */}
                     <CardContent
                         sx={{
-                            flex: 2,
+                            flex: 1,
                             backgroundColor: '#f3f1fe',
                             borderRadius: 2,
                             display: 'flex',
@@ -125,9 +116,18 @@ const ForgotPasswordView = () => {
                             </Typography>
                         </Stack>
                     </CardContent>
-
                 </Stack>
             </Card>
+            <Snackbar
+                open={successMessageOpen}
+                autoHideDuration={3000}
+                onClose={handleCloseSnackbar}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            >
+                <Alert onClose={handleCloseSnackbar} severity="success" sx={{ width: '100%' }}>
+                    Password reset link sent successfully! Please check your email.
+                </Alert>
+            </Snackbar>
         </Box>
     );
 };
