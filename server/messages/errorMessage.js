@@ -20,6 +20,7 @@ const ErrorMessage = {
   Unauthorizaton: "Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại!",
   ClockedUser:
     "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ admin để được hỗ trợ!",
+  InvalidRole: "Bạn không có quyền thực hiện chức năng này!",
 };
 
 export default ErrorMessage;

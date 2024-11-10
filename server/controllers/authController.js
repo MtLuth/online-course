@@ -81,14 +81,13 @@ class AuthController {
     const { email, password, confirmPassword, fullName, phoneNumber } =
       await registerParam.validate(req.body);
 
-    const newUser = new User(
-      null,
-      fullName,
+    const registerUser = await authService.createUser(
       email,
-      UserRole.Student,
+      fullName,
+      password,
+      null,
       phoneNumber
     );
-    const registerUser = await authService.createUser(password, newUser);
     res.status(200).json({
       status: "Successfully!",
       message: registerUser,

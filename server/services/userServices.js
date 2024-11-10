@@ -8,10 +8,10 @@ class UserService {
   }
   async getProfileById(uid) {
     try {
-      const profileDoc = await this.dbRef.doc(uid).get();
-      const profile = User.fromFirestore(profileDoc);
-      return profile;
+      const user = await User.getUserByUid(uid);
+      return user;
     } catch (error) {
+      console.log(error);
       throw new AppError(error, 500);
     }
   }

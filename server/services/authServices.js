@@ -38,38 +38,31 @@ class AuthService {
         throw new AppError(ErrorMessage.UserInactive, 401);
       } else if (error.code === "auth/user-disabled") {
         throw new AppError(ErrorMessage.ClockedUser, 401);
+      } else if (error.code === "auth/invalid-credential") {
+        throw new AppError(ErrorMessage.InvalidCredential, 400);
       } else {
         throw new AppError(`${error.code}`, 500);
       }
     }
   }
 
-  async createUser(password, newUser) {
+  async createUser(email, fullName, password, avt, phoneNumber) {
     try {
-      const userRecord = await this.authAdmin.createUser({
-        email: newUser.email,
-        password: password,
-        emailVerified: false,
-        displayName: newUser.fullName,
-        phoneNumber: newUser.phoneNumber,
-      });
+      const account = new User();
+      account.fullName = fullName;
+      account.email = email;
+      account.avt =
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Breezeicons-actions-22-im-user.svg/1200px-Breezeicons-actions-22-im-user.svg.png";
+      account.phoneNumber = phoneNumber;
+      account.role = UserRole.Student;
+      account.password = password;
 
-      const emailLink = await this.authAdmin.generateEmailVerificationLink(
-        newUser.email
-      );
+      await account.createAccout();
 
-      const userRef = this.firestore.collection("users").doc(userRecord.uid);
-      const user = new User(
-        userRecord.uid,
-        newUser.fullName,
-        newUser.email,
-        UserRole.Student,
-        newUser.phoneNumber
-      );
-      const userFirestore = user.toFirestore();
-      await userRef.set(userFirestore);
+      const emailLink =
+        await this.authAdmin.generateEmailVerificationLink(email);
+
       return {
-        user,
         emailLink,
       };
     } catch (error) {
@@ -94,12 +87,13 @@ class AuthService {
     review
   ) {
     try {
-      const account = await this.authAdmin.createUser({
-        email: email,
-        password: password,
-        displayName: fullName,
-      });
-      const uid = account.uid;
+      const account = new User();
+      account.email = email;
+      account.password = password;
+      account.avt = avt;
+      account.fullName = fullName;
+      account.role = UserRole.Teacher;
+      const uid = await account.createAccout();
       const newInstructor = new Instructor(
         uid,
         email,
@@ -116,7 +110,10 @@ class AuthService {
       await newInstructor.save();
       return "Thông tin của bạn đã được gửi admin và chờ kiểm duyệt!";
     } catch (error) {
-      throw new AppError(error);
+      if (error.code === "auth/email-already-exists") {
+        throw new AppError(ErrorMessage.EmailAlreadyExist, 500);
+      }
+      throw new AppError(`${ErrorMessage.Internal}: ${error}`, 500);
     }
   }
 
