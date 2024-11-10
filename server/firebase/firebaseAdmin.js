@@ -10,6 +10,7 @@ const accountService = JSON.parse(
 
 const firebaseAdmin = admin.initializeApp({
   credential: admin.credential.cert(accountService),
+  storageBucket: "journalapp-bb379.appspot.com",
 });
 
 export default firebaseAdmin;
