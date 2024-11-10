@@ -10,6 +10,8 @@ import ErrorMessage from "../messages/errorMessage.js";
 import User, { UserRole } from "../model/userModel.js";
 import tokenServices from "./tokenServices.js";
 import { mailOptions, sendEmail } from "./emailService.js";
+import Instructor from "../model/instructorModel.js";
+import firebaseAdmin from "../firebase/firebaseAdmin.js";
 
 class AuthService {
   constructor() {
@@ -75,6 +77,46 @@ class AuthService {
         throw new AppError(ErrorMessage.EmailAlreadyExist, 500);
       }
       throw new AppError(error, 500);
+    }
+  }
+
+  async becomeInstructors(
+    email,
+    password,
+    fullName,
+    avt,
+    bio,
+    expertise,
+    experience,
+    education,
+    certificages,
+    rating,
+    review
+  ) {
+    try {
+      const account = await this.authAdmin.createUser({
+        email: email,
+        password: password,
+        displayName: fullName,
+      });
+      const uid = account.uid;
+      const newInstructor = new Instructor(
+        uid,
+        email,
+        fullName,
+        avt,
+        bio,
+        expertise,
+        experience,
+        education,
+        certificages,
+        rating,
+        review
+      );
+      await newInstructor.save();
+      return "Thông tin của bạn đã được gửi admin và chờ kiểm duyệt!";
+    } catch (error) {
+      throw new AppError(error);
     }
   }
 

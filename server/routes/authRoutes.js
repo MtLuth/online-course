@@ -10,6 +10,9 @@ authRouter.post(
   "/send-email/reset-password",
   authController.SendEmailResetPassword
 );
+
+authRouter.post("/become-instructor", authController.BecomeInstructor);
+
 authRouter.post("/reset-password/:token", authController.ResetPassword);
 authRouter.route("/profile").get(validateUser);
 export default authRouter;

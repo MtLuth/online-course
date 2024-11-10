@@ -38,6 +38,26 @@ const registerParam = yup.object().shape({
     .required(ErrorMessage.PhoneNumberIsRequired),
 });
 
+const becomeInstructorParam = yup.object().shape({
+  email: yup
+    .string()
+    .email(ErrorMessage.InvalidEmail)
+    .required(ErrorMessage.EmailIsRequired),
+  password: yup.string().password().required(ErrorMessage.PasswordIsRequired),
+  confirmPassword: yup
+    .string()
+    .label("confirm password")
+    .required(ErrorMessage.ConfirmPasswordIsRequired)
+    .oneOf([yup.ref("password"), null], ErrorMessage.PasswordNotMatch),
+  fullName: yup.string().label("full name").required(),
+  bio: yup.string().required(),
+  certificate: yup.string().required(),
+  education: yup.string().required(),
+  expertise: yup.string().required(),
+  experience: yup.number().min(1).required(),
+  avt: yup.string().required(),
+});
+
 class AuthController {
   static Login = catchAsync(async (req, res, next) => {
     const { email, password } = await loginParam.validate(req.body, {
@@ -114,6 +134,39 @@ class AuthController {
     res.status(200).json({
       status: "Successfully",
       message: message,
+    });
+  });
+
+  static BecomeInstructor = catchAsync(async (req, res, next) => {
+    const {
+      email,
+      password,
+      confirmPassword,
+      fullName,
+      bio,
+      certificate,
+      education,
+      expertise,
+      experience,
+      avt,
+    } = await becomeInstructorParam.validate(req.body, {
+      abortEarly: true,
+      strict: true,
+    });
+    const result = await authService.becomeInstructors(
+      email,
+      password,
+      fullName,
+      avt,
+      bio,
+      expertise,
+      experience,
+      education,
+      certificate
+    );
+    res.status(200).json({
+      status: "Successfully",
+      message: result,
     });
   });
 }
