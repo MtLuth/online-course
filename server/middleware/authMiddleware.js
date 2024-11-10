@@ -1,8 +1,8 @@
 import catchAsync from "../utils/catchAsync.js";
 import firebaseAdmin from "../firebase/firebaseAdmin.js";
-import {} from "firebase/auth";
 import AppError from "../utils/appError.js";
 import ErrorMessage from "../messages/errorMessage.js";
+import User from "../model/userModel.js";
 
 const validateUser = catchAsync(async (req, res, next) => {
   if (
@@ -12,6 +12,14 @@ const validateUser = catchAsync(async (req, res, next) => {
     const token = req.headers.authorization.split(" ")[1];
     const valid = await firebaseAdmin.auth().verifyIdToken(token);
     req.uid = valid.sub;
+    const uid = valid.sub;
+    const userSnapshot = await firebaseAdmin
+      .firestore()
+      .collection("users")
+      .doc(uid)
+      .get();
+    const user = await User.fromFirestore(userSnapshot);
+    req.role = user.role;
     next();
   } else {
     return next(new AppError(ErrorMessage.Unauthorizaton, 401));
