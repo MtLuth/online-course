@@ -8,10 +8,19 @@ const ErrorMessage = {
   FullNameIsRequired: "Vui lòng nhập đầy đủ thông tin.",
   UserInactive:
     "Tài khoản chưa được kích hoạt vui lòng kiểm tra email để kích hoạt tài khoản!",
+  EmailAlreadyExist: "Email này đã được sử dụng!",
+  Internal: "Lỗi hệ thống!",
   PhoneNumberIsRequired: "Vui lòng nhập số điện thoại",
   PhoneNumberInvalid: "Số điện thoại chỉ bao gồm chữ số",
   PhoneNumberTooShort: "Số điện thoại phải có ít nhất 10 chữ số",
   PhoneNumberTooLong: "Số điện thoại không được quá 11 chữ số",
+  SendEmailPasswordSuccessfully: "Đã gửi email đặt lại mật khẩu!",
+  LinkExpired: "Đường link đã hết hạn hoặc không chính xác!",
+  EmailNotFound: "Không tìm thấy email trên hệ thống!",
+  Unauthorizaton: "Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại!",
+  ClockedUser:
+    "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ admin để được hỗ trợ!",
+  InvalidRole: "Bạn không có quyền thực hiện chức năng này!",
 };
 
 export default ErrorMessage;

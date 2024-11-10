@@ -1,10 +1,11 @@
 import ErrorMessage from "../messages/errorMessage.js";
-import { User } from "../model/userModel.js";
+import User, { UserRole } from "../model/userModel.js";
 import authService from "../services/authServices.js";
 import catchAsync from "../utils/catchAsync.js";
 import yup, { bool } from "yup";
 import YupPassword from "yup-password";
 import { mailOptions, sendEmail } from "../services/emailService.js";
+import tokenServices from "../services/tokenServices.js";
 
 YupPassword(yup);
 
@@ -34,12 +35,28 @@ const registerParam = yup.object().shape({
   phoneNumber: yup
     .string()
     .label("phone number")
-    .required(ErrorMessage.PhoneNumberIsRequired)
-    .matches(/^[0-9]+$/, ErrorMessage.PhoneNumberInvalid)
-    .min(10, ErrorMessage.PhoneNumberTooShort)
-    .max(11, ErrorMessage.PhoneNumberTooLong),
+    .required(ErrorMessage.PhoneNumberIsRequired),
 });
 
+const becomeInstructorParam = yup.object().shape({
+  email: yup
+    .string()
+    .email(ErrorMessage.InvalidEmail)
+    .required(ErrorMessage.EmailIsRequired),
+  password: yup.string().password().required(ErrorMessage.PasswordIsRequired),
+  confirmPassword: yup
+    .string()
+    .label("confirm password")
+    .required(ErrorMessage.ConfirmPasswordIsRequired)
+    .oneOf([yup.ref("password"), null], ErrorMessage.PasswordNotMatch),
+  fullName: yup.string().label("full name").required(),
+  bio: yup.string().required(),
+  certificate: yup.string().required(),
+  education: yup.string().required(),
+  expertise: yup.string().required(),
+  experience: yup.number().min(1).required(),
+  avt: yup.string().required(),
+});
 
 class AuthController {
   static Login = catchAsync(async (req, res, next) => {
@@ -61,33 +78,24 @@ class AuthController {
   });
 
   static Register = catchAsync(async (req, res, next) => {
-    try {
-      // In ra req.body để kiểm tra dữ liệu mà server nhận được từ client
-      console.log('Request Body:', req.body);
+    const { email, password, confirmPassword, fullName, phoneNumber } =
+      await registerParam.validate(req.body);
 
-      const { email, password, confirmPassword, fullName, phoneNumber } =
-        await registerParam.validate(req.body, {
-          abortEarly: true,
-          strict: true,
-        });
+    const registerUser = await authService.createUser(
+      email,
+      fullName,
+      password,
+      null,
+      phoneNumber
+    );
+    res.status(200).json({
+      status: "Successfully!",
+      message: registerUser,
+    });
+  });
 
-      // Kiểm tra dữ liệu sau khi đã validate thành công
-      console.log('Validated Data:', { email, password, confirmPassword, fullName, phoneNumber });
-
-      const user = new User(null, fullName, email, "inactive", phoneNumber);
-      const newUser = await authService.createUser(password, user);
-
-      return res.status(200).json({
-        status: "Successfully",
-        message: newUser,
-      });
-    } catch (error) {
-      console.error('Error during registration:', error);
-      return res.status(500).json({
-        status: "error",
-        message: error.message || "Lỗi server",
-      });
-    }
+  static GetCurrentUser = catchAsync(async (req, res, next) => {
+    res.json(await authService.resetPassword);
   });
 
   static SendEmailActive = catchAsync(async (req, res, next) => {
@@ -98,6 +106,66 @@ class AuthController {
     return res.status(200).json({
       status: "Successfully",
       message: "OK",
+    });
+  });
+
+  static ResetPassword = catchAsync(async (req, res, next) => {
+    const token = req.params.token;
+    const validatePassword = yup
+      .string()
+      .password()
+      .required(ErrorMessage.PasswordIsRequired);
+    const password = await validatePassword.validate(req.body.password);
+    const message = await authService.resetPassword(token, password);
+    res.status(200).json({
+      status: "Successfully",
+      message: message,
+    });
+  });
+
+  static SendEmailResetPassword = catchAsync(async (req, res, next) => {
+    const validateParam = yup
+      .string()
+      .required(ErrorMessage.EmailIsRequired)
+      .email(ErrorMessage.InvalidEmail);
+    const email = await validateParam.validate(req.body.email);
+    const message = await authService.sendEmailResetPassword(email);
+    res.status(200).json({
+      status: "Successfully",
+      message: message,
+    });
+  });
+
+  static BecomeInstructor = catchAsync(async (req, res, next) => {
+    const {
+      email,
+      password,
+      confirmPassword,
+      fullName,
+      bio,
+      certificate,
+      education,
+      expertise,
+      experience,
+      avt,
+    } = await becomeInstructorParam.validate(req.body, {
+      abortEarly: true,
+      strict: true,
+    });
+    const result = await authService.becomeInstructors(
+      email,
+      password,
+      fullName,
+      avt,
+      bio,
+      expertise,
+      experience,
+      education,
+      certificate
+    );
+    res.status(200).json({
+      status: "Successfully",
+      message: result,
     });
   });
 }
