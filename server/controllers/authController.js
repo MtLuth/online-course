@@ -2,61 +2,13 @@ import ErrorMessage from "../messages/errorMessage.js";
 import User, { UserRole } from "../model/userModel.js";
 import authService from "../services/authServices.js";
 import catchAsync from "../utils/catchAsync.js";
-import yup, { bool } from "yup";
-import YupPassword from "yup-password";
 import { mailOptions, sendEmail } from "../services/emailService.js";
 import tokenServices from "../services/tokenServices.js";
-
-YupPassword(yup);
-
-const loginParam = yup.object().shape({
-  email: yup
-    .string()
-    .required(ErrorMessage.EmailIsRequired)
-    .email(ErrorMessage.EmailInvalid),
-  password: yup.string().required(ErrorMessage.PasswordIsRequired),
-});
-
-const registerParam = yup.object().shape({
-  email: yup
-    .string()
-    .required(ErrorMessage.EmailIsRequired)
-    .email(ErrorMessage.EmailInvalid),
-  password: yup.string().password().required(ErrorMessage.PasswordIsRequired),
-  confirmPassword: yup
-    .string()
-    .label("confirm password")
-    .required(ErrorMessage.ConfirmPasswordIsRequired)
-    .oneOf([yup.ref("password"), null], ErrorMessage.PasswordNotMatch),
-  fullName: yup
-    .string()
-    .label("full name")
-    .required(ErrorMessage.FullNameIsRequired),
-  phoneNumber: yup
-    .string()
-    .label("phone number")
-    .required(ErrorMessage.PhoneNumberIsRequired),
-});
-
-const becomeInstructorParam = yup.object().shape({
-  email: yup
-    .string()
-    .email(ErrorMessage.InvalidEmail)
-    .required(ErrorMessage.EmailIsRequired),
-  password: yup.string().password().required(ErrorMessage.PasswordIsRequired),
-  confirmPassword: yup
-    .string()
-    .label("confirm password")
-    .required(ErrorMessage.ConfirmPasswordIsRequired)
-    .oneOf([yup.ref("password"), null], ErrorMessage.PasswordNotMatch),
-  fullName: yup.string().label("full name").required(),
-  bio: yup.string().required(),
-  certificate: yup.string().required(),
-  education: yup.string().required(),
-  expertise: yup.string().required(),
-  experience: yup.number().min(1).required(),
-  avt: yup.string().required(),
-});
+import {
+  becomeInstructorParam,
+  loginParam,
+  registerParam,
+} from "../validator/validationSchema.js";
 
 class AuthController {
   static Login = catchAsync(async (req, res, next) => {

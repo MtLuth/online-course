@@ -39,6 +39,7 @@ class User {
       email: this.email,
       password: this.password,
       displayName: this.fullName,
+      emailVerified: true,
     });
     await dbRef.doc(accountRecord.uid).set(this.toFirestore());
     return accountRecord.uid;
