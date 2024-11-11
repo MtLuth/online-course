@@ -1,10 +1,16 @@
 import firebaseAdmin from "../firebase/firebaseAdmin.js";
 
 const dbRef = firebaseAdmin.firestore().collection("instructors");
+
+const InstructorStatus = {
+  Active: "active",
+  Pending: "pending",
+};
 class Instructor {
   constructor(
     uid,
     email,
+    status,
     fullName,
     avt,
     bio,
@@ -18,6 +24,7 @@ class Instructor {
     this.uid = uid || null;
     this.fullName = fullName || null;
     this.email = email || null;
+    this.status = status || InstructorStatus.Pending;
     this.avt = avt || null;
     this.bio = bio || null;
     this.expertise = expertise || null;
@@ -32,6 +39,7 @@ class Instructor {
     return {
       fullName: this.fullName,
       email: this.email,
+      status: this.status,
       avt: this.avt,
       bio: this.bio,
       expertise: this.expertise,
@@ -48,6 +56,7 @@ class Instructor {
     return new Instructor(
       snapshot.id,
       data.email,
+      data.status,
       data.fullName,
       data.avt,
       data.bio,
@@ -61,6 +70,7 @@ class Instructor {
   }
 
   async save() {
+    console.log(this.status);
     const instructor = this.toFirestore();
     await dbRef.doc(this.uid).set(instructor);
   }
@@ -71,6 +81,7 @@ class Instructor {
     return new Instructor(
       snapshot.id,
       data.email,
+      data.status,
       data.fullName,
       data.avt,
       data.bio,
@@ -85,3 +96,5 @@ class Instructor {
 }
 
 export default Instructor;
+
+export { InstructorStatus };

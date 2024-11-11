@@ -9,6 +9,7 @@ import cookiesPareser from "cookie-parser";
 import userRouter from "../routes/userRoutes.js";
 import uploadRouter from "../routes/uploadRoutes.js";
 import courseRouter from "../routes/courseRoutes.js";
+import instructorRouter from "../routes/instructorRoutes.js";
 
 dotenv.config("./../config.env");
 
@@ -31,6 +32,7 @@ app.use(`${apiUrlGroup}/auth`, authRouter);
 app.use(`${apiUrlGroup}/user`, userRouter);
 app.use(`${apiUrlGroup}/upload`, uploadRouter);
 app.use(`${apiUrlGroup}/course`, courseRouter);
+app.use(`${apiUrlGroup}/instructor`, instructorRouter);
 
 app.all("*", (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
