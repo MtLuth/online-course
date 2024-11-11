@@ -73,7 +73,7 @@ export default function RegisterView() {
   } = methods;
 
   const onSubmit = handleSubmit(async (data) => {
-    console.log('Data being sent:', data); // Kiểm tra dữ liệu client gửi đi
+    console.log('Data being sent:', data);
 
     try {
       const response = await fetch('http://localhost:8080/api/v1/auth/register', {
@@ -85,17 +85,15 @@ export default function RegisterView() {
       });
 
       if (response.ok) {
-        // Nếu đăng ký thành công
+
         const result = await response.json();
         console.log('Đăng ký thành công:', result);
 
         setErrorMessage("Đăng ký thành công!");
         setOpenSnackbar(true);
 
-        reset(); // Xóa form sau khi đăng ký thành công
-        // Điều hướng hoặc thực hiện hành động khác nếu cần
+        reset();
       } else {
-        // Nếu đăng ký không thành công
         const errorData = await response.json();
         const errorMessage = errorData.message || 'Đăng ký không thành công';
 
@@ -199,7 +197,6 @@ export default function RegisterView() {
         {renderForm}
       </CardContent>
 
-      {/* Hiển thị thông báo lỗi */}
       <Snackbar
         open={openSnackbar}
         autoHideDuration={3000}

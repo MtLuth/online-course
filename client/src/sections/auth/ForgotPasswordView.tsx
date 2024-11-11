@@ -31,9 +31,11 @@ const ForgotPasswordView = () => {
 
   const {
     handleSubmit,
-    formState: { isSubmitting },
+    formState: { errors, isSubmitting },
   } = methods;
-  const [successMessageOpen, setSuccessMessageOpen] = useState(false); // State to control snackbar visibility
+
+  const [successMessageOpen, setSuccessMessageOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleSendCode = async () => {
     const email = methods.getValues("email");
@@ -51,19 +53,21 @@ const ForgotPasswordView = () => {
         const data = await response.json();
         console.log("Reset code sent successfully:", data.resetToken);
         setSuccessMessageOpen(true);
-        setTimeout(() => {
-          router.push("/resetpassword");
-        }, 2000);
+
+        const resetLink = `/resetpassword/${data.resetToken}`;
       } else {
-        console.error("Failed to send reset code");
+        const errorData = await response.json();
+        setErrorMessage(`Error ${response.status}: ${errorData.message}`);
       }
     } catch (error) {
+      setErrorMessage("An unexpected error occurred. Please try again later.");
       console.error("Error sending reset code:", error);
     }
   };
 
   const handleCloseSnackbar = () => {
     setSuccessMessageOpen(false);
+    setErrorMessage(null);
   };
 
   return (
@@ -74,16 +78,17 @@ const ForgotPasswordView = () => {
         alignItems: "center",
         justifyContent: "center",
         backgroundColor: "#f4f6f8",
+        padding: 1,
       }}
     >
       <Card
         sx={{
-          maxWidth: 600,
+          maxWidth: 900,
           width: "100%",
           mx: 2,
-          boxShadow: 3,
-          borderRadius: 3,
-          padding: 4,
+          boxShadow: 10,
+          borderRadius: 4,
+          padding: 3,
         }}
       >
         <Stack direction="row" spacing={2}>
@@ -92,9 +97,11 @@ const ForgotPasswordView = () => {
             <Stack spacing={2}>
               <Typography variant="subtitle1">Email</Typography>
               <TextField
-                placeholder="Enter your email"
+                placeholder="Nhập Email của bạn"
                 fullWidth
                 {...methods.register("email")}
+                error={Boolean(errors.email)}
+                helperText={errors.email?.message}
               />
               <LoadingButton
                 fullWidth
@@ -104,7 +111,7 @@ const ForgotPasswordView = () => {
                 loading={isSubmitting}
                 onClick={handleSubmit(handleSendCode)}
               >
-                Send Password Reset Link
+                Đặt lại mật khẩu
               </LoadingButton>
             </Stack>
           </CardContent>
@@ -114,47 +121,57 @@ const ForgotPasswordView = () => {
             sx={{
               flex: 1,
               backgroundColor: "#f3f1fe",
-              borderRadius: 2,
+              borderRadius: 3,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              padding: 2,
+              padding: 3,
             }}
           >
-            <Stack spacing={1} alignItems="center">
+            <Stack spacing={2} alignItems="center">
               <Typography
                 variant="h5"
                 fontWeight="medium"
                 color="text.secondary"
               >
-                Forget your password?
+                Quên mật khẩu?
               </Typography>
-              <Typography variant="h3" fontWeight="bold">
-                Reset Password!
+              <Typography variant="h4" fontWeight="bold">
+                Đặt lại mật khẩu!
               </Typography>
               <Typography
                 variant="body2"
                 sx={{ color: "text.secondary", textAlign: "center", mt: 1 }}
               >
-                Enter your email address to receive a password reset link.
+                Nhập địa chỉ email của bạn để nhận liên kết khôi phục mật khẩu.
               </Typography>
             </Stack>
           </CardContent>
         </Stack>
       </Card>
       <Snackbar
-        open={successMessageOpen}
+        open={successMessageOpen || Boolean(errorMessage)}
         autoHideDuration={3000}
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity="success"
-          sx={{ width: "100%" }}
-        >
-          Password reset link sent successfully! Please check your email.
-        </Alert>
+        {successMessageOpen ? (
+          <Alert
+            onClose={handleCloseSnackbar}
+            severity="success"
+            sx={{ width: "100%" }}
+          >
+            Liên kết đặt lại mật khẩu đã gửi thành công! Vui lòng kiểm tra email của bạn.
+          </Alert>
+        ) : (
+          <Alert
+            onClose={handleCloseSnackbar}
+            severity="error"
+            sx={{ width: "100%" }}
+          >
+            {errorMessage}
+          </Alert>
+        )}
       </Snackbar>
     </Box>
   );

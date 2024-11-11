@@ -25,6 +25,7 @@ import { useState } from 'react';
 
 export default function LoginView() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [openSnackbar, setOpenSnackbar] = useState(false);
 
   const passwordShow = useBoolean();
@@ -58,36 +59,27 @@ export default function LoginView() {
       if (response.ok) {
         const result = await response.json();
 
-        // In phản hồi từ server ra console
-        console.log('API Response:', result);
-
         const { status, message } = result;
 
         if (status === "success") {
           const token = message?.tokenPairs?.accessToken;
 
           if (token) {
-
             localStorage.setItem('jwt', token);
-
           } else {
             console.log('Token không tồn tại trong phản hồi');
           }
 
           reset();
-          console.log('Login successful:', message);
-          setErrorMessage("Đăng nhập thành công!");
+          setSuccessMessage("Đăng nhập thành công!");
           setOpenSnackbar(true);
-
-          // Chuyển hướng nếu cần thiết
-          // router.push('/admin');
         } else {
-          setErrorMessage('Đăng nhập thất bại.');
+          setErrorMessage(`Đăng nhập thất bại: ${message}`);
           setOpenSnackbar(true);
         }
       } else {
-        console.log("Login failed, setting error message");
-        setErrorMessage('Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');
+        const errorData = await response.json();
+        setErrorMessage(`Error ${response.status}: ${errorData.message}`);
         setOpenSnackbar(true);
       }
     } catch (error) {
@@ -97,10 +89,10 @@ export default function LoginView() {
     }
   });
 
-
-
   const handleCloseSnackbar = () => {
     setOpenSnackbar(false);
+    setErrorMessage(null);
+    setSuccessMessage(null);
   };
 
   const renderHead = (
@@ -158,15 +150,19 @@ export default function LoginView() {
         {renderForm}
       </CardContent>
 
-      {/* Popup thông báo lỗi */}
+      {/* Popup thông báo */}
       <Snackbar
         open={openSnackbar}
-        autoHideDuration={3000} // Thời gian tự động đóng popup
+        autoHideDuration={3000}
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert onClose={handleCloseSnackbar} severity="error" sx={{ width: '100%' }}>
-          {errorMessage}
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={successMessage ? 'success' : 'error'}
+          sx={{ width: '100%' }}
+        >
+          {successMessage || errorMessage}
         </Alert>
       </Snackbar>
     </Card>
