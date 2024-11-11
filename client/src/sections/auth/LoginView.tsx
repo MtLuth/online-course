@@ -22,10 +22,12 @@ import { useRouter } from "@/routes/hooks/useRouter";
 import { useToastNotification } from "@/hook/useToastNotification";
 import { authApi } from "@/server/Auth";
 import { useState } from "react";
+import { useAppContext } from "@/context/AppContext";
 
 export default function LoginView() {
   const passwordShow = useBoolean();
   const router = useRouter();
+  const { setSessionToken } = useAppContext();
   const { notifySuccess, notifyError } = useToastNotification();
 
   const LoginSchema = Yup.object().shape({
@@ -61,6 +63,7 @@ export default function LoginView() {
           notifySuccess(
             "Đăng nhập thành công! Vui lòng kiểm tra lại Email để xác thực tài khoản!"
           );
+          setSessionToken(response.message.tokenPairs.accessToken);
           reset();
           router.push("/");
         }

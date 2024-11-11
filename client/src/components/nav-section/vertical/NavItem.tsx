@@ -1,14 +1,46 @@
-import { forwardRef } from 'react';
+// NavItem.tsx
 
-import Box from '@mui/material/Box';
-import Link from '@mui/material/Link';
-import Tooltip from '@mui/material/Tooltip';
-import { alpha, styled } from '@mui/material/styles';
-import ListItemButton from '@mui/material/ListItemButton';
+import { forwardRef } from "react";
 
-import Iconify from '../../iconify';
-import { NavItemProps, NavItemStateProps } from '../types';
+import Box from "@mui/material/Box";
+import Link from "@mui/material/Link";
+import Tooltip from "@mui/material/Tooltip";
+import ListItemButton from "@mui/material/ListItemButton";
+
+import Iconify from "../../iconify";
+import { NavItemProps } from "../types";
 import RouterLink from "@/routes/components/RouterLink";
+
+const StyledNavItem = forwardRef<HTMLDivElement, any>(
+  ({ open, depth, active, disabled, ...other }, ref) => {
+    const subItem = depth !== 1;
+    const deepSubItem = Number(depth) > 2;
+    const opened = open && !active;
+
+    const styles: React.CSSProperties = {
+      display: "flex",
+      alignItems: "center",
+      width: "100%",
+      maxWidth: "100%",
+      padding: subItem ? "4px 12px" : "4px 24px",
+      borderRadius: 8,
+      marginBottom: 4,
+      color: subItem ? "#6e6e6e" : "#9e9e9e",
+      cursor: disabled ? "default" : "pointer",
+      textDecoration: "none",
+      backgroundColor: active ? "#F0F4FF" : opened ? "#f5f5f5" : "transparent",
+      transition: "background-color 0.3s",
+    };
+
+    if (deepSubItem) {
+      styles.paddingLeft = `${16 * depth}px`;
+    }
+
+    return (
+      <ListItemButton ref={ref} disabled={disabled} style={styles} {...other} />
+    );
+  }
+);
 
 const NavItem = forwardRef<HTMLDivElement, NavItemProps>(
   (
@@ -20,13 +52,12 @@ const NavItem = forwardRef<HTMLDivElement, NavItemProps>(
       disabled,
       caption,
       roles,
-      //
       open,
       depth,
       active,
       hasChild,
       externalLink,
-      currentRole = 'admin',
+      currentRole = "admin",
       ...other
     },
     ref
@@ -36,7 +67,6 @@ const NavItem = forwardRef<HTMLDivElement, NavItemProps>(
     const renderContent = (
       <StyledNavItem
         ref={ref}
-        disableGutters
         open={open}
         depth={depth}
         active={active}
@@ -44,28 +74,36 @@ const NavItem = forwardRef<HTMLDivElement, NavItemProps>(
         {...other}
       >
         {!subItem && icon && (
-          <Box component="span" className="icon">
+          <Box component="span" style={iconStyles}>
             {icon}
           </Box>
         )}
 
         {subItem && icon ? (
-          <Box component="span" className="icon">
+          <Box component="span" style={iconStyles}>
             {icon}
           </Box>
         ) : (
-          <Box component="span" className="sub-icon" />
+          <Box component="span" style={subIconStyles} />
         )}
 
         {title && (
-          <Box component="span" sx={{ flex: '1 1 auto', minWidth: 0 }}>
-            <Box component="span" className="label">
+          <Box
+            component="span"
+            style={{
+              flex: "1 1 auto",
+              minWidth: 0,
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <Box component="span" style={labelStyles}>
               {title}
             </Box>
 
             {caption && (
               <Tooltip title={caption} placement="top-start">
-                <Box component="span" className="caption">
+                <Box component="span" style={captionStyles}>
                   {caption}
                 </Box>
               </Tooltip>
@@ -74,7 +112,7 @@ const NavItem = forwardRef<HTMLDivElement, NavItemProps>(
         )}
 
         {info && (
-          <Box component="span" className="info">
+          <Box component="span" style={infoStyles}>
             {info}
           </Box>
         )}
@@ -82,8 +120,12 @@ const NavItem = forwardRef<HTMLDivElement, NavItemProps>(
         {hasChild && (
           <Iconify
             width={16}
-            className="arrow"
-            icon={open ? 'eva:arrow-ios-downward-fill' : 'eva:arrow-ios-forward-fill'}
+            style={arrowStyles}
+            icon={
+              open
+                ? "eva:arrow-ios-downward-fill"
+                : "eva:arrow-ios-forward-fill"
+            }
           />
         )}
       </StyledNavItem>
@@ -93,11 +135,7 @@ const NavItem = forwardRef<HTMLDivElement, NavItemProps>(
       return null;
     }
 
-    if (hasChild) {
-      return renderContent;
-    }
-
-    if (externalLink)
+    if (externalLink) {
       return (
         <Link
           href={path}
@@ -105,15 +143,16 @@ const NavItem = forwardRef<HTMLDivElement, NavItemProps>(
           rel="noopener"
           color="inherit"
           underline="none"
-          sx={{
-            ...(disabled && {
-              cursor: 'default',
-            }),
-          }}
+          style={
+            disabled
+              ? { cursor: "default", textDecoration: "none" }
+              : { textDecoration: "none" }
+          }
         >
           {renderContent}
         </Link>
       );
+    }
 
     return (
       <Link
@@ -121,11 +160,11 @@ const NavItem = forwardRef<HTMLDivElement, NavItemProps>(
         href={path}
         color="inherit"
         underline="none"
-        sx={{
-          ...(disabled && {
-            cursor: 'default',
-          }),
-        }}
+        style={
+          disabled
+            ? { cursor: "default", textDecoration: "none" }
+            : { textDecoration: "none" }
+        }
       >
         {renderContent}
       </Link>
@@ -133,138 +172,47 @@ const NavItem = forwardRef<HTMLDivElement, NavItemProps>(
   }
 );
 
+const iconStyles: React.CSSProperties = {
+  width: 24,
+  height: 24,
+  flexShrink: 0,
+  marginRight: 16,
+};
+
+const subIconStyles: React.CSSProperties = {
+  width: 24,
+  height: 24,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  position: "relative",
+};
+
+const labelStyles: React.CSSProperties = {
+  fontSize: "14px",
+  fontWeight: 600,
+  textTransform: "capitalize",
+  overflow: "hidden",
+  whiteSpace: "nowrap",
+  textOverflow: "ellipsis",
+};
+
+const captionStyles: React.CSSProperties = {
+  fontSize: "12px",
+  color: "#9e9e9e",
+  overflow: "hidden",
+  whiteSpace: "nowrap",
+  textOverflow: "ellipsis",
+};
+
+const infoStyles: React.CSSProperties = {
+  display: "inline-flex",
+  marginLeft: 6,
+};
+
+const arrowStyles: React.CSSProperties = {
+  flexShrink: 0,
+  marginLeft: 6,
+};
+
 export default NavItem;
-const StyledNavItem = styled(ListItemButton, {
-  shouldForwardProp: (prop) => prop !== 'active',
-})<NavItemStateProps>(({ active, open, depth, theme }) => {
-  const subItem = depth !== 1;
-
-  const opened = open && !active;
-
-  const deepSubItem = Number(depth) > 2;
-
-  const noWrapStyles = {
-    width: '100%',
-    maxWidth: '100%',
-    display: 'block',
-    overflow: 'hidden',
-    whiteSpace: 'nowrap',
-    textOverflow: 'ellipsis',
-  } as const;
-
-  const baseStyles = {
-    item: {
-      marginBottom: 4,
-      borderRadius: 8,
-      color: theme.palette.text.secondary,
-      padding: theme.spacing(0.5, 1, 0.5, 1.5),
-    },
-    icon: {
-      width: 24,
-      height: 24,
-      flexShrink: 0,
-      marginRight: theme.spacing(2),
-    },
-    label: {
-      ...noWrapStyles,
-      ...theme.typography.body2,
-      textTransform: 'capitalize',
-      fontWeight: theme.typography[active ? 'fontWeightSemiBold' : 'fontWeightMedium'],
-    },
-    caption: {
-      ...noWrapStyles,
-      ...theme.typography.caption,
-      color: theme.palette.text.disabled,
-    },
-    info: {
-      display: 'inline-flex',
-      marginLeft: theme.spacing(0.75),
-    },
-    arrow: {
-      flexShrink: 0,
-      marginLeft: theme.spacing(0.75),
-    },
-  } as const;
-
-  return {
-    ...(!subItem && {
-      ...baseStyles.item,
-      minHeight: 44,
-      '& .icon': {
-        ...baseStyles.icon,
-      },
-      '& .sub-icon': {
-        display: 'none',
-      },
-      '& .label': {
-        ...baseStyles.label,
-      },
-      '& .caption': {
-        ...baseStyles.caption,
-      },
-      '& .info': {
-        ...baseStyles.info,
-      },
-      '& .arrow': {
-        ...baseStyles.arrow,
-      },
-      ...(active && {
-        color:
-          theme.palette.mode === 'light' ? theme.palette.primary.main : theme.palette.primary.light,
-        backgroundColor: alpha(theme.palette.primary.main, 0.08),
-        '&:hover': {
-          backgroundColor: alpha(theme.palette.primary.main, 0.16),
-        },
-      }),
-      ...(opened && {
-        color: theme.palette.text.primary,
-        backgroundColor: theme.palette.action.hover,
-      }),
-    }),
-    ...(subItem && {
-      ...baseStyles.item,
-      minHeight: 36,
-      '& .icon': {
-        ...baseStyles.icon,
-      },
-      '& .sub-icon': {
-        ...baseStyles.icon,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        '&:before': {
-          content: '""',
-          width: 4,
-          height: 4,
-          borderRadius: '50%',
-          backgroundColor: theme.palette.text.disabled,
-          transition: theme.transitions.create(['transform'], {
-            duration: theme.transitions.duration.shorter,
-          }),
-          ...(active && {
-            transform: 'scale(2)',
-            backgroundColor: theme.palette.primary.main,
-          }),
-        },
-      },
-      '& .label': {
-        ...baseStyles.label,
-      },
-      '& .caption': {
-        ...baseStyles.caption,
-      },
-      '& .info': {
-        ...baseStyles.info,
-      },
-      '& .arrow': {
-        ...baseStyles.arrow,
-      },
-      ...(active && {
-        color: theme.palette.text.primary,
-      }),
-    }),
-    ...(deepSubItem && {
-      paddingLeft: `${theme.spacing(Number(depth))} !important`,
-    }),
-  };
-});

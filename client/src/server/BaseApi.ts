@@ -24,7 +24,7 @@ class BaseApi {
   private setupInterceptors() {
     this.axiosInstance.interceptors.request.use(
       (config: AxiosRequestConfig) => {
-        const token = Cookies.get("token");
+        const token = Cookies.get("accessToken");
         if (token) {
           config.headers = {
             ...config.headers,

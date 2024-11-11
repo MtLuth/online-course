@@ -110,18 +110,6 @@ export default function InstructorBecomeView() {
       <Typography variant="h3" paragraph>
         Bắt đầu trở thành Chuyên
       </Typography>
-
-      <Typography variant="body2" sx={{ color: "text.secondary" }}>
-        {`Đã có tài khoản? `}
-        <Link
-          component={RouterLink}
-          href={paths.login}
-          variant="subtitle2"
-          color="primary"
-        >
-          Đăng nhập
-        </Link>
-      </Typography>
     </Stack>
   );
 

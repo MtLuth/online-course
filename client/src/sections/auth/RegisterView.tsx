@@ -23,11 +23,13 @@ import RHFTextField from "@/components/hook-form/RHFTextField";
 import { useToastNotification } from "@/hook/useToastNotification";
 import { useState } from "react";
 import { authApi } from "@/server/Auth";
+import { useRouter } from "next/navigation";
 
 export default function RegisterView() {
   const passwordShow = useBoolean();
   const confirmPasswordShow = useBoolean();
 
+  const router = useRouter();
   const { notifySuccess, notifyError } = useToastNotification();
 
   const RegisterSchema = Yup.object().shape({

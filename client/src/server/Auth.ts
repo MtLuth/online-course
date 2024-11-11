@@ -1,5 +1,5 @@
 import BaseApi from "./BaseApi";
-
+import Cookies from "js-cookie";
 interface InstructorData {
   email: string;
   avt?: string;
@@ -45,10 +45,19 @@ class Auth extends BaseApi {
       if (response.status === "success") {
         const { accessToken, expirationTime } = response.message.tokenPairs;
         localStorage.setItem("accessToken", accessToken);
-        localStorage.setItem("expirationTime", expirationTime.toString());
+        localStorage.setItem("uid", response.message.uid);
+        localStorage.setItem("email", response.message.email);
+        const expirationDate = new Date();
+        expirationDate.setHours(expirationDate.getHours() + 1);
+        localStorage.setItem("expirationTime", expirationDate.toISOString());
+        Cookies.set("accessToken", accessToken, { expires: 1 / 24 });
+        Cookies.set("expirationTime", expirationDate.toISOString(), {
+          expires: 1 / 24,
+        });
       } else {
         console.error("Đăng nhập thất bại:", response.message);
       }
+
       return response;
     } catch (error) {
       throw error;

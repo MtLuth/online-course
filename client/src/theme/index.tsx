@@ -49,9 +49,18 @@ export default function ThemeProvider({
     [themeMode, themeDirection, presets.palette, presets.customShadows]
   );
 
-  const theme = createTheme(memoizedValue as ThemeOptions);
+  const baseTheme = useMemo(
+    () => createTheme(memoizedValue as ThemeOptions),
+    [memoizedValue]
+  );
 
-  theme.components = componentsOverrides(theme);
+  const theme = useMemo(
+    () =>
+      createTheme(baseTheme, {
+        components: componentsOverrides(baseTheme),
+      }),
+    [baseTheme]
+  );
 
   return (
     <NextAppDirEmotionCacheProvider options={{ key: "css" }}>
