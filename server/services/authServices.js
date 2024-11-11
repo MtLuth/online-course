@@ -11,6 +11,7 @@ import User, { UserRole } from "../model/userModel.js";
 import tokenServices from "./tokenServices.js";
 import {
   getEmailTemplateActive,
+  getEmailTemplateResetPassword,
   mailOptions,
   sendEmail,
 } from "./emailService.js";
@@ -132,7 +133,11 @@ class AuthService {
       setTimeout(async () => {
         await tokenServices.delete(resetToken);
       }, 1000 * 300);
-      const mailDialup = mailOptions(email, "Reset Password", resetToken.value);
+      const content = getEmailTemplateResetPassword(
+        `http://localhost:3000/resetpassword/${resetToken.value}`
+      );
+      console.log(resetToken);
+      const mailDialup = mailOptions(email, "Reset Password", content);
       await sendEmail(mailDialup);
       return ErrorMessage.SendEmailPasswordSuccessfully;
     } catch (error) {

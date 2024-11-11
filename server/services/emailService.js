@@ -42,4 +42,28 @@ const getEmailTemplateActive = (emailLink) => {
   `;
 };
 
-export { mailOptions, sendEmail, getEmailTemplateActive };
+const getEmailTemplateResetPassword = (resetLink) => {
+  return `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+      <h2 style="color: #4CAF50;">Yêu cầu đặt lại mật khẩu</h2>
+      <p>Chúng tôi đã nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn.</p>
+      <p>Vui lòng nhấn vào nút dưới đây để đặt lại mật khẩu:</p>
+      <a 
+        href="${resetLink}" 
+        style="display: inline-block; padding: 10px 20px; margin-top: 20px; background-color: #4CAF50; color: #fff; text-decoration: none; border-radius: 5px;"
+      >
+        Đặt lại mật khẩu
+      </a>
+      <p><strong>Lưu ý:</strong> Liên kết đặt lại mật khẩu này sẽ hết hạn sau 5 phút.</p>
+      <p>Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này hoặc liên hệ với chúng tôi để được hỗ trợ.</p>
+      <p>Trân trọng,<br/>Đội ngũ Online Course</p>
+    </div>
+  `;
+};
+
+export {
+  mailOptions,
+  sendEmail,
+  getEmailTemplateActive,
+  getEmailTemplateResetPassword,
+};
