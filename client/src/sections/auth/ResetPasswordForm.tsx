@@ -50,9 +50,9 @@ const ResetPasswordForm = () => {
 
             if (response.ok) {
                 console.log('Password reset successful');
-                setSuccessMessageOpen(true); // Show success snackbar
+                setSuccessMessageOpen(true);
                 setTimeout(() => {
-                    router.push('/login'); // Redirect to login page after password reset
+                    router.push('/login');
                 }, 2000);
             } else {
                 console.error('Failed to reset password');
