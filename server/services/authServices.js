@@ -12,6 +12,7 @@ import tokenServices from "./tokenServices.js";
 import {
   getEmailTemplateActive,
   getEmailTemplateResetPassword,
+  getTemplateAdminCheckInstructor,
   mailOptions,
   sendEmail,
 } from "./emailService.js";
@@ -61,7 +62,7 @@ class AuthService {
       account.role = UserRole.Student;
       account.password = password;
 
-      await account.createAccout();
+      await account.createAccout(false);
 
       const emailLink =
         await this.authAdmin.generateEmailVerificationLink(email);
@@ -100,7 +101,7 @@ class AuthService {
       account.avt = avt;
       account.fullName = fullName;
       account.role = UserRole.Teacher;
-      const uid = await account.createAccout();
+      const uid = await account.createAccout(true);
       const newInstructor = new Instructor(
         uid,
         email,
@@ -170,8 +171,37 @@ class AuthService {
     }
   }
 
-  // async adminCheckInstructor(uid, status) {
-  //   if (status === "accept") {}
+  async adminCheckInstructor(uid, state) {
+    try {
+      var sendEmailState;
+      const instructor = await this.authAdmin.getUser(uid);
+      if (state.status === "approve") {
+        await this.authAdmin.updateUser(uid, {
+          disabled: false,
+        });
+        const emailLink = await this.authAdmin.generateEmailVerificationLink(
+          instructor.email
+        );
+        sendEmailState = {
+          ...state,
+          emailLink: emailLink,
+        };
+      } else {
+        await this.authAdmin.deleteUser(uid);
+
+        sendEmailState = {
+          ...state,
+        };
+      }
+      const content = getTemplateAdminCheckInstructor(sendEmailState);
+      const mailDialup = mailOptions(instructor.email, "Active User", content);
+      await sendEmail(mailDialup);
+      return "Thành công!";
+    } catch (error) {
+      console.log(error);
+      throw new AppError(error, 500);
+    }
+  }
 }
 
 export default new AuthService();

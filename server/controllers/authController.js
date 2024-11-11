@@ -12,7 +12,7 @@ import {
 } from "../validator/validationSchema.js";
 
 class AuthController {
-  static Login = catchAsync(async (req, res, next) => {
+  Login = catchAsync(async (req, res, next) => {
     const { email, password } = await loginParam.validate(req.body, {
       abortEarly: true,
       strict: true,
@@ -30,7 +30,7 @@ class AuthController {
     });
   });
 
-  static Register = catchAsync(async (req, res, next) => {
+  Register = catchAsync(async (req, res, next) => {
     const { email, password, confirmPassword, fullName, phoneNumber } =
       await registerParam.validate(req.body);
 
@@ -46,11 +46,11 @@ class AuthController {
     });
   });
 
-  static GetCurrentUser = catchAsync(async (req, res, next) => {
+  GetCurrentUser = catchAsync(async (req, res, next) => {
     res.json(await authService.resetPassword);
   });
 
-  static SendEmailActive = catchAsync(async (req, res, next) => {
+  SendEmailActive = catchAsync(async (req, res, next) => {
     const email = req.body.email;
     console.log(email);
     const options = mailOptions(email, "Test", "Hiiii");
@@ -61,7 +61,7 @@ class AuthController {
     });
   });
 
-  static ResetPassword = catchAsync(async (req, res, next) => {
+  ResetPassword = catchAsync(async (req, res, next) => {
     const token = req.params.token;
     const validatePassword = yup
       .string()
@@ -75,7 +75,7 @@ class AuthController {
     });
   });
 
-  static SendEmailResetPassword = catchAsync(async (req, res, next) => {
+  SendEmailResetPassword = catchAsync(async (req, res, next) => {
     const validateParam = yup
       .string()
       .required(ErrorMessage.EmailIsRequired)
@@ -88,7 +88,7 @@ class AuthController {
     });
   });
 
-  static BecomeInstructor = catchAsync(async (req, res, next) => {
+  BecomeInstructor = catchAsync(async (req, res, next) => {
     const {
       email,
       password,
@@ -120,6 +120,33 @@ class AuthController {
       message: result,
     });
   });
+
+  AdminCheckInstructor = catchAsync(async (req, res, next) => {
+    const statusValidate = yup
+      .string()
+      .required(ErrorMessage.StatusIsRequired)
+      .oneOf(["approve", "reject"], ErrorMessage.InvalidStatus);
+    const uid = req.params.uid;
+    const status = await statusValidate.validate(req.body.status);
+    let state = {
+      status: "",
+      reason: "",
+    };
+    state.status = status;
+    if (status === "reject") {
+      const reasonValidate = yup
+        .string()
+        .required("Vui lòng nhập lý do!")
+        .min(10);
+      const reason = await reasonValidate.validate(req.body.reason);
+      state.reason = reason;
+    }
+    const result = await authService.adminCheckInstructor(uid, state);
+    res.status(200).json({
+      status: "Successfully",
+      message: result,
+    });
+  });
 }
 
-export default AuthController;
+export default new AuthController();

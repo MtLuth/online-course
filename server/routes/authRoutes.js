@@ -1,6 +1,7 @@
 import express from "express";
 import authController from "../controllers/authController.js";
-import { validateUser } from "../middleware/authMiddleware.js";
+import customMiddleWare from "../middleware/authMiddleware.js";
+import authMiddleware from "../middleware/authMiddleware.js";
 
 const authRouter = express.Router();
 
@@ -14,5 +15,12 @@ authRouter.post(
 authRouter.post("/become-instructor", authController.BecomeInstructor);
 
 authRouter.post("/reset-password/:token", authController.ResetPassword);
-authRouter.route("/profile").get(validateUser);
+authRouter.route("/profile").get(customMiddleWare.validateUser);
+
+authRouter.post(
+  "/admin/update-instructor/:uid",
+  authMiddleware.validateUser,
+  authMiddleware.validateRoleAdmin,
+  authController.AdminCheckInstructor
+);
 export default authRouter;
