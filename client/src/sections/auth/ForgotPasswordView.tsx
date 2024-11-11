@@ -31,9 +31,11 @@ const ForgotPasswordView = () => {
 
   const {
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting }, // Thêm errors vào đây để lấy các lỗi từ Yup schema
   } = methods;
-  const [successMessageOpen, setSuccessMessageOpen] = useState(false); // State to control snackbar visibility
+
+  const [successMessageOpen, setSuccessMessageOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleSendCode = async () => {
     const email = methods.getValues("email");
@@ -98,8 +100,8 @@ const ForgotPasswordView = () => {
                 placeholder="Nhập Email của bạn"
                 fullWidth
                 {...methods.register("email")}
-                error={Boolean(errors.email)}
-                helperText={errors.email?.message}
+                error={Boolean(errors.email)} // Kết nối với trạng thái lỗi của email
+                helperText={errors.email?.message} // Hiển thị thông báo lỗi nếu có
               />
               <LoadingButton
                 fullWidth

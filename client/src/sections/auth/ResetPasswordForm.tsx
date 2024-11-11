@@ -138,7 +138,7 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token }) => {
                 anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
             >
                 <Alert onClose={handleCloseSnackbar} severity="success" sx={{ width: "100%" }}>
-                    Đặt lại mật khẩu thành công! Chuyển hướng đến đăng nhập...
+                    Password reset successful! Redirecting to login...
                 </Alert>
             </Snackbar>
             {/* Snackbar cho lỗi */}
