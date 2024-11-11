@@ -37,7 +37,6 @@ class AuthController {
       email,
       fullName,
       password,
-      null,
       phoneNumber
     );
     res.status(200).json({

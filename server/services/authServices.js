@@ -9,7 +9,11 @@ import AppError from "../utils/appError.js";
 import ErrorMessage from "../messages/errorMessage.js";
 import User, { UserRole } from "../model/userModel.js";
 import tokenServices from "./tokenServices.js";
-import { mailOptions, sendEmail } from "./emailService.js";
+import {
+  getEmailTemplateActive,
+  mailOptions,
+  sendEmail,
+} from "./emailService.js";
 import Instructor from "../model/instructorModel.js";
 import firebaseAdmin from "../firebase/firebaseAdmin.js";
 
@@ -46,7 +50,7 @@ class AuthService {
     }
   }
 
-  async createUser(email, fullName, password, avt, phoneNumber) {
+  async createUser(email, fullName, password, phoneNumber) {
     try {
       const account = new User();
       account.fullName = fullName;
@@ -62,13 +66,16 @@ class AuthService {
       const emailLink =
         await this.authAdmin.generateEmailVerificationLink(email);
 
-      return {
-        emailLink,
-      };
+      const mailContent = getEmailTemplateActive(emailLink);
+      const mailDialup = mailOptions(email, "Active Account", mailContent);
+      await sendEmail(mailDialup);
+
+      return "Vui lòng kiểm tra email của bạn để kích hoạt tài khoản!";
     } catch (error) {
       if (error.code === "auth/email-already-exists") {
         throw new AppError(ErrorMessage.EmailAlreadyExist, 500);
       }
+      console.log(error);
       throw new AppError(error, 500);
     }
   }
