@@ -6,6 +6,10 @@ const courseRouter = e.Router();
 
 courseRouter
   .route("/")
-  .post(authMiddleware.validateUser, courseController.createCourse);
+  .post(
+    authMiddleware.validateUser,
+    authMiddleware.validateRoleInstructor,
+    courseController.createCourse
+  );
 
 export default courseRouter;

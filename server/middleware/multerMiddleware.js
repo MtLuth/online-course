@@ -17,11 +17,24 @@ const imageFilter = (req, file, cb) => {
   }
 };
 
+const videoFilter = (req, file, cb) => {
+  if (file.mimetype === "video/mov" || file.mimetype === "video/mp4") {
+    cb(null, true);
+  } else {
+    new Error("Invalid file type. Only MOV, MP4"), false;
+  }
+};
+
 const storage = multer.memoryStorage();
 
-const upload = multer({
+const uploadImage = multer({
   storage: storage,
   fileFilter: imageFilter,
 });
 
-export default upload;
+const uploadVideo = multer({
+  storage: storage,
+  fileFilter: videoFilter,
+});
+
+export { uploadImage, uploadVideo };

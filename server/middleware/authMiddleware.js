@@ -42,6 +42,15 @@ class CustomMiddleware {
     }
     next();
   });
+
+  validateRoleInstructor = catchAsync(async (req, res, next) => {
+    const uid = req.uid;
+    const role = await User.getRoleById(uid);
+    if (role !== UserRole.Teacher) {
+      next(new AppError(ErrorMessage.InvalidRole, 401));
+    }
+    next();
+  });
 }
 
 export default new CustomMiddleware();

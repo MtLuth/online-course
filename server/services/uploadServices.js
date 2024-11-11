@@ -4,7 +4,7 @@ class UploadService {
   async uploadImage(fileBuffer, fileName) {
     try {
       const storage = firebaseAdmin.storage().bucket();
-      const file = storage.file(`${Date.now()}_${fileName}`);
+      const file = storage.file(`images/${Date.now()}_${fileName}`);
       await file.save(fileBuffer, {
         public: true,
         metadata: {
@@ -16,6 +16,26 @@ class UploadService {
       console.log(error);
       throw new AppError(error, 500);
     }
+  }
+
+  uploadVideos(uid, files) {
+    const storage = firebaseAdmin.storage().bucket();
+    var filesUrl = [];
+    files.map(async (file) => {
+      try {
+        const ref = storage.file(`videos/${uid}/${file.originalname}`);
+        ref.save(file.buffer, {
+          public: true,
+          metadata: {
+            contentType: "video",
+          },
+        });
+        filesUrl.push(ref.publicUrl());
+      } catch (error) {
+        throw new AppError(error, 500);
+      }
+    });
+    return filesUrl;
   }
 }
 
