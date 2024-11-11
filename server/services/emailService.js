@@ -74,6 +74,7 @@ const getEmailTemplateResetPassword = (resetLink) => {
       <p>Trân trọng,<br/>Đội ngũ Online Course</p>
     </div>
   `;
+  // hui
 };
 
 export {
