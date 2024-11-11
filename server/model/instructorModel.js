@@ -1,5 +1,6 @@
 import firebaseAdmin from "../firebase/firebaseAdmin.js";
 
+const dbRef = firebaseAdmin.firestore().collection("instructors");
 class Instructor {
   constructor(
     uid,
@@ -25,8 +26,6 @@ class Instructor {
     this.certificages = certificages || null;
     this.rating = rating || null;
     this.review = review || null;
-
-    this.dbRef = firebaseAdmin.firestore().collection("instructors");
   }
 
   toFirestore() {
@@ -44,7 +43,7 @@ class Instructor {
     };
   }
 
-  static fromFirestore(snapshot) {
+  fromFirestore(snapshot) {
     data = snapshot.data();
     return new Instructor(
       snapshot.id,
@@ -63,7 +62,25 @@ class Instructor {
 
   async save() {
     const instructor = this.toFirestore();
-    await this.dbRef.doc(this.uid).set(instructor);
+    await dbRef.doc(this.uid).set(instructor);
+  }
+
+  async getById(id) {
+    const snapshot = await dbRef.doc(id).get();
+    const data = snapshot.data();
+    return new Instructor(
+      snapshot.id,
+      data.email,
+      data.fullName,
+      data.avt,
+      data.bio,
+      data.expertise,
+      data.experience,
+      data.education,
+      data.certificages,
+      data.rating,
+      data.education
+    );
   }
 }
 

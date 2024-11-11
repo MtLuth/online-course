@@ -9,9 +9,14 @@ import AppError from "../utils/appError.js";
 import ErrorMessage from "../messages/errorMessage.js";
 import User, { UserRole } from "../model/userModel.js";
 import tokenServices from "./tokenServices.js";
-import { mailOptions, sendEmail } from "./emailService.js";
+import {
+  getEmailTemplateActive,
+  getEmailTemplateResetPassword,
+  getTemplateAdminCheckInstructor,
+  mailOptions,
+  sendEmail,
+} from "./emailService.js";
 import Instructor from "../model/instructorModel.js";
-import firebaseAdmin from "../firebase/firebaseAdmin.js";
 
 class AuthService {
   constructor() {
@@ -46,7 +51,7 @@ class AuthService {
     }
   }
 
-  async createUser(email, fullName, password, avt, phoneNumber) {
+  async createUser(email, fullName, password, phoneNumber) {
     try {
       const account = new User();
       account.fullName = fullName;
@@ -57,18 +62,21 @@ class AuthService {
       account.role = UserRole.Student;
       account.password = password;
 
-      await account.createAccout();
+      await account.createAccout(false);
 
       const emailLink =
         await this.authAdmin.generateEmailVerificationLink(email);
 
-      return {
-        emailLink,
-      };
+      const mailContent = getEmailTemplateActive(emailLink);
+      const mailDialup = mailOptions(email, "Active Account", mailContent);
+      await sendEmail(mailDialup);
+
+      return "Vui lòng kiểm tra email của bạn để kích hoạt tài khoản!";
     } catch (error) {
       if (error.code === "auth/email-already-exists") {
         throw new AppError(ErrorMessage.EmailAlreadyExist, 500);
       }
+      console.log(error);
       throw new AppError(error, 500);
     }
   }
@@ -93,7 +101,7 @@ class AuthService {
       account.avt = avt;
       account.fullName = fullName;
       account.role = UserRole.Teacher;
-      const uid = await account.createAccout();
+      const uid = await account.createAccout(true);
       const newInstructor = new Instructor(
         uid,
         email,
@@ -125,13 +133,17 @@ class AuthService {
       setTimeout(async () => {
         await tokenServices.delete(resetToken);
       }, 1000 * 300);
-      const mailDialup = mailOptions(email, "Reset Password", resetToken.value);
+      const content = getEmailTemplateResetPassword(
+        `http://localhost:3000/resetpassword/${resetToken.value}`
+      );
+      const mailDialup = mailOptions(email, "Reset Password", content);
       await sendEmail(mailDialup);
       return ErrorMessage.SendEmailPasswordSuccessfully;
     } catch (error) {
       if (error.code === "auth/user-not-found") {
         throw new AppError(ErrorMessage.EmailNotFound, 400);
       }
+      console.log(error);
       throw new AppError(`${ErrorMessage.Internal}: ${error}`, 500);
     }
   }
@@ -156,6 +168,38 @@ class AuthService {
         throw error;
       }
       throw new AppError(`${ErrorMessage.Internal}: ${error}`, 500);
+    }
+  }
+
+  async adminCheckInstructor(uid, state) {
+    try {
+      var sendEmailState;
+      const instructor = await this.authAdmin.getUser(uid);
+      if (state.status === "approve") {
+        await this.authAdmin.updateUser(uid, {
+          disabled: false,
+        });
+        const emailLink = await this.authAdmin.generateEmailVerificationLink(
+          instructor.email
+        );
+        sendEmailState = {
+          ...state,
+          emailLink: emailLink,
+        };
+      } else {
+        await this.authAdmin.deleteUser(uid);
+
+        sendEmailState = {
+          ...state,
+        };
+      }
+      const content = getTemplateAdminCheckInstructor(sendEmailState);
+      const mailDialup = mailOptions(instructor.email, "Active User", content);
+      await sendEmail(mailDialup);
+      return "Thành công!";
+    } catch (error) {
+      console.log(error);
+      throw new AppError(error, 500);
     }
   }
 }

@@ -19,8 +19,10 @@ const ErrorMessage = {
   EmailNotFound: "Không tìm thấy email trên hệ thống!",
   Unauthorizaton: "Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại!",
   ClockedUser:
-    "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ admin để được hỗ trợ!",
+    "Tài khoản này không có quyền đăng nhập vào hệ thống. Vui lòng liên hệ admin để được hỗ trợ!",
   InvalidRole: "Bạn không có quyền thực hiện chức năng này!",
+  StatusIsRequired: "Status không được để trống!",
+  InvalidStatus: "Status không hợp lệ!",
 };
 
 export default ErrorMessage;

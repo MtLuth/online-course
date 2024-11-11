@@ -34,11 +34,13 @@ class User {
     return user;
   }
 
-  async createAccout() {
+  async createAccout(disable) {
     const accountRecord = await auth.createUser({
       email: this.email,
       password: this.password,
       displayName: this.fullName,
+      emailVerified: false,
+      disabled: disable,
     });
     await dbRef.doc(accountRecord.uid).set(this.toFirestore());
     return accountRecord.uid;
@@ -72,11 +74,12 @@ class User {
   }
 
   static async getRoleById(uid) {
-    const snapshot = dbRef.doc(uid);
-    if (!snapshot.exists) {
-      return null;
-    }
+    const snapshot = await dbRef.doc(uid).get();
     return snapshot.data().role;
+  }
+
+  static async deleteUserById(uid) {
+    await dbRef.doc(uid).delete();
   }
 }
 

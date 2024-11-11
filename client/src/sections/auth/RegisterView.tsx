@@ -40,9 +40,17 @@ export default function RegisterView() {
       .email("Email không hợp lệ"),
     phoneNumber: Yup.string()
       .required("Vui lòng nhập số điện thoại")
-      .matches(/^[0-9]+$/, "Số điện thoại chỉ bao gồm chữ số")
-      .min(10, "Số điện thoại phải có ít nhất 10 chữ số")
-      .max(11, "Số điện thoại không được quá 11 chữ số"),
+      .matches(
+        /^\+84\d{9,10}$/,
+        "Số điện thoại không hợp lệ. Vui lòng nhập đúng số điện thoại với mã vùng +84"
+      )
+      .test("phone-length", "Số điện thoại không hợp lệ", (value) => {
+        const phoneNumberWithoutPlus = value?.replace("+", "");
+        return (
+          phoneNumberWithoutPlus.length >= 10 &&
+          phoneNumberWithoutPlus.length <= 11
+        );
+      }),
     password: Yup.string()
       .required("Vui lòng nhập mật khẩu")
       .min(6, "Mật khẩu cần ít nhất 6 ký tự"),
