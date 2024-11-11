@@ -21,7 +21,22 @@ const sendEmail = async (mailOptions) => {
     return await transporter.sendMail(mailOptions);
   } catch (error) {
     console.log(error);
-    return new AppError(`Không thể gửi email: ${error}`, 500);
+    if (error.responseCode === 550) {
+      console.error("Lỗi: Địa chỉ email không tồn tại hoặc bị từ chối.");
+      throw new AppError("Địa chỉ email không tồn tại hoặc bị từ chối.", 400);
+    } else if (error.responseCode === 535) {
+      console.error("Lỗi: Sai thông tin xác thực.");
+      throw new AppError(
+        "Sai thông tin xác thực. Kiểm tra lại email và mật khẩu SMTP.",
+        401
+      );
+    } else if (error.code === "ECONNECTION") {
+      console.error("Lỗi: Không thể kết nối tới máy chủ SMTP.");
+      throw new AppError("Không thể kết nối tới máy chủ SMTP.", 500);
+    } else {
+      console.error("Lỗi không xác định khi gửi email:", error);
+      throw new AppError(`Không thể gửi email: ${error.message}`, 500);
+    }
   }
 };
 

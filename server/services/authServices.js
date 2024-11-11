@@ -16,7 +16,6 @@ import {
   sendEmail,
 } from "./emailService.js";
 import Instructor from "../model/instructorModel.js";
-import firebaseAdmin from "../firebase/firebaseAdmin.js";
 
 class AuthService {
   constructor() {
@@ -136,7 +135,6 @@ class AuthService {
       const content = getEmailTemplateResetPassword(
         `http://localhost:3000/resetpassword/${resetToken.value}`
       );
-      console.log(resetToken);
       const mailDialup = mailOptions(email, "Reset Password", content);
       await sendEmail(mailDialup);
       return ErrorMessage.SendEmailPasswordSuccessfully;
@@ -144,6 +142,7 @@ class AuthService {
       if (error.code === "auth/user-not-found") {
         throw new AppError(ErrorMessage.EmailNotFound, 400);
       }
+      console.log(error);
       throw new AppError(`${ErrorMessage.Internal}: ${error}`, 500);
     }
   }
@@ -170,6 +169,9 @@ class AuthService {
       throw new AppError(`${ErrorMessage.Internal}: ${error}`, 500);
     }
   }
+
+  // async adminCheckInstructor(uid, status) {
+  //   if (status === "accept") {}
 }
 
 export default new AuthService();
