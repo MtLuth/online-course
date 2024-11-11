@@ -33,9 +33,7 @@ const ForgotPasswordView = () => {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = methods;
-
-  const [successMessageOpen, setSuccessMessageOpen] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessageOpen, setSuccessMessageOpen] = useState(false); // State to control snackbar visibility
 
   const handleSendCode = async () => {
     const email = methods.getValues("email");
