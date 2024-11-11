@@ -1,9 +1,9 @@
 import RegisterView from "@/sections/auth/RegisterView";
 
 export const metadata = {
-  title: 'Register',
+  title: "Đăng ký trở thành học viên | Elearning",
 };
 
-export default function LoginBackgroundPage() {
+export default function RegisterBackgroundPage() {
   return <RegisterView />;
 }
