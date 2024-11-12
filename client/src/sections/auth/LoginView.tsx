@@ -21,7 +21,6 @@ import RHFTextField from "@/components/hook-form/RHFTextField";
 import { useRouter } from "@/routes/hooks/useRouter";
 import { useToastNotification } from "@/hook/useToastNotification";
 import { authApi } from "@/server/Auth";
-import { useState } from "react";
 import { useAppContext } from "@/context/AppContext";
 
 export default function LoginView() {

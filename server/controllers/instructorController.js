@@ -1,16 +1,17 @@
 import instructorServices from "../services/instructorServices.js";
 import catchAsync from "../utils/catchAsync.js";
+import { paginationValidate } from "../validator/validationSchema.js";
 
 class InstructorController {
   getAllInstructor = catchAsync(async (req, res, next) => {
-    const queryObj = { ...req.query };
-    const excludedFields = ["page", "sort", "limit", "fields", "status"];
-    excludedFields.map((e) => delete queryObj[e]);
     const status = req.query.status;
-    const searchParams = { ...queryObj };
+    const searchParam = req.query.searchParam;
+    const pagination = await paginationValidate.validate(req.query);
     const results = await instructorServices.getAllInstructor(
       status,
-      searchParams
+      searchParam,
+      pagination.limit,
+      pagination.page
     );
     res.status(200).json({
       status: "Successfully",

@@ -146,9 +146,15 @@ const courseValidationSchema = yup.object({
   isPublished: yup.boolean().default(false),
 });
 
+const paginationValidate = yup.object().shape({
+  limit: yup.number().min(1).max(20).required(),
+  page: yup.number().min(1).required(),
+});
+
 export {
   loginParam,
   registerParam,
   becomeInstructorParam,
   courseValidationSchema,
+  paginationValidate,
 };
