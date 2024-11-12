@@ -1,7 +1,7 @@
 import {
+  setPersistence,
   signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  sendEmailVerification,
+  browserLocalPersistence,
 } from "firebase/auth";
 import { authClient } from "../firebase/firebaseClient.js";
 import admin from "../firebase/firebaseAdmin.js";
@@ -16,8 +16,7 @@ import {
   mailOptions,
   sendEmail,
 } from "./emailService.js";
-import Instructor from "../model/instructorModel.js";
-import firebaseAdmin from "../firebase/firebaseAdmin.js";
+import Instructor, { InstructorStatus } from "../model/instructorModel.js";
 
 class AuthService {
   constructor() {
@@ -26,6 +25,7 @@ class AuthService {
   }
   async validateUser(email, password) {
     try {
+      await setPersistence(authClient, browserLocalPersistence);
       const userCredential = await signInWithEmailAndPassword(
         authClient,
         email,
@@ -106,6 +106,7 @@ class AuthService {
       const newInstructor = new Instructor(
         uid,
         email,
+        InstructorStatus.Pending,
         fullName,
         avt,
         bio,
@@ -177,9 +178,15 @@ class AuthService {
       var sendEmailState;
       const instructor = await this.authAdmin.getUser(uid);
       if (state.status === "approve") {
-        await this.authAdmin.updateUser(uid, {
-          disabled: false,
-        });
+        await Promise.all([
+          this.authAdmin.updateUser(uid, {
+            disabled: false,
+          }),
+          this.firestore
+            .collection("instructors")
+            .doc(uid)
+            .set({ status: InstructorStatus.Active }),
+        ]);
         const emailLink = await this.authAdmin.generateEmailVerificationLink(
           instructor.email
         );
@@ -188,7 +195,10 @@ class AuthService {
           emailLink: emailLink,
         };
       } else {
-        await this.authAdmin.deleteUser(uid);
+        await Promise.all([
+          this.authAdmin.deleteUser(uid),
+          this.firestore.collection("instructors").doc(uid).delete(),
+        ]);
 
         sendEmailState = {
           ...state,

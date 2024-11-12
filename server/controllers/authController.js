@@ -1,9 +1,7 @@
 import ErrorMessage from "../messages/errorMessage.js";
-import User, { UserRole } from "../model/userModel.js";
 import authService from "../services/authServices.js";
 import catchAsync from "../utils/catchAsync.js";
 import { mailOptions, sendEmail } from "../services/emailService.js";
-import tokenServices from "../services/tokenServices.js";
 import yup from "yup";
 import {
   becomeInstructorParam,

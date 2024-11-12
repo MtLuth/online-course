@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     Box,
     Table,
@@ -10,100 +10,106 @@ import {
     IconButton,
     TablePagination,
     Paper,
+    Menu,
+    MenuItem,
+    FormControl,
+    InputLabel,
+    Select,
+    SelectChangeEvent,
     Dialog,
     DialogActions,
     DialogContent,
-    DialogContentText,
     DialogTitle,
-    Button,
-    Menu,
-    MenuItem,
     TextField,
+    Button,
+    DialogContentText,
     Typography,
-    Select,
-    FormControl,
-    InputLabel,
-    SelectChangeEvent,
+
 } from "@mui/material";
 import { MoreVert, Search, Close } from "@mui/icons-material";
 import BaseCard from "@/components/shared/DashboardCard";
+import { string } from "yup";
 
-const instructorsData = [
-    {
-        email: "instructor1@gmail.com",
-        avt: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Breezeicons-actions-22-im-user.svg/1200px-Breezeicons-actions-22-im-user.svg.png",
-        experience: 3,
-        expertise: "JavaScript",
-        education: "UTE",
-        fullName: "Instructor 1",
-        status: "Active",
-    },
-    {
-        email: "instructor2@gmail.com",
-        avt: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Breezeicons-actions-22-im-user.svg/1200px-Breezeicons-actions-22-im-user.svg.png",
-        experience: 3,
-        expertise: "NextJs",
-        education: "UTE",
-        fullName: "Instructor 2",
-        status: "Active",
-    },
-    {
-        email: "instructor3@gmail.com",
-        avt: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Breezeicons-actions-22-im-user.svg/1200px-Breezeicons-actions-22-im-user.svg.png",
-        experience: 3,
-        expertise: "Python",
-        education: "UTE",
-        fullName: "Instructor 3",
-        status: "Pending",
-    },
-];
+type Instructor = {
+    avt: string;
+    fullName: string;
+    email: string;
+    expertise: string;
+    experience: string;
+    education: string;
+    status: string;
+};
 
 const InstructorInfoTable = () => {
-    const [instructors, setInstructors] = useState(instructorsData);
+    const [instructors, setInstructors] = useState<Instructor[]>([]);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
+    const [filterStatus, setFilterStatus] = useState<string>("all");
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
+    const [selectedInstructor, setSelectedInstructor] = useState<Instructor | null>(null);
     const [openDialog, setOpenDialog] = useState(false);
     const [rejectionReason, setRejectionReason] = useState("");
     const [isRejecting, setIsRejecting] = useState(false);
-    const [selectedStatus, setSelectedStatus] = useState("");
-    const [filterStatus, setFilterStatus] = useState("All");
-    const [searchTerm, setSearchTerm] = useState("");
     const [showSearch, setShowSearch] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
 
-    const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, email: string, status: string) => {
-        setAnchorEl(event.currentTarget);
-        setSelectedEmail(email);
-        setSelectedStatus(status);
-    };
 
-    const handleMenuClose = () => {
-        setAnchorEl(null);
-    };
+    const fetchInstructors = async (status: string, searchTerm: string) => {
+        try {
+            let url = `http://localhost:8080/api/v1/instructor`;
 
-    const handleApproveRequest = () => {
-        setOpenDialog(true);
-        setIsRejecting(false);
-        handleMenuClose();
-    };
+            const queryParams: Array<{ [key: string]: string }> = [];
 
-    const handleDialogClose = (decision: string) => {
-        if (decision === "rejected" && rejectionReason.trim() === "") {
-            alert("Vui lòng nhập lý do từ chối.");
-            return;
+            if (status && status !== "all") {
+                queryParams.push({ status });
+            }
+
+            if (searchTerm && searchTerm.trim() !== "") {
+                queryParams.push({ fullName: searchTerm });
+            }
+
+            if (queryParams.length > 0) {
+                const queryString = queryParams
+                    .map(item => {
+                        const [key, value] = Object.entries(item)[0];
+                        return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+                    })
+                    .join("&");
+
+                url = `${url}?${queryString}`;
+            }
+
+            const response = await fetch(url);
+            if (response.ok) {
+                const data = await response.json();
+
+                if (Array.isArray(data.message)) {
+                    const filteredInstructors = data.message.map((instr: any) => ({
+                        avt: instr.avt,
+                        fullName: instr.fullName,
+                        email: instr.email,
+                        expertise: instr.expertise,
+                        experience: instr.experience,
+                        education: instr.education,
+                        status: instr.status,
+                    }));
+                    setInstructors(filteredInstructors);
+                } else {
+                    console.error("Data returned is not an array:", data);
+                }
+            } else {
+                console.error("Failed to fetch instructors");
+            }
+        } catch (error) {
+            console.error("Error fetching instructors:", error);
         }
-        setInstructors((prev) =>
-            prev.map((instr) =>
-                instr.email === selectedEmail
-                    ? { ...instr, status: decision === "approved" ? "Active" : instr.status }
-                    : instr
-            )
-        );
-        setOpenDialog(false);
-        setSelectedEmail(null);
-        setRejectionReason("");
     };
+
+
+
+    useEffect(() => {
+        fetchInstructors(filterStatus, searchTerm);
+    }, [filterStatus, searchTerm]);
 
     const handleChangePage = (event: unknown, newPage: number) => {
         setPage(newPage);
@@ -114,30 +120,45 @@ const InstructorInfoTable = () => {
         setPage(0);
     };
 
-    const getStatusColor = (status: string) => {
-        return status === "Active" ? "#6fbf73" : "#ff9800";
-    };
-
     const handleFilterChange = (event: SelectChangeEvent) => {
-        setFilterStatus(event.target.value);
+        setFilterStatus(event.target.value as string);
+    };
+    const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, instructor: Instructor) => {
+        setAnchorEl(event.currentTarget);
+        setSelectedInstructor(instructor);
     };
 
+    const handleMenuClose = () => {
+        setAnchorEl(null);
+        setSelectedInstructor(null);
+    };
+
+    const handleActionClick = (action: string) => {
+        if (action === "Duyệt đơn") {
+            setOpenDialog(true);
+        }
+        handleMenuClose();
+    };
+
+    const handleDialogClose = (decision: string) => {
+        if (decision === "Từ chối" && !rejectionReason.trim()) {
+            alert("Vui lòng nhập lý do từ chối.");
+            return;
+        }
+
+        setOpenDialog(false);
+        setRejectionReason("");
+    };
+
+    const getStatusColor = (status: string) => {
+        return status === "active" ? "#6fbf73" : "#ff9800";
+    };
     const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchTerm(event.target.value.toLowerCase());
+        setSearchTerm(event.target.value);
     };
-
-    // Filter instructors based on the selected status and search term
-    const filteredInstructors = instructors.filter((instr) =>
-        (filterStatus === "All" || instr.status === filterStatus) &&
-        (instr.fullName.toLowerCase().includes(searchTerm) ||
-            instr.email.toLowerCase().includes(searchTerm) ||
-            instr.expertise.toLowerCase().includes(searchTerm) ||
-            instr.education.toLowerCase().includes(searchTerm))
-    );
-
     return (
         <BaseCard title="Danh sách Giảng viên">
-            <React.Fragment>
+            <>
                 <Box mb={2} display="flex" justifyContent="space-between" alignItems="center">
                     {showSearch ? (
                         <TextField
@@ -171,114 +192,83 @@ const InstructorInfoTable = () => {
                             sm: "100%",
                         },
                     }}
-                >
-                    <Table
-                        aria-label="simple table"
-                        sx={{
-                            whiteSpace: "nowrap",
-                            mt: 2,
-                        }}
-                    >
+                ></TableContainer>
+                <TableContainer component={Paper}>
+                    <Table>
                         <TableHead>
                             <TableRow>
-                                <TableCell>Avatar</TableCell>
+                                <TableCell align="center">Avatar</TableCell>
                                 <TableCell>Full Name</TableCell>
                                 <TableCell>Email</TableCell>
                                 <TableCell>Expertise</TableCell>
-                                <TableCell>Experience</TableCell>
-                                <TableCell>Education</TableCell>
+                                <TableCell align="right">Experience</TableCell>
+                                <TableCell align="left">Education</TableCell>
                                 <TableCell align="right">
                                     <FormControl variant="outlined" size="small" sx={{ minWidth: 120 }}>
                                         <InputLabel>Status</InputLabel>
-                                        <Select
-                                            value={filterStatus}
-                                            onChange={handleFilterChange}
-                                            label="Status"
-                                        >
-                                            <MenuItem value="All">All</MenuItem>
-                                            <MenuItem value="Active">Active</MenuItem>
-                                            <MenuItem value="Pending">Pending</MenuItem>
+                                        <Select value={filterStatus} onChange={handleFilterChange} label="Status">
+                                            <MenuItem value="all">All</MenuItem>
+                                            <MenuItem value="active">Active</MenuItem>
+                                            <MenuItem value="pending">Pending</MenuItem>
                                         </Select>
                                     </FormControl>
                                 </TableCell>
-                                <TableCell align="right">Actions</TableCell>
+                                <TableCell align="center">Action</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {filteredInstructors
-                                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                                .map((instr, index) => (
-                                    <TableRow key={index}>
-                                        <TableCell>
-                                            <Box display="flex" alignItems="center">
-                                                <img
-                                                    src={instr.avt}
-                                                    alt="avatar"
-                                                    width="40"
-                                                    height="40"
-                                                    style={{ borderRadius: "50%" }}
-                                                />
-                                            </Box>
-                                        </TableCell>
-                                        <TableCell>{instr.fullName}</TableCell>
-                                        <TableCell>{instr.email}</TableCell>
-                                        <TableCell>{instr.expertise}</TableCell>
-                                        <TableCell>{instr.experience} years</TableCell>
-                                        <TableCell>{instr.education}</TableCell>
-                                        <TableCell align="right">
-                                            <Typography
-                                                variant="body2"
-                                                sx={{
-                                                    color: getStatusColor(instr.status),
-                                                    fontWeight: "bold",
-                                                }}
+                            {instructors.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((instr, index) => (
+                                <TableRow key={index}>
+                                    <TableCell align="center">
+                                        <Box display="flex" alignItems="center">
+                                            <img src={instr.avt} alt="avatar" width="40" height="40" style={{ borderRadius: "50%" }} />
+                                        </Box>
+                                    </TableCell>
+                                    <TableCell>{instr.fullName}</TableCell>
+                                    <TableCell>{instr.email}</TableCell>
+                                    <TableCell>{instr.expertise}</TableCell>
+                                    <TableCell align="right">{instr.experience}</TableCell>
+                                    <TableCell>{instr.education}</TableCell>
+                                    <TableCell align="center">
+                                        <Typography variant="body2" sx={{ color: getStatusColor(instr.status), fontWeight: "bold" }}>
+                                            {instr.status}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell align="center">
+                                        <IconButton onClick={(e) => handleMenuOpen(e, instr)}>
+                                            <MoreVert />
+                                        </IconButton>
+                                        <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+                                            <MenuItem
+                                                onClick={() => handleActionClick("Duyệt đơn")}
+                                                disabled={instr.status === "Active"}
                                             >
-                                                {instr.status}
-                                            </Typography>
-                                        </TableCell>
-                                        <TableCell align="right">
-                                            <IconButton
-                                                onClick={(e) => handleMenuOpen(e, instr.email, instr.status)}
-                                            >
-                                                <MoreVert />
-                                            </IconButton>
-                                            <Menu
-                                                anchorEl={anchorEl}
-                                                open={Boolean(anchorEl)}
-                                                onClose={handleMenuClose}
-                                            >
-                                                <MenuItem
-                                                    onClick={handleApproveRequest}
-                                                    disabled={selectedStatus !== "Pending"}
-                                                >
-                                                    Duyệt đơn
-                                                </MenuItem>
-                                            </Menu>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
+                                                Duyệt đơn
+                                            </MenuItem>
+                                        </Menu>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
                         </TableBody>
                     </Table>
                 </TableContainer>
+
                 <TablePagination
                     component="div"
-                    count={filteredInstructors.length}
+                    count={instructors.length}
                     page={page}
                     onPageChange={handleChangePage}
                     rowsPerPage={rowsPerPage}
                     onRowsPerPageChange={handleChangeRowsPerPage}
                     rowsPerPageOptions={[5, 10, 25]}
                 />
-                <Dialog
-                    open={openDialog}
-                    onClose={() => setOpenDialog(false)}
-                >
+
+                {/* Dialog xác nhận duyệt đơn */}
+                <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
                     <DialogTitle>Xác nhận Duyệt đơn</DialogTitle>
                     <DialogContent>
                         <DialogContentText>
-                            {isRejecting
-                                ? "Vui lòng nhập lý do từ chối đơn của giảng viên."
-                                : "Bạn có chắc muốn duyệt đơn này không?"}
+                            Bạn có chắc chắn muốn duyệt đơn này?
                         </DialogContentText>
                         {isRejecting && (
                             <TextField
@@ -294,27 +284,20 @@ const InstructorInfoTable = () => {
                         )}
                     </DialogContent>
                     <DialogActions>
-                        <Button
-                            onClick={() => handleDialogClose(isRejecting ? "rejected" : "approved")}
-                            color="primary"
-                        >
-                            {isRejecting ? "Xác nhận Từ chối" : "Đồng ý"}
+                        <Button onClick={() => handleDialogClose("Đồng ý")} color="primary">
+                            Đồng ý
                         </Button>
-                        {!isRejecting && (
-                            <Button
-                                onClick={() => setIsRejecting(true)}
-                                color="error"
-                            >
-                                Từ chối
-                            </Button>
-                        )}
+                        <Button onClick={() => setIsRejecting(true)} color="error">
+                            Từ chối
+                        </Button>
                         <Button onClick={() => setOpenDialog(false)} color="error">
                             Hủy
                         </Button>
                     </DialogActions>
                 </Dialog>
-            </React.Fragment>
+            </>
         </BaseCard>
+
     );
 };
 
