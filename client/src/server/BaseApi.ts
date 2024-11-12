@@ -9,18 +9,27 @@ import Cookies from "js-cookie";
 class BaseApi {
   protected axiosInstance: AxiosInstance;
 
-  constructor(prefixUrl: string = "") {
+  constructor(baseURL: string) {
     this.axiosInstance = axios.create({
-      baseURL: `http://localhost:8080/api/v1`,
+      baseURL: "http://localhost:8080/api/v1",
       headers: {
         "Content-Type": "application/json",
       },
       timeout: 5000,
     });
 
+    this.setAuthHeader();
     this.setupInterceptors();
   }
 
+  private setAuthHeader() {
+    const token = Cookies.get("accessToken");
+    if (token) {
+      this.axiosInstance.defaults.headers.common[
+        "Authorization"
+      ] = `Bearer ${token}`;
+    }
+  }
   private setupInterceptors() {
     this.axiosInstance.interceptors.request.use(
       (config: AxiosRequestConfig) => {
@@ -53,35 +62,38 @@ class BaseApi {
     );
   }
 
-  protected get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
+  protected async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
     return this.axiosInstance
-      .get(url, config)
+      .get<T>(url, config)
       .then((response) => response.data);
   }
 
-  protected post<T>(
+  protected async post<T>(
     url: string,
     data?: any,
     config?: AxiosRequestConfig
   ): Promise<T> {
     return this.axiosInstance
-      .post(url, data, config)
+      .post<T>(url, data, config)
       .then((response) => response.data);
   }
 
-  protected put<T>(
+  protected async put<T>(
     url: string,
     data?: any,
     config?: AxiosRequestConfig
   ): Promise<T> {
     return this.axiosInstance
-      .put(url, data, config)
+      .put<T>(url, data, config)
       .then((response) => response.data);
   }
 
-  protected delete<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
+  protected async delete<T>(
+    url: string,
+    config?: AxiosRequestConfig
+  ): Promise<T> {
     return this.axiosInstance
-      .delete(url, config)
+      .delete<T>(url, config)
       .then((response) => response.data);
   }
 }
