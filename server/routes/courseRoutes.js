@@ -1,9 +1,15 @@
 import e from "express";
-import { validateUser } from "../middleware/authMiddleware.js";
 import courseController from "../controllers/courseController.js";
+import authMiddleware from "../middleware/authMiddleware.js";
 
 const courseRouter = e.Router();
 
-courseRouter.route("/").post(validateUser, courseController.createCourse);
+courseRouter
+  .route("/")
+  .post(
+    authMiddleware.validateUser,
+    authMiddleware.validateRoleInstructor,
+    courseController.createCourse
+  );
 
 export default courseRouter;

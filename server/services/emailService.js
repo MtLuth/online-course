@@ -61,9 +61,40 @@ const getEmailTemplateResetPassword = (resetLink) => {
   `;
 };
 
+const getTemplateAdminCheckInstructor = (state) => {
+  if (state.status === "approve") {
+    return `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <h2 style="color: #4CAF50;">Yêu cầu đăng ký của bạn đã được chấp thuận!</h2>
+          <p>Chúng tôi vui mừng thông báo rằng yêu cầu đăng ký của bạn đã được phê duyệt.</p>
+          <p>Để hoàn tất việc kích hoạt tài khoản, vui lòng nhấn vào nút dưới đây:</p>
+          <a 
+            href="${state.emailLink}" 
+            style="display: inline-block; padding: 10px 20px; margin-top: 20px; background-color: #4CAF50; color: #fff; text-decoration: none; border-radius: 5px;"
+          >
+            Kích hoạt tài khoản
+          </a>
+          <p>Chúc bạn một ngày tốt lành!</p>
+          <p>Trân trọng,<br/>Đội ngũ Online Course</p>
+        </div>
+      `;
+  } else {
+    return `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <h2 style="color: #FF6347;">Rất tiếc, yêu cầu đăng ký của bạn không được chấp thuận</h2>
+          <p>Chúng tôi rất tiếc phải thông báo rằng yêu cầu đăng ký của bạn không được phê duyệt.</p>
+          <p><strong>Lý do:</strong> ${state.reason}</p>
+          <p>Nếu bạn cần hỗ trợ thêm, vui lòng liên hệ với chúng tôi.</p>
+          <p>Trân trọng,<br/>Đội ngũ Online Course</p>
+        </div>
+      `;
+  }
+};
+
 export {
   mailOptions,
   sendEmail,
   getEmailTemplateActive,
   getEmailTemplateResetPassword,
+  getTemplateAdminCheckInstructor,
 };
