@@ -1,7 +1,7 @@
 import {
+  setPersistence,
   signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  sendEmailVerification,
+  browserLocalPersistence,
 } from "firebase/auth";
 import { authClient } from "../firebase/firebaseClient.js";
 import admin from "../firebase/firebaseAdmin.js";
@@ -25,6 +25,7 @@ class AuthService {
   }
   async validateUser(email, password) {
     try {
+      await setPersistence(authClient, browserLocalPersistence);
       const userCredential = await signInWithEmailAndPassword(
         authClient,
         email,

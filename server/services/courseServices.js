@@ -15,6 +15,36 @@ class CourseService {
       throw new AppError(error, 500);
     }
   }
+
+  async getAllCourseOfInstructor(uid) {
+    try {
+      const courseModel = new Course();
+      const results = await courseModel.getCourseOfInstructor(uid);
+      return results;
+    } catch (error) {
+      throw new AppError(error, 500);
+    }
+  }
+
+  async getCourseById(id) {
+    try {
+      const courseModel = new Course();
+      const result = await courseModel.getCourseById(id);
+      return result;
+    } catch (error) {
+      throw new AppError(error, 500);
+    }
+  }
+
+  async updateCourseStatus(id, status) {
+    try {
+      const courseModel = new Course();
+      const message = await courseModel.updateStatusCourse(id, status);
+      return message;
+    } catch (error) {
+      throw new AppError(error, 500);
+    }
+  }
 }
 
 export default new CourseService();
