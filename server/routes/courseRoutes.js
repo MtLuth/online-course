@@ -22,8 +22,15 @@ courseRouter
   .put(
     authMiddleware.validateUser,
     authMiddleware.validateRoleInstructor,
-    courseController.updateCourseStatus
+    courseController.updateCourse
   );
+
+courseRouter.put(
+  "/manage/update-status/:id",
+  authMiddleware.validateUser,
+  authMiddleware.validateRoleInstructor,
+  courseController.updateCourseStatus
+);
 
 courseRouter.get("/:id", courseController.getCourseById);
 

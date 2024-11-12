@@ -45,6 +45,16 @@ class CourseController {
       message: message,
     });
   });
+
+  updateCourse = catchAsync(async (req, res, next) => {
+    const id = req.params.id;
+    const newValues = { ...req.body };
+    const message = await courseServices.updateCourse(id, newValues);
+    res.status(200).json({
+      status: "Successfully",
+      message: message,
+    });
+  });
 }
 
 export default new CourseController();

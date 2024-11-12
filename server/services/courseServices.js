@@ -32,7 +32,7 @@ class CourseService {
       const result = await courseModel.getCourseById(id);
       return result;
     } catch (error) {
-      throw new AppError(error, 500);
+      throw new AppError("Khóa học không tồn tại!", 500);
     }
   }
 
@@ -42,7 +42,20 @@ class CourseService {
       const message = await courseModel.updateStatusCourse(id, status);
       return message;
     } catch (error) {
-      throw new AppError(error, 500);
+      throw new AppError(
+        "Bạn không thể cập nhật trạng thái cho khóa học này!",
+        500
+      );
+    }
+  }
+
+  async updateCourse(id, newValue) {
+    try {
+      const courseModel = new Course();
+      const message = await courseModel.updateCourse(id, newValue);
+      return message;
+    } catch (error) {
+      throw new AppError("Bạn không thể cập nhật khóa học này!", 500);
     }
   }
 }
