@@ -116,6 +116,7 @@ const courseValidationSchema = yup.object({
                 .oneOf(["video", "article"])
                 .required("Loại bài giảng là bắt buộc"),
               videoUrl: yup.string().url("URL video không hợp lệ"),
+              articleContent: yup.string(),
               resources: yup.array().of(
                 yup.object({
                   title: yup.string().required("Tên tài nguyên là bắt buộc"),
