@@ -87,7 +87,6 @@ const ForgotPasswordView = () => {
         }}
       >
         <Stack direction="row" spacing={2}>
-          {/* Form Section */}
           <CardContent sx={{ flex: 1 }}>
             <Stack spacing={2}>
               <Typography variant="subtitle1">Email</Typography>

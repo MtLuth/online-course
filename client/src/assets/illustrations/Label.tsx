@@ -1,7 +1,6 @@
-import { memo } from 'react';
-
-import Box from '@mui/material/Box';
-import Stack, { StackProps } from '@mui/material/Stack';
+import { memo } from "react";
+import Box from "@mui/material/Box";
+import Stack, { StackProps } from "@mui/material/Stack";
 
 interface Props extends StackProps {
   text: string;
@@ -19,13 +18,12 @@ function Label({ icon, text, sx, ...other }: Props) {
         fontSize: 15,
         borderRadius: 2,
         letterSpacing: -0.5,
-        color: 'common.black',
-        bgcolor: 'common.white',
-        fontWeight: 'fontWeightBold',
-        boxShadow: (theme) =>
-          `0px 24px 48px rgba(0, 0, 0, 0.8), inset 0px -4px 10px ${theme.palette.grey[600]}`,
-        '& > div': { lineHeight: 0 },
-        '& svg': { width: 44, height: 44 },
+        color: "#000000",
+        bgcolor: "#FFFFFF",
+        fontWeight: 700,
+        boxShadow: `0px 24px 48px rgba(0, 0, 0, 0.8), inset 0px -4px 10px rgba(97, 97, 97, 0.6)`,
+        "& > div": { lineHeight: 0 },
+        "& svg": { width: 44, height: 44 },
         ...sx,
       }}
       {...other}

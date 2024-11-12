@@ -12,23 +12,23 @@ import InputAdornment from "@mui/material/InputAdornment";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Iconify from "src/components/iconify";
-import Snackbar from "@mui/material/Snackbar";
-import Alert from "@mui/material/Alert";
+import Divider from "@mui/material/Divider";
 import { useBoolean } from "@/hook/useBoolean";
 import RouterLink from "@/routes/components/RouterLink";
 import { paths } from "@/routes/path";
 import FormProvider from "@/components/hook-form/FormProvider";
 import RHFTextField from "@/components/hook-form/RHFTextField";
-import Divider from "@mui/material/Divider";
 import { useRouter } from "@/routes/hooks/useRouter";
+import { useToastNotification } from "@/hook/useToastNotification";
+import { authApi } from "@/server/Auth";
 import { useState } from "react";
+import { useAppContext } from "@/context/AppContext";
 
 export default function LoginView() {
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [openSnackbar, setOpenSnackbar] = useState(false);
-
   const passwordShow = useBoolean();
   const router = useRouter();
+  const { setSessionToken } = useAppContext();
+  const { notifySuccess, notifyError } = useToastNotification();
 
   const LoginSchema = Yup.object().shape({
     email: Yup.string()
@@ -51,55 +51,31 @@ export default function LoginView() {
     formState: { isSubmitting },
   } = methods;
 
-  const onSubmit = handleSubmit(async (data) => {
-    try {
-      const response = await fetch("http://localhost:8080/api/v1/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-
-        console.log("API Response:", result);
-
-        const { status, message } = result;
-
-        if (status === "success") {
-          const token = message?.tokenPairs?.accessToken;
-
-          if (token) {
-            localStorage.setItem("jwt", token);
-          } else {
-            console.log("Token không tồn tại trong phản hồi");
-          }
-
-          reset();
-          console.log("Login successful:", message);
-          setErrorMessage("Đăng nhập thành công!");
-          setOpenSnackbar(true);
-        } else {
-          setErrorMessage("Đăng nhập thất bại.");
-          setOpenSnackbar(true);
+  const onSubmit = handleSubmit((data) => {
+    authApi
+      .login(data)
+      .then((response) => {
+        if (response.status === "error") {
+          notifyError(response.message || "Đăng nhập không thành công");
+          return;
         }
-      } else {
-        console.log("Login failed, setting error message");
-        setErrorMessage("Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.");
-        setOpenSnackbar(true);
-      }
-    } catch (error) {
-      console.error("Login error:", error);
-      setErrorMessage("Có lỗi xảy ra. Vui lòng thử lại sau.");
-      setOpenSnackbar(true);
-    }
+        if (response.status === "success") {
+          notifySuccess(
+            "Đăng nhập thành công! Vui lòng kiểm tra lại Email để xác thực tài khoản!"
+          );
+          setSessionToken(response.message.tokenPairs.accessToken);
+          reset();
+          router.push("/");
+        }
+      })
+      .catch((error) => {
+        const errorMessage =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Có lỗi xảy ra. Vui lòng thử lại sau.";
+        notifyError(errorMessage);
+      });
   });
-
-  const handleCloseSnackbar = () => {
-    setOpenSnackbar(false);
-  };
 
   const renderHead = (
     <Stack spacing={1} alignItems="center">
@@ -173,22 +149,6 @@ export default function LoginView() {
         <Divider sx={{ my: 2 }} />
         {renderForm}
       </CardContent>
-
-      {/* Popup thông báo lỗi */}
-      <Snackbar
-        open={openSnackbar}
-        autoHideDuration={3000} // Thời gian tự động đóng popup
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity="error"
-          sx={{ width: "100%" }}
-        >
-          {errorMessage}
-        </Alert>
-      </Snackbar>
     </Card>
   );
 }
