@@ -35,7 +35,7 @@ onAuthStateChanged(authClient, async (user) => {
           .firestore()
           .collection("cart")
           .doc(user.uid)
-          .set({ courses: [], total: 0 });
+          .set({ courses: {}, total: 0 });
       }
     }
   }

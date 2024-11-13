@@ -45,7 +45,6 @@ class Cart {
     const data = snapshot.data();
     let courses = data.courses;
     if (courses && courses[courseId]) {
-      console.log("aaaa");
       delete courses[courseId];
     }
     const total = data.total - 1;
