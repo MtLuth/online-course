@@ -1,5 +1,5 @@
-import Course from "../model/courseModel.js";
 import Instructor from "../model/instructorModel.js";
+import Course from "../repository/courseRepo.js";
 import AppError from "../utils/appError.js";
 
 class CourseService {
@@ -16,10 +16,14 @@ class CourseService {
     }
   }
 
-  async getAllCourseOfInstructor(uid) {
+  async getAllCourseOfInstructor(uid, status, searchParam) {
     try {
       const courseModel = new Course();
-      const results = await courseModel.getCourseOfInstructor(uid);
+      const results = await courseModel.getCourseOfInstructor(
+        uid,
+        status,
+        searchParam
+      );
       return results;
     } catch (error) {
       throw new AppError(error, 500);
@@ -56,6 +60,16 @@ class CourseService {
       return message;
     } catch (error) {
       throw new AppError("Bạn không thể cập nhật khóa học này!", 500);
+    }
+  }
+
+  async getAllCourse(searchParam, orderByPrice) {
+    try {
+      const courseModel = new Course();
+      const results = await courseModel.getAllCourse(searchParam, orderByPrice);
+      return results;
+    } catch (error) {
+      throw new AppError(error, 500);
     }
   }
 }

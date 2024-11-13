@@ -10,6 +10,8 @@ import userRouter from "../routes/userRoutes.js";
 import uploadRouter from "../routes/uploadRoutes.js";
 import courseRouter from "../routes/courseRoutes.js";
 import instructorRouter from "../routes/instructorRoutes.js";
+import paginate from "express-paginate";
+import cartRouter from "../routes/cartRoutes.js";
 
 dotenv.config("./../config.env");
 
@@ -26,6 +28,8 @@ app.use(
   })
 );
 
+app.use(paginate.middleware(5, 50));
+
 const apiUrlGroup = "/api/v1";
 
 app.use(`${apiUrlGroup}/auth`, authRouter);
@@ -33,6 +37,7 @@ app.use(`${apiUrlGroup}/user`, userRouter);
 app.use(`${apiUrlGroup}/upload`, uploadRouter);
 app.use(`${apiUrlGroup}/course`, courseRouter);
 app.use(`${apiUrlGroup}/instructor`, instructorRouter);
+app.use(`${apiUrlGroup}/cart`, cartRouter);
 
 app.all("*", (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
