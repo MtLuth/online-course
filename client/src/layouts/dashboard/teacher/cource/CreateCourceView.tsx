@@ -34,7 +34,6 @@ import * as Yup from "yup";
 import Cookies from "js-cookie";
 import { courseApi } from "@/server/Cource";
 
-// Interfaces
 interface LectureResource {
   title: string;
   fileUrl: string;
@@ -43,10 +42,10 @@ interface LectureResource {
 interface Lecture {
   title: string;
   duration: string;
-  type: string;
+  type: "video" | "article";
   videoUrl: string;
-  videoFile: File | null;
-  description: string;
+  videoFile?: File | null;
+  description?: string;
   resources: LectureResource[];
 }
 
@@ -84,7 +83,7 @@ interface CreateCourseData {
     lectures: {
       title: string;
       duration: string;
-      type: string;
+      type: "video" | "article";
       videoUrl: string;
       resources?: {
         title: string;
@@ -95,7 +94,6 @@ interface CreateCourseData {
   isPublished: boolean;
 }
 
-// Validation Schema
 const validationSchema = Yup.object().shape({
   title: Yup.string().required("Tiêu đề khóa học là bắt buộc."),
   description: Yup.string().required("Mô tả khóa học là bắt buộc."),
@@ -121,7 +119,12 @@ const validationSchema = Yup.object().shape({
             Yup.object().shape({
               title: Yup.string().required("Tiêu đề bài giảng là bắt buộc."),
               duration: Yup.string().required("Thời lượng là bắt buộc."),
-              type: Yup.string().required("Loại bài giảng là bắt buộc."),
+              type: Yup.string()
+                .oneOf(
+                  ["video", "article"],
+                  "Loại bài giảng phải là video hoặc article."
+                )
+                .required("Loại bài giảng là bắt buộc."),
             })
           )
           .min(1, "Ít nhất một bài giảng."),
@@ -166,7 +169,6 @@ const CourseConfig: React.FC = React.memo(() => {
               <MenuItem value="Lập trình">Lập trình</MenuItem>
               <MenuItem value="Thiết kế">Thiết kế</MenuItem>
               <MenuItem value="Marketing">Marketing</MenuItem>
-              {/* Add more categories as needed */}
             </Select>
             {touched.category && errors.category && (
               <Typography variant="caption" color="error">
@@ -221,7 +223,6 @@ const CourseConfig: React.FC = React.memo(() => {
             >
               <MenuItem value="Vietnamese">Tiếng Việt</MenuItem>
               <MenuItem value="English">English</MenuItem>
-              {/* Add more languages as needed */}
             </Select>
             {touched.language && errors.language && (
               <Typography variant="caption" color="error">
@@ -426,7 +427,6 @@ const CourseImageRequirements: React.FC = React.memo(() => {
     </Box>
   );
 });
-
 interface LectureProps {
   sectionIndex: number;
   lectureIndex: number;
@@ -451,7 +451,6 @@ const LectureItem: React.FC<LectureProps> = React.memo(
             `content[${sectionIndex}].lectures[${lectureIndex}].videoFile`,
             file
           );
-          // Optionally, you can set a preview URL
           const videoUrl = URL.createObjectURL(file);
           setFieldValue(
             `content[${sectionIndex}].lectures[${lectureIndex}].videoUrl`,
@@ -498,6 +497,7 @@ const LectureItem: React.FC<LectureProps> = React.memo(
               helperText={lectureTouched.duration && lectureErrors.duration}
             />
           </Grid>
+          {/* Loại */}
           <Grid item xs={12} sm={3}>
             <FormControl
               fullWidth
@@ -515,8 +515,7 @@ const LectureItem: React.FC<LectureProps> = React.memo(
                 onChange={handleChange}
               >
                 <MenuItem value="video">Video</MenuItem>
-                <MenuItem value="text">Chữ</MenuItem>
-                {/* Add more types as needed */}
+                <MenuItem value="article">Chữ</MenuItem>
               </Select>
               {lectureTouched.type && lectureErrors.type && (
                 <Typography variant="caption" color="error">
@@ -566,12 +565,12 @@ const LectureItem: React.FC<LectureProps> = React.memo(
             </Grid>
           )}
 
-          {lecture.type === "text" && (
+          {lecture.type === "article" && (
             <Grid item xs={12}>
               <TextField
                 label="Mô tả"
                 name={`content[${sectionIndex}].lectures[${lectureIndex}].description`}
-                value={lecture.description}
+                value={lecture.description || ""}
                 onChange={handleChange}
                 fullWidth
                 multiline
@@ -587,8 +586,6 @@ const LectureItem: React.FC<LectureProps> = React.memo(
               />
             </Grid>
           )}
-
-          {/* Resources */}
           <Grid item xs={12}>
             <Typography variant="subtitle1" gutterBottom>
               Tài nguyên (tùy chọn)
@@ -732,7 +729,6 @@ const ContentSectionComponent: React.FC<SectionProps> = React.memo(
           </IconButton>
         </Box>
 
-        {/* Lectures */}
         <FieldArray name={`content[${sectionIndex}].lectures`}>
           {({ push, remove }) => (
             <Box>
@@ -753,8 +749,6 @@ const ContentSectionComponent: React.FC<SectionProps> = React.memo(
                     duration: "",
                     type: "video",
                     videoUrl: "",
-                    videoFile: null,
-                    description: "",
                     resources: [],
                   })
                 }
@@ -813,7 +807,6 @@ const CourseContent: React.FC = React.memo(() => {
   );
 });
 
-// Main Component
 const CreateCourseView: React.FC = () => {
   const initialValues: CourseData = useMemo(
     () => ({
@@ -850,13 +843,11 @@ const CreateCourseView: React.FC = () => {
   const handleSubmit = useCallback(
     async (values: CourseData, actions: FormikHelpers<CourseData>) => {
       try {
-        // Retrieve token from cookies
         const token = Cookies.get("accessToken");
         if (!token) {
-          throw new Error("Authentication token not found. Please log in.");
+          throw new Error("Không tìm thấy token xác thực. Vui lòng đăng nhập.");
         }
 
-        // 1. Upload Thumbnail (if exists)
         let thumbnailUrl = "";
         if (values.thumbnail) {
           const uploadImageResponse = await uploadApi.uploadImages(
@@ -871,12 +862,10 @@ const CreateCourseView: React.FC = () => {
             thumbnailUrl = uploadImageResponse.message;
           } else {
             throw new Error(
-              uploadImageResponse.message || "Thumbnail upload failed."
+              uploadImageResponse.message || "Tải lên ảnh bìa thất bại."
             );
           }
         }
-
-        // 2. Collect all video files to upload
         const videoFiles: File[] = [];
 
         values.content.forEach((section) => {
@@ -886,8 +875,6 @@ const CreateCourseView: React.FC = () => {
             }
           });
         });
-
-        // 3. Upload all video files in bulk
         let videoUrls: string[] = [];
         if (videoFiles.length > 0) {
           const uploadVideoResponse = await uploadApi.uploadVideos(
@@ -902,12 +889,12 @@ const CreateCourseView: React.FC = () => {
             videoUrls = uploadVideoResponse.message;
           } else {
             throw new Error(
-              uploadVideoResponse.message || "Video upload failed."
+              uploadVideoResponse.message || "Tải lên video thất bại."
             );
           }
         }
 
-        // 4. Map uploaded video URLs back to their respective lectures
+        // 4. Gán lại URL video đã tải lên cho các bài giảng tương ứng
         let videoUrlIndex = 0;
         const updatedContent = values.content.map((section) => {
           const updatedLectures = section.lectures.map((lecture) => {
@@ -916,7 +903,15 @@ const CreateCourseView: React.FC = () => {
               return {
                 ...lecture,
                 videoUrl: uploadedUrl,
-                videoFile: null, // Clear the videoFile after upload
+                videoFile: null,
+              };
+            } else if (lecture.type === "article" && lecture.description) {
+              const encodedDescription = lecture.description;
+              const dataUrl = `${encodedDescription}`;
+              return {
+                ...lecture,
+                videoUrl: dataUrl,
+                description: undefined,
               };
             }
             return lecture;
@@ -924,14 +919,12 @@ const CreateCourseView: React.FC = () => {
           return { ...section, lectures: updatedLectures };
         });
 
-        // 5. Prepare the complete course data
         const completeCourseData: CreateCourseData = {
           ...values,
           thumbnail: thumbnailUrl,
           content: updatedContent,
         };
 
-        // 6. Create the course
         const response = await courseApi.createCourse(
           completeCourseData,
           token
@@ -941,7 +934,7 @@ const CreateCourseView: React.FC = () => {
           alert("Khóa học đã được tạo thành công!");
           actions.resetForm();
         } else {
-          throw new Error(response.message || "Create course failed.");
+          throw new Error(response.message || "Tạo khóa học thất bại.");
         }
       } catch (error: any) {
         console.error("Lỗi khi tạo khóa học:", error);
@@ -1054,15 +1047,11 @@ const CreateCourseView: React.FC = () => {
               </Box>
 
               <Divider sx={{ mb: 2 }} />
-
-              {/* Tab Panels */}
               <Box>
                 {activeTab === 0 && <CourseConfig />}
                 {activeTab === 1 && <CourseImageRequirements />}
                 {activeTab === 2 && <CourseContent />}
               </Box>
-
-              {/* Navigation Buttons */}
               <Box
                 sx={{
                   display: "flex",

@@ -41,7 +41,7 @@ class Course extends BaseApi {
     data: CreateCourseData,
     token: string
   ): Promise<{ status: string; message?: string }> {
-    const response = await this.post(`/course`, data, {
+    const response = await this.post(`/course/manage`, data, {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",

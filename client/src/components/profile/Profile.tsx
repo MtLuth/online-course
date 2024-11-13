@@ -61,16 +61,26 @@ const Profile = () => {
           },
         }}
       >
-        <MenuItem>
-          <ListItemIcon>
-            <IconUser width={20} />
-          </ListItemIcon>
-          <ListItemText>Trang cá nhân</ListItemText>
-        </MenuItem>
+        <Link href="/my-courses" passHref>
+          <MenuItem component="a">
+            <ListItemIcon>
+              <IconMail width={20} />
+            </ListItemIcon>
+            <ListItemText>Khóa học của tôi</ListItemText>
+          </MenuItem>
+        </Link>
         <Link href="/dashboard/teacher" passHref>
           <MenuItem component="a">
             <ListItemIcon>
               <IconMail width={20} />
+            </ListItemIcon>
+            <ListItemText>Bảng điều khiển</ListItemText>
+          </MenuItem>
+        </Link>
+        <Link href="/profile" passHref>
+          <MenuItem component="a">
+            <ListItemIcon>
+              <IconUser width={20} />
             </ListItemIcon>
             <ListItemText>Bảng điều khiển</ListItemText>
           </MenuItem>
