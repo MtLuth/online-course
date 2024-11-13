@@ -1,0 +1,15 @@
+node_modules/
+logs
+*.log
+npm-debug.log*
+pids
+logs
+*.pid
+*.seed
+*.pid.lock
+directory
+.npm
+.eslintcache
+.node_repl_history
+.env*
+online-course-56226-firebase-adminsdk-tpy1j-b563af60cc.json
