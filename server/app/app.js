@@ -10,6 +10,7 @@ import userRouter from "../routes/userRoutes.js";
 import uploadRouter from "../routes/uploadRoutes.js";
 import courseRouter from "../routes/courseRoutes.js";
 import instructorRouter from "../routes/instructorRoutes.js";
+import paginate from "express-paginate";
 
 dotenv.config("./../config.env");
 
@@ -25,6 +26,8 @@ app.use(
     credentials: true,
   })
 );
+
+app.use(paginate.middleware(5, 50));
 
 const apiUrlGroup = "/api/v1";
 

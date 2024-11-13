@@ -17,21 +17,46 @@ class Course {
     return courseRef.id;
   }
 
-  async getCourseOfInstructor(uid) {
+  async getCourseOfInstructor(uid, status, searchParam) {
     const results = [];
-    const query = this.courseCollection.where("instructor.uid", "==", uid);
+    let query = this.courseCollection.where("instructor.uid", "==", uid);
+    if (status && status != "") {
+      query = query.where("isPublished", "==", status);
+    }
     const querySnapshot = await query.get();
     querySnapshot.forEach((doc) => {
       const data = doc.data();
-      results.push({
-        id: doc.id,
-        title: data.title,
-        price: data.price,
-        description: data.description,
-        category: data.category,
-        level: data.level,
-        isPublished: data.isPublished,
-      });
+      if (searchParam && searchParam != "") {
+        searchParam = searchParam.toLowerCase();
+      }
+      const matchTitle =
+        data.title && data.title.toLowerCase().includes(searchParam);
+      const matchLevel =
+        data.level && data.level.toLowerCase().includes(searchParam);
+      const matchDescription =
+        data.description &&
+        data.description.toLowerCase().includes(searchParam);
+      const matchCategory =
+        data.category && data.category.toLowerCase().includes(searchParam);
+
+      if (
+        matchTitle ||
+        matchLevel ||
+        matchDescription ||
+        matchCategory ||
+        !searchParam
+      ) {
+        results.push({
+          id: doc.id,
+          title: data.title,
+          price: data.price,
+          description: data.description,
+          category: data.category,
+          level: data.level,
+          isPublished: data.isPublished,
+          thumbnail: data.thumbnail,
+        });
+      }
     });
     return results;
   }
@@ -79,6 +104,26 @@ class Course {
       .doc(id)
       .update({ ...newValues, updatedAt: new Date() });
     return "Cập nhật khóa học thành công!";
+  }
+
+  async getAllCourse() {
+    const results = [];
+    const query = this.courseCollection.where("isPublished", "==", true);
+    const querySnapshot = await query.get();
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      results.push({
+        id: doc.id,
+        title: data.title,
+        price: data.price,
+        description: data.description,
+        category: data.category,
+        level: data.level,
+        isPublished: data.isPublished,
+        thumbnail: data.thumbnail,
+      });
+    });
+    return results;
   }
 }
 export default Course;

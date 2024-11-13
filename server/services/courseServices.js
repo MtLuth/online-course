@@ -16,10 +16,14 @@ class CourseService {
     }
   }
 
-  async getAllCourseOfInstructor(uid) {
+  async getAllCourseOfInstructor(uid, status, searchParam) {
     try {
       const courseModel = new Course();
-      const results = await courseModel.getCourseOfInstructor(uid);
+      const results = await courseModel.getCourseOfInstructor(
+        uid,
+        status,
+        searchParam
+      );
       return results;
     } catch (error) {
       throw new AppError(error, 500);
@@ -57,6 +61,13 @@ class CourseService {
     } catch (error) {
       throw new AppError("Bạn không thể cập nhật khóa học này!", 500);
     }
+  }
+
+  async getAllCourse(pagination) {
+    try {
+      const courseModel = new Course();
+      const results = await courseModel.getAllCourse();
+    } catch (error) {}
   }
 }
 
