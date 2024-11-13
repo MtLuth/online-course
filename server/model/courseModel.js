@@ -106,22 +106,43 @@ class Course {
     return "Cập nhật khóa học thành công!";
   }
 
-  async getAllCourse() {
+  async getAllCourse(searchParam) {
     const results = [];
-    const query = this.courseCollection.where("isPublished", "==", true);
+    let query = this.courseCollection.where("isPublished", "==", true);
     const querySnapshot = await query.get();
     querySnapshot.forEach((doc) => {
       const data = doc.data();
-      results.push({
-        id: doc.id,
-        title: data.title,
-        price: data.price,
-        description: data.description,
-        category: data.category,
-        level: data.level,
-        isPublished: data.isPublished,
-        thumbnail: data.thumbnail,
-      });
+      if (searchParam && searchParam != "") {
+        searchParam = searchParam.toLowerCase();
+      }
+      const matchTitle =
+        data.title && data.title.toLowerCase().includes(searchParam);
+      const matchLevel =
+        data.level && data.level.toLowerCase().includes(searchParam);
+      const matchDescription =
+        data.description &&
+        data.description.toLowerCase().includes(searchParam);
+      const matchCategory =
+        data.category && data.category.toLowerCase().includes(searchParam);
+
+      if (
+        matchTitle ||
+        matchLevel ||
+        matchDescription ||
+        matchCategory ||
+        !searchParam
+      ) {
+        results.push({
+          id: doc.id,
+          title: data.title,
+          price: data.price,
+          description: data.description,
+          category: data.category,
+          level: data.level,
+          isPublished: data.isPublished,
+          thumbnail: data.thumbnail,
+        });
+      }
     });
     return results;
   }

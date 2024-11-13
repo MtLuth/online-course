@@ -34,6 +34,8 @@ courseRouter.put(
   courseController.updateCourseStatus
 );
 
+courseRouter.get("/", courseController.getAllCourse, pagination);
+
 courseRouter.get("/:id", courseController.getCourseById);
 
 export default courseRouter;

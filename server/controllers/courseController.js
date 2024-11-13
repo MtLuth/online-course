@@ -63,6 +63,13 @@ class CourseController {
       message: message,
     });
   });
+
+  getAllCourse = catchAsync(async (req, res, next) => {
+    const searchParam = req.query.searchParam;
+    const courseData = await courseServices.getAllCourse(searchParam);
+    req.results = courseData;
+    next();
+  });
 }
 
 export default new CourseController();

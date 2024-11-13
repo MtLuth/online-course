@@ -63,11 +63,14 @@ class CourseService {
     }
   }
 
-  async getAllCourse(pagination) {
+  async getAllCourse(searchParam) {
     try {
       const courseModel = new Course();
-      const results = await courseModel.getAllCourse();
-    } catch (error) {}
+      const results = await courseModel.getAllCourse(searchParam);
+      return results;
+    } catch (error) {
+      throw new AppError(error, 500);
+    }
   }
 }
 
