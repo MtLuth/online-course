@@ -10,8 +10,12 @@ import {
   ListItemIcon,
   ListItemText,
 } from "@mui/material";
-import { IconListCheck, IconMail, IconUser } from "@tabler/icons-react";
-
+import {
+  School as IconCourses,
+  Dashboard as IconDashboard,
+  Person as IconProfile,
+  Assignment as IconTasks,
+} from "@mui/icons-material";
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState(null);
 
@@ -64,7 +68,7 @@ const Profile = () => {
         <Link href="/my-courses" passHref>
           <MenuItem component="a">
             <ListItemIcon>
-              <IconMail width={20} />
+              <IconCourses fontSize="small" />
             </ListItemIcon>
             <ListItemText>Khóa học của tôi</ListItemText>
           </MenuItem>
@@ -72,7 +76,7 @@ const Profile = () => {
         <Link href="/dashboard/teacher" passHref>
           <MenuItem component="a">
             <ListItemIcon>
-              <IconMail width={20} />
+              <IconDashboard fontSize="small" />
             </ListItemIcon>
             <ListItemText>Bảng điều khiển</ListItemText>
           </MenuItem>
@@ -80,16 +84,16 @@ const Profile = () => {
         <Link href="/profile" passHref>
           <MenuItem component="a">
             <ListItemIcon>
-              <IconUser width={20} />
+              <IconProfile fontSize="small" />
             </ListItemIcon>
-            <ListItemText>Bảng điều khiển</ListItemText>
+            <ListItemText>Hồ sơ cá nhân</ListItemText>
           </MenuItem>
         </Link>
         <MenuItem>
           <ListItemIcon>
-            <IconListCheck width={20} />
+            <IconTasks fontSize="small" />
           </ListItemIcon>
-          <ListItemText>My Tasks</ListItemText>
+          <ListItemText>Công việc của tôi</ListItemText>
         </MenuItem>
         <Box mt={1} py={1} px={2}>
           <Button

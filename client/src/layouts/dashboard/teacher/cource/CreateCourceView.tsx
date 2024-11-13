@@ -33,6 +33,7 @@ import { uploadApi } from "@/server/Upload";
 import * as Yup from "yup";
 import Cookies from "js-cookie";
 import { courseApi } from "@/server/Cource";
+import { useRouter } from "next/navigation";
 
 interface LectureResource {
   title: string;
@@ -94,6 +95,12 @@ interface CreateCourseData {
   isPublished: boolean;
 }
 
+interface CreateCourseViewProps {
+  initialValues?: CourseData;
+  isEditMode?: boolean;
+  courseId?: string;
+}
+
 const validationSchema = Yup.object().shape({
   title: Yup.string().required("Tiêu đề khóa học là bắt buộc."),
   description: Yup.string().required("Mô tả khóa học là bắt buộc."),
@@ -103,7 +110,11 @@ const validationSchema = Yup.object().shape({
     .min(1, "Giá phải lớn hơn 0."),
   language: Yup.string().required("Ngôn ngữ là bắt buộc."),
   level: Yup.string().required("Cấp độ là bắt buộc."),
-  thumbnail: Yup.mixed().required("Ảnh bìa là bắt buộc."),
+  thumbnail: Yup.mixed().when("isEditMode", {
+    is: false,
+    then: Yup.mixed().required("Ảnh bìa là bắt buộc."),
+    otherwise: Yup.mixed(),
+  }),
   requirements: Yup.array()
     .of(Yup.string().required("Yêu cầu không được để trống."))
     .min(1, "Ít nhất một yêu cầu."),
@@ -133,6 +144,7 @@ const validationSchema = Yup.object().shape({
     .min(1, "Ít nhất một phần."),
 });
 
+// Component Cấu Hình Khóa Học
 const CourseConfig: React.FC = React.memo(() => {
   const { values, errors, touched, handleChange } =
     useFormikContext<CourseData>();
@@ -169,6 +181,7 @@ const CourseConfig: React.FC = React.memo(() => {
               <MenuItem value="Lập trình">Lập trình</MenuItem>
               <MenuItem value="Thiết kế">Thiết kế</MenuItem>
               <MenuItem value="Marketing">Marketing</MenuItem>
+              {/* Thêm các danh mục khác nếu cần */}
             </Select>
             {touched.category && errors.category && (
               <Typography variant="caption" color="error">
@@ -223,6 +236,7 @@ const CourseConfig: React.FC = React.memo(() => {
             >
               <MenuItem value="Vietnamese">Tiếng Việt</MenuItem>
               <MenuItem value="English">English</MenuItem>
+              {/* Thêm các ngôn ngữ khác nếu cần */}
             </Select>
             {touched.language && errors.language && (
               <Typography variant="caption" color="error">
@@ -261,6 +275,7 @@ const CourseConfig: React.FC = React.memo(() => {
   );
 });
 
+// Component Hình Ảnh và Yêu Cầu
 const CourseImageRequirements: React.FC = React.memo(() => {
   const { values, errors, touched, setFieldValue, handleChange } =
     useFormikContext<CourseData>();
@@ -277,36 +292,54 @@ const CourseImageRequirements: React.FC = React.memo(() => {
   return (
     <Box>
       <Grid container spacing={2}>
+        {/* Thumbnail */}
         <Grid item xs={12} sm={6}>
-          <Button variant="contained" component="label">
-            Tải ảnh bìa
-            <input
-              type="file"
-              accept="image/*"
-              hidden
-              onChange={handleThumbnailChange}
-            />
-          </Button>
+          <Typography variant="h6" gutterBottom>
+            Ảnh bìa
+          </Typography>
+          {/* Hiển thị ảnh hiện có nếu ở chế độ chỉnh sửa và không thay đổi */}
+          {values.thumbnail ? (
+            <Box>
+              <Button variant="contained" component="label">
+                Thay đổi ảnh bìa
+                <input
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={handleThumbnailChange}
+                />
+              </Button>
+              <Box sx={{ mt: 2 }}>
+                <Image
+                  src={URL.createObjectURL(values.thumbnail)}
+                  alt="Thumbnail"
+                  sx={{
+                    width: 200,
+                    height: 200,
+                    objectFit: "cover",
+                  }}
+                />
+              </Box>
+            </Box>
+          ) : (
+            <Button variant="contained" component="label">
+              Tải ảnh bìa
+              <input
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={handleThumbnailChange}
+              />
+            </Button>
+          )}
           {touched.thumbnail && errors.thumbnail && (
             <Typography variant="caption" color="error">
               {errors.thumbnail}
             </Typography>
           )}
-          {values.thumbnail && (
-            <Box sx={{ mt: 2 }}>
-              <Image
-                src={URL.createObjectURL(values.thumbnail)}
-                alt="Thumbnail"
-                sx={{
-                  width: 200,
-                  height: 200,
-                  objectFit: "cover",
-                }}
-              />
-            </Box>
-          )}
         </Grid>
 
+        {/* Yêu cầu */}
         <Grid item xs={12} sm={6}>
           <Typography variant="h6" gutterBottom>
             Yêu cầu
@@ -365,6 +398,7 @@ const CourseImageRequirements: React.FC = React.memo(() => {
           </FieldArray>
         </Grid>
 
+        {/* Bạn sẽ học được gì */}
         <Grid item xs={12}>
           <Typography variant="h6" gutterBottom>
             Bạn sẽ học được gì
@@ -427,6 +461,8 @@ const CourseImageRequirements: React.FC = React.memo(() => {
     </Box>
   );
 });
+
+// Component Bài Giảng
 interface LectureProps {
   sectionIndex: number;
   lectureIndex: number;
@@ -527,13 +563,25 @@ const LectureItem: React.FC<LectureProps> = React.memo(
 
           {lecture.type === "video" && (
             <Grid item xs={12} sm={6}>
+              <Typography variant="subtitle1">Video hiện có:</Typography>
+              {lecture.videoUrl && !lecture.videoFile ? (
+                <Box sx={{ mt: 1 }}>
+                  <video
+                    width="100%"
+                    height="200"
+                    controls
+                    src={lecture.videoUrl}
+                  />
+                </Box>
+              ) : null}
               <Button
                 variant="contained"
                 component="label"
                 fullWidth
                 startIcon={<Add />}
+                sx={{ mt: 1 }}
               >
-                Chọn Video
+                {lecture.videoFile ? "Video đã được chọn" : "Thay đổi Video"}
                 <input
                   type="file"
                   accept="video/*"
@@ -676,6 +724,7 @@ const LectureItem: React.FC<LectureProps> = React.memo(
   }
 );
 
+// Component Phần Nội Dung
 interface SectionProps {
   sectionIndex: number;
   removeSection: (index: number) => void;
@@ -763,6 +812,7 @@ const ContentSectionComponent: React.FC<SectionProps> = React.memo(
   }
 );
 
+// Component Nội Dung Khóa Học
 const CourseContent: React.FC = React.memo(() => {
   const { values } = useFormikContext<CourseData>();
 
@@ -807,38 +857,13 @@ const CourseContent: React.FC = React.memo(() => {
   );
 });
 
-const CreateCourseView: React.FC = () => {
-  const initialValues: CourseData = useMemo(
-    () => ({
-      title: "",
-      description: "",
-      category: "",
-      price: 0,
-      language: "",
-      level: "",
-      thumbnail: null,
-      requirements: [""],
-      whatYouWillLearn: [""],
-      content: [
-        {
-          sectionTitle: "",
-          lectures: [
-            {
-              title: "",
-              duration: "",
-              type: "video",
-              videoUrl: "",
-              videoFile: null,
-              description: "",
-              resources: [],
-            },
-          ],
-        },
-      ],
-      isPublished: false,
-    }),
-    []
-  );
+// Component Chính Tạo/Chỉnh sửa Khóa Học
+const CreateCourseView: React.FC<CreateCourseViewProps> = ({
+  initialValues,
+  isEditMode = false,
+  courseId,
+}) => {
+  const router = useRouter();
 
   const handleSubmit = useCallback(
     async (values: CourseData, actions: FormikHelpers<CourseData>) => {
@@ -865,7 +890,12 @@ const CreateCourseView: React.FC = () => {
               uploadImageResponse.message || "Tải lên ảnh bìa thất bại."
             );
           }
+        } else if (isEditMode && initialValues) {
+          // Nếu không thay đổi thumbnail trong chế độ chỉnh sửa, giữ nguyên URL cũ
+          // Giả sử bạn có cách để lấy URL cũ từ initialValues (cần bổ sung nếu cần)
+          // thumbnailUrl = initialValues.thumbnailUrl; // Ví dụ
         }
+
         const videoFiles: File[] = [];
 
         values.content.forEach((section) => {
@@ -875,6 +905,7 @@ const CreateCourseView: React.FC = () => {
             }
           });
         });
+
         let videoUrls: string[] = [];
         if (videoFiles.length > 0) {
           const uploadVideoResponse = await uploadApi.uploadVideos(
@@ -894,7 +925,7 @@ const CreateCourseView: React.FC = () => {
           }
         }
 
-        // 4. Gán lại URL video đã tải lên cho các bài giảng tương ứng
+        // Gán lại URL video đã tải lên cho các bài giảng tương ứng
         let videoUrlIndex = 0;
         const updatedContent = values.content.map((section) => {
           const updatedLectures = section.lectures.map((lecture) => {
@@ -906,12 +937,11 @@ const CreateCourseView: React.FC = () => {
                 videoFile: null,
               };
             } else if (lecture.type === "article" && lecture.description) {
-              const encodedDescription = lecture.description;
-              const dataUrl = `${encodedDescription}`;
+              // Không cần mã hóa thành Data URL nếu backend hỗ trợ nhận trực tiếp
               return {
                 ...lecture,
-                videoUrl: dataUrl,
-                description: undefined,
+                videoUrl: "", // Có thể để trống hoặc xử lý khác tùy backend
+                description: lecture.description,
               };
             }
             return lecture;
@@ -925,35 +955,90 @@ const CreateCourseView: React.FC = () => {
           content: updatedContent,
         };
 
-        const response = await courseApi.createCourse(
-          completeCourseData,
-          token
-        );
+        let response;
+        if (isEditMode && courseId) {
+          // Gọi API cập nhật khóa học
+          response = await courseApi.updateCourse(
+            courseId,
+            completeCourseData,
+            token
+          );
+        } else {
+          // Gọi API tạo khóa học
+          response = await courseApi.createCourse(completeCourseData, token);
+        }
 
         if (response.status === "Successfully") {
-          alert("Khóa học đã được tạo thành công!");
+          alert(
+            isEditMode
+              ? "Khóa học đã được cập nhật thành công!"
+              : "Khóa học đã được tạo thành công!"
+          );
           actions.resetForm();
+          if (isEditMode && courseId) {
+            router.push(`/course/${courseId}`); // Chuyển hướng đến trang chi tiết khóa học
+          }
         } else {
-          throw new Error(response.message || "Tạo khóa học thất bại.");
+          throw new Error(
+            response.message ||
+              (isEditMode
+                ? "Cập nhật khóa học thất bại."
+                : "Tạo khóa học thất bại.")
+          );
         }
       } catch (error: any) {
-        console.error("Lỗi khi tạo khóa học:", error);
+        console.error("Lỗi khi tạo/chỉnh sửa khóa học:", error);
         alert(
-          error.message || "Có lỗi xảy ra khi tạo khóa học. Vui lòng thử lại."
+          error.message ||
+            "Có lỗi xảy ra khi tạo/chỉnh sửa khóa học. Vui lòng thử lại."
         );
       } finally {
         actions.setSubmitting(false);
       }
     },
-    []
+    [isEditMode, courseId, initialValues]
+  );
+
+  const initialFormValues: CourseData = useMemo(
+    () =>
+      initialValues || {
+        title: "",
+        description: "",
+        category: "",
+        price: 0,
+        language: "",
+        level: "",
+        thumbnail: null,
+        requirements: [""],
+        whatYouWillLearn: [""],
+        content: [
+          {
+            sectionTitle: "",
+            lectures: [
+              {
+                title: "",
+                duration: "",
+                type: "video",
+                videoUrl: "",
+                videoFile: null,
+                description: "",
+                resources: [],
+              },
+            ],
+          },
+        ],
+        isPublished: false,
+      },
+    [initialValues]
   );
 
   return (
-    <WrapperPage title="Tạo Khóa Học Của Bạn">
+    <WrapperPage title={isEditMode ? "Chỉnh sửa Khóa Học" : "Tạo Khóa Học"}>
       <Formik
-        initialValues={initialValues}
+        initialValues={initialFormValues}
         validationSchema={validationSchema}
         onSubmit={handleSubmit}
+        enableReinitialize // Để Formik cập nhật initialValues khi props thay đổi
       >
         {({
           values,
@@ -1019,6 +1104,7 @@ const CreateCourseView: React.FC = () => {
 
           return (
             <Form>
+              {/* Tabs và Công tắc Xuất bản */}
               <Box
                 sx={{
                   display: "flex",
@@ -1084,8 +1170,10 @@ const CreateCourseView: React.FC = () => {
                           color="inherit"
                           sx={{ mr: 1 }}
                         />
-                        Đang tạo...
+                        Đang {isEditMode ? "cập nhật..." : "tạo..."}
                       </>
+                    ) : isEditMode ? (
+                      "Cập nhật Khóa Học"
                     ) : (
                       "Tạo Khóa Học"
                     )}
