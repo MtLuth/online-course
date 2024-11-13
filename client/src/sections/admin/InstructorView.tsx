@@ -29,6 +29,8 @@ import {
 import { MoreVert, Search, Close } from "@mui/icons-material";
 import BaseCard from "@/components/shared/DashboardCard";
 import { string } from "yup";
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+
 
 type Instructor = {
     avt: string;
@@ -42,87 +44,98 @@ type Instructor = {
 
 const InstructorInfoTable = () => {
     const [instructors, setInstructors] = useState<Instructor[]>([]);
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(5);
-    const [filterStatus, setFilterStatus] = useState<string>("all");
+    const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(3);;
+    const [total, setTotal] = useState(0);
+    const [filterStatus, setFilterStatus] = useState("all");
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [selectedInstructor, setSelectedInstructor] = useState<Instructor | null>(null);
-    const [openDialog, setOpenDialog] = useState(false);
-    const [rejectionReason, setRejectionReason] = useState("");
-    const [isRejecting, setIsRejecting] = useState(false);
-    const [showSearch, setShowSearch] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
+    const [showSearch, setShowSearch] = useState(false);
+    const [rejectionReason, setRejectionReason] = useState("");
+    const [openDialog, setOpenDialog] = useState(false);
+    const [isRejecting, setIsRejecting] = useState(false);
+    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
 
+    const { replace } = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
 
-    const fetchInstructors = async (status: string, searchTerm: string) => {
+    useEffect(() => {
+        const initialPage = Number(searchParams.get('page')) || 1;
+        const initialLimit = Number(searchParams.get('limit')) || 3;
+        setPage(initialPage);
+        setLimit(initialLimit);
+    }, [searchParams]);
+
+    const fetchInstructors = async () => {
         try {
-            let url = `http://localhost:8080/api/v1/instructor`;
-
-            const queryParams: Array<{ [key: string]: string }> = [];
-
-            if (status && status !== "all") {
-                queryParams.push({ status });
+            const queryParams = new URLSearchParams();
+            queryParams.set('page', page.toString());
+            queryParams.set('limit', limit.toString());
+            if (filterStatus !== "all") {
+                queryParams.set('status', filterStatus);
+            }
+            if (debouncedSearchTerm.trim()) {
+                queryParams.set('searchParam', debouncedSearchTerm);
             }
 
-            if (searchTerm && searchTerm.trim() !== "") {
-                queryParams.push({ fullName: searchTerm });
-            }
-
-            if (queryParams.length > 0) {
-                const queryString = queryParams
-                    .map(item => {
-                        const [key, value] = Object.entries(item)[0];
-                        return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
-                    })
-                    .join("&");
-
-                url = `${url}?${queryString}`;
-            }
+            const url = `http://localhost:8080/api/v1/instructor?${queryParams.toString()}`;
+            console.log("Fetch URL:", url);
 
             const response = await fetch(url);
             if (response.ok) {
                 const data = await response.json();
-
-                if (Array.isArray(data.message)) {
-                    const filteredInstructors = data.message.map((instr: any) => ({
-                        avt: instr.avt,
-                        fullName: instr.fullName,
-                        email: instr.email,
-                        expertise: instr.expertise,
-                        experience: instr.experience,
-                        education: instr.education,
-                        status: instr.status,
-                    }));
-                    setInstructors(filteredInstructors);
-                } else {
-                    console.error("Data returned is not an array:", data);
-                }
+                setInstructors(data.message ?? []);
+                setTotal(data.total ?? 10);
             } else {
-                console.error("Failed to fetch instructors");
+                console.error("Failed to fetch data:", response.statusText);
             }
         } catch (error) {
             console.error("Error fetching instructors:", error);
         }
     };
 
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearchTerm(searchTerm);
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
 
 
     useEffect(() => {
-        fetchInstructors(filterStatus, searchTerm);
-    }, [filterStatus, searchTerm]);
+        fetchInstructors();
+    }, [page, limit, filterStatus, debouncedSearchTerm]);
 
-    const handleChangePage = (event: unknown, newPage: number) => {
-        setPage(newPage);
+    const handleChangePage = (event: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
+        setPage(newPage + 1);
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('page', (newPage + 1).toString());
+        replace(`${pathname}?${params.toString()}`);
     };
 
-    const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setRowsPerPage(parseInt(event.target.value, 10));
-        setPage(0);
+    const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const newLimit = parseInt(event.target.value, 10);
+        setLimit(newLimit);
+        setPage(1);
+
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('limit', newLimit.toString());
+        params.set('page', '1');
+        replace(`${pathname}?${params.toString()}`);
     };
 
     const handleFilterChange = (event: SelectChangeEvent) => {
         setFilterStatus(event.target.value as string);
+        setPage(1);
     };
+
+    const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchTerm(event.target.value);
+    };
+
     const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, instructor: Instructor) => {
         setAnchorEl(event.currentTarget);
         setSelectedInstructor(instructor);
@@ -133,19 +146,26 @@ const InstructorInfoTable = () => {
         setSelectedInstructor(null);
     };
 
-    const handleActionClick = (action: string) => {
-        if (action === "Duyệt đơn") {
-            setOpenDialog(true);
-        }
-        handleMenuClose();
+    const handleOpenDialog = () => {
+        setOpenDialog(true);
     };
 
-    const handleDialogClose = (decision: string) => {
-        if (decision === "Từ chối" && !rejectionReason.trim()) {
+    const handleActionClick = (action: "Duyệt đơn" | "Từ chối") => {
+        if (action === "Duyệt đơn") {
+            setIsRejecting(false);
+            handleOpenDialog();
+        } else if (action === "Từ chối") {
+            setIsRejecting(true);
+            handleOpenDialog();
+        }
+    };
+
+    const handleDialogClose = (decision: "Đồng ý" | "Từ chối") => {
+        if (decision === "Đồng ý") {
+        } else if (decision === "Từ chối" && !rejectionReason.trim()) {
             alert("Vui lòng nhập lý do từ chối.");
             return;
         }
-
         setOpenDialog(false);
         setRejectionReason("");
     };
@@ -153,9 +173,8 @@ const InstructorInfoTable = () => {
     const getStatusColor = (status: string) => {
         return status === "active" ? "#6fbf73" : "#ff9800";
     };
-    const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchTerm(event.target.value);
-    };
+
+
     return (
         <BaseCard title="Danh sách Giảng viên">
             <>
@@ -166,11 +185,11 @@ const InstructorInfoTable = () => {
                             variant="outlined"
                             value={searchTerm}
                             onChange={handleSearchChange}
-                            placeholder="Tìm theo tên, email, chuyên môn hoặc nơi công tác"
+                            placeholder="Tìm theo tên"
                             sx={{ width: '60%' }}
                             InputProps={{
                                 endAdornment: (
-                                    <IconButton onClick={() => { setShowSearch(false); setSearchTerm(""); }}>
+                                    <IconButton onClick={() => { setShowSearch(false); setSearchTerm(""); setPage(1); }}>
                                         <Close />
                                     </IconButton>
                                 ),
@@ -182,17 +201,6 @@ const InstructorInfoTable = () => {
                         </IconButton>
                     )}
                 </Box>
-                <TableContainer
-                    component={Paper}
-                    sx={{
-                        borderRadius: 10,
-                        boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)",
-                        width: {
-                            xs: "274px",
-                            sm: "100%",
-                        },
-                    }}
-                ></TableContainer>
                 <TableContainer component={Paper}>
                     <Table>
                         <TableHead>
@@ -202,7 +210,7 @@ const InstructorInfoTable = () => {
                                 <TableCell>Email</TableCell>
                                 <TableCell>Expertise</TableCell>
                                 <TableCell align="right">Experience</TableCell>
-                                <TableCell align="left">Education</TableCell>
+                                <TableCell>Education</TableCell>
                                 <TableCell align="right">
                                     <FormControl variant="outlined" size="small" sx={{ minWidth: 120 }}>
                                         <InputLabel>Status</InputLabel>
@@ -217,12 +225,10 @@ const InstructorInfoTable = () => {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {instructors.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((instr, index) => (
+                            {instructors.map((instr, index) => (
                                 <TableRow key={index}>
                                     <TableCell align="center">
-                                        <Box display="flex" alignItems="center">
-                                            <img src={instr.avt} alt="avatar" width="40" height="40" style={{ borderRadius: "50%" }} />
-                                        </Box>
+                                        <img src={instr.avt} alt="avatar" width="40" height="40" style={{ borderRadius: "50%" }} />
                                     </TableCell>
                                     <TableCell>{instr.fullName}</TableCell>
                                     <TableCell>{instr.email}</TableCell>
@@ -239,10 +245,7 @@ const InstructorInfoTable = () => {
                                             <MoreVert />
                                         </IconButton>
                                         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-                                            <MenuItem
-                                                onClick={() => handleActionClick("Duyệt đơn")}
-                                                disabled={instr.status === "Active"}
-                                            >
+                                            <MenuItem onClick={() => handleActionClick("Duyệt đơn")} disabled={instr.status === "Active"}>
                                                 Duyệt đơn
                                             </MenuItem>
                                         </Menu>
@@ -252,17 +255,17 @@ const InstructorInfoTable = () => {
                         </TableBody>
                     </Table>
                 </TableContainer>
-
                 <TablePagination
                     component="div"
-                    count={instructors.length}
-                    page={page}
+                    count={total}
+                    page={page - 1}
                     onPageChange={handleChangePage}
-                    rowsPerPage={rowsPerPage}
+                    rowsPerPage={limit}
                     onRowsPerPageChange={handleChangeRowsPerPage}
-                    rowsPerPageOptions={[5, 10, 25]}
+                    rowsPerPageOptions={[3, 5, 10]}
+                    showFirstButton
+                    showLastButton
                 />
-
                 {/* Dialog xác nhận duyệt đơn */}
                 <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
                     <DialogTitle>Xác nhận Duyệt đơn</DialogTitle>
@@ -297,7 +300,6 @@ const InstructorInfoTable = () => {
                 </Dialog>
             </>
         </BaseCard>
-
     );
 };
 

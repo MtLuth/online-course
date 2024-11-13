@@ -61,8 +61,24 @@ class Course {
 
   async updateStatusCourse(id, status) {
     const doc = await this.courseCollection.doc(id);
-    await doc.update({ isPublished: status });
+    await doc.update({ isPublished: status, updatedAt: new Date() });
     return "Đã cập trạng thái khóa học!";
+  }
+
+  async updateCourse(id, newValues) {
+    const doc = await this.courseCollection.doc(id).get();
+    const course = {
+      ...doc.data(),
+    };
+    Object.entries(newValues).forEach(([key, value]) => {
+      if (!course[key]) {
+        delete newValues[key];
+      }
+    });
+    await this.courseCollection
+      .doc(id)
+      .update({ ...newValues, updatedAt: new Date() });
+    return "Cập nhật khóa học thành công!";
   }
 }
 export default Course;

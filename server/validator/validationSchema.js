@@ -115,7 +115,7 @@ const courseValidationSchema = yup.object({
                 .string()
                 .oneOf(["video", "article"])
                 .required("Loại bài giảng là bắt buộc"),
-              videoUrl: yup.string().url("URL video không hợp lệ"),
+              videoUrl: yup.string(),
               resources: yup.array().of(
                 yup.object({
                   title: yup.string().required("Tên tài nguyên là bắt buộc"),
@@ -146,9 +146,15 @@ const courseValidationSchema = yup.object({
   isPublished: yup.boolean().default(false),
 });
 
+const paginationValidate = yup.object().shape({
+  limit: yup.number().min(1).max(20).required(),
+  page: yup.number().min(1).required(),
+});
+
 export {
   loginParam,
   registerParam,
   becomeInstructorParam,
   courseValidationSchema,
+  paginationValidate,
 };

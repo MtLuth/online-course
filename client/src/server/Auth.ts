@@ -46,7 +46,6 @@ class Auth extends BaseApi {
         const { accessToken, expirationTime } = response.message.tokenPairs;
         localStorage.setItem("accessToken", accessToken);
         localStorage.setItem("uid", response.message.uid);
-        localStorage.setItem("email", response.message.email);
         const expirationDate = new Date();
         expirationDate.setHours(expirationDate.getHours() + 1);
         localStorage.setItem("expirationTime", expirationDate.toISOString());
