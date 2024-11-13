@@ -13,6 +13,25 @@ class CartController {
       message: result,
     });
   });
+
+  getAllCoursesInCart = catchAsync(async (req, res, next) => {
+    const uid = req.uid;
+    const results = await cartServices.getAllCourseInCart(uid);
+    res.status(200).json({
+      status: "Successfully",
+      message: results,
+    });
+  });
+
+  deleteCourse = catchAsync(async (req, res, next) => {
+    const uid = req.uid;
+    const courseId = req.params.courseId;
+    const message = await cartServices.removeCourse(uid, courseId);
+    res.status(200).json({
+      status: "Successfully",
+      message: message,
+    });
+  });
 }
 
 export default new CartController();

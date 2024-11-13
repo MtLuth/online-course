@@ -11,4 +11,16 @@ cartRouter.post(
   cartController.addCourse
 );
 
+cartRouter.get(
+  "/",
+  authMiddleware.validateUser,
+  cartController.getAllCoursesInCart
+);
+
+cartRouter.delete(
+  "/:courseId",
+  authMiddleware.validateUser,
+  cartController.deleteCourse
+);
+
 export default cartRouter;

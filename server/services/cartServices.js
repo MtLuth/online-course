@@ -15,6 +15,24 @@ class CartService {
       throw new AppError(error, 500);
     }
   }
+
+  async getAllCourseInCart(uid) {
+    try {
+      const results = await cartRepo.getAllCourseInCart(uid);
+      return results;
+    } catch (error) {
+      throw new AppError(error, 500);
+    }
+  }
+
+  async removeCourse(uid, courseId) {
+    try {
+      const message = await cartRepo.removeCourse(uid, courseId);
+      return message;
+    } catch (error) {
+      throw new AppError(error, 500);
+    }
+  }
 }
 
 export default new CartService();

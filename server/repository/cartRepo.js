@@ -25,7 +25,33 @@ class Cart {
     await this.dbRef.doc(uid).update({ courses: courses, total: totalCourse });
   }
 
-  async getAllCourseOfCart(uid) {}
+  async getAllCourseInCart(uid) {
+    const snapshot = await this.dbRef.doc(uid).get();
+    const data = snapshot.data();
+    const courses = data.courses;
+    let results = [];
+    const keys = Object.keys(courses);
+    keys.forEach((key) => {
+      results.push(courses[key]);
+    });
+    return {
+      courses: courses,
+      total: data.total,
+    };
+  }
+
+  async removeCourse(uid, courseId) {
+    const snapshot = await this.dbRef.doc(uid).get();
+    const data = snapshot.data();
+    let courses = data.courses;
+    if (courses && courses[courseId]) {
+      console.log("aaaa");
+      delete courses[courseId];
+    }
+    const total = data.total - 1;
+    await this.dbRef.doc(uid).update({ courses: { ...courses }, total: total });
+    return "Đã xóa sản phẩm khỏi cửa hàng!";
+  }
 }
 
 export default new Cart();
