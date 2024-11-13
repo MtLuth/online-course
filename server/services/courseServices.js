@@ -1,5 +1,5 @@
-import Course from "../model/courseModel.js";
 import Instructor from "../model/instructorModel.js";
+import Course from "../repository/courseRepo.js";
 import AppError from "../utils/appError.js";
 
 class CourseService {

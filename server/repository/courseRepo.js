@@ -133,6 +133,7 @@ class Course {
         matchCategory ||
         !searchParam
       ) {
+        const content = doc.content;
         results.push({
           id: doc.id,
           title: data.title,

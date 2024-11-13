@@ -74,7 +74,7 @@ class AuthService {
       account.role = UserRole.Student;
       account.password = password;
 
-      await account.createAccout(false);
+      await account.createAccount(false);
 
       const emailLink =
         await this.authAdmin.generateEmailVerificationLink(email);
