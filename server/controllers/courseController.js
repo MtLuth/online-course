@@ -66,7 +66,14 @@ class CourseController {
 
   getAllCourse = catchAsync(async (req, res, next) => {
     const searchParam = req.query.searchParam;
-    const courseData = await courseServices.getAllCourse(searchParam);
+    const validateOrderbyPrice = yup.string().oneOf(["asc", "desc"]);
+    const orderByPrice = await validateOrderbyPrice.validate(
+      req.query.orderByPrice
+    );
+    const courseData = await courseServices.getAllCourse(
+      searchParam,
+      orderByPrice
+    );
     req.results = courseData;
     next();
   });

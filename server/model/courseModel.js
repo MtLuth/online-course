@@ -1,6 +1,4 @@
-import { title } from "process";
 import firebaseAdmin from "../firebase/firebaseAdmin.js";
-import AppError from "../utils/appError.js";
 
 const firestore = firebaseAdmin.firestore();
 
@@ -20,13 +18,13 @@ class Course {
   async getCourseOfInstructor(uid, status, searchParam) {
     const results = [];
     let query = this.courseCollection.where("instructor.uid", "==", uid);
-    if (status && status != "") {
+    if (status && status !== "") {
       query = query.where("isPublished", "==", status);
     }
     const querySnapshot = await query.get();
     querySnapshot.forEach((doc) => {
       const data = doc.data();
-      if (searchParam && searchParam != "") {
+      if (searchParam && searchParam !== "") {
         searchParam = searchParam.toLowerCase();
       }
       const matchTitle =
@@ -106,13 +104,16 @@ class Course {
     return "Cập nhật khóa học thành công!";
   }
 
-  async getAllCourse(searchParam) {
+  async getAllCourse(searchParam, orderByPrice) {
     const results = [];
     let query = this.courseCollection.where("isPublished", "==", true);
+    if (orderByPrice && orderByPrice !== "") {
+      query = query.orderBy("price", orderByPrice);
+    }
     const querySnapshot = await query.get();
     querySnapshot.forEach((doc) => {
       const data = doc.data();
-      if (searchParam && searchParam != "") {
+      if (searchParam && searchParam !== "") {
         searchParam = searchParam.toLowerCase();
       }
       const matchTitle =
