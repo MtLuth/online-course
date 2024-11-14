@@ -71,12 +71,7 @@ const courseValidationSchema = yup.object({
     .number()
     .required("Giá của khóa học là bắt buộc")
     .min(0, "Giá không được nhỏ hơn 0"),
-  //   discount: yup.number()
-  //     .min(0, "Giảm giá không thể nhỏ hơn 0")
-  //     .max(100, "Giảm giá không thể lớn hơn 100"),
   language: yup.string().required("Ngôn ngữ của khóa học là bắt buộc"),
-  //   rating: yup.number().min(1).max(5),
-  //   numberOfRatings: yup.number().min(0),
   level: yup
     .string()
     .oneOf(["Beginner", "Intermediate", "Advanced"])
@@ -131,18 +126,6 @@ const courseValidationSchema = yup.object({
       })
     )
     .min(1, "Khóa học phải có ít nhất một phần nội dung"),
-
-  //   reviews: yup.array().of(
-  //     yup.object({
-  //       userId: yup.string().required("ID người dùng là bắt buộc"),
-  //       userName: yup.string().required("Tên người dùng là bắt buộc"),
-  //       rating: yup.number().min(1).max(5).required("Đánh giá là bắt buộc"),
-  //       comment: yup.string().max(500),
-  //       createdAt: yup.date().default(() => new Date()),
-  //     })
-  //   ),
-
-  //   studentsEnrolled: yup.array().of(yup.string()).min(1),
   isPublished: yup.boolean().default(false),
 });
 
@@ -167,6 +150,23 @@ const createPaymentLinkSchema = yup
   .required("items is required")
   .min(1, "Vui lòng chọn ít nhất một sản phẩm muốn mua");
 
+const categorySchema = yup.object({
+  name: yup.string().required(),
+  url: yup.string().required(),
+  children: yup.array().of(
+    yup.object({
+      name: yup.string().required(),
+      url: yup.string().required(),
+      children: yup.array().of(
+        yup.object({
+          name: yup.string().required(),
+          url: yup.string().required(),
+        })
+      ),
+    })
+  ),
+});
+
 export {
   loginParam,
   registerParam,
@@ -174,4 +174,5 @@ export {
   courseValidationSchema,
   buyCoursesSchema,
   createPaymentLinkSchema,
+  categorySchema,
 };
