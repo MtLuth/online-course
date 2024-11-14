@@ -37,6 +37,21 @@ onAuthStateChanged(authClient, async (user) => {
           .doc(user.uid)
           .set({ courses: {}, total: 0 });
       }
+
+      const purchaseHistorySnapshot = await firebaseAdmin
+        .firestore()
+        .collection("purchaseHistory")
+        .get();
+      if (!purchaseHistorySnapshot.exists) {
+        await firebaseAdmin
+          .firestore()
+          .collection("purchaseHistory")
+          .doc(user.uid)
+          .set({
+            purchase: [],
+            totalResults: 0,
+          });
+      }
     }
   }
 });
