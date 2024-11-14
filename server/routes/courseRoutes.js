@@ -1,6 +1,7 @@
 import e from "express";
 import courseController from "../controllers/courseController.js";
 import authMiddleware from "../middleware/authMiddleware.js";
+import pagination from "../middleware/paginateMiddleware.js";
 
 const courseRouter = e.Router();
 
@@ -14,7 +15,8 @@ courseRouter
   .get(
     authMiddleware.validateUser,
     authMiddleware.validateRoleInstructor,
-    courseController.getAllCourseOfInstructor
+    courseController.getAllCourseOfInstructor,
+    pagination
   );
 
 courseRouter
@@ -23,6 +25,11 @@ courseRouter
     authMiddleware.validateUser,
     authMiddleware.validateRoleInstructor,
     courseController.updateCourse
+  )
+  .get(
+    authMiddleware.validateUser,
+    authMiddleware.validateRoleInstructor,
+    courseController.getCourseById
   );
 
 courseRouter.put(
@@ -32,6 +39,12 @@ courseRouter.put(
   courseController.updateCourseStatus
 );
 
-courseRouter.get("/:id", courseController.getCourseById);
+courseRouter.get(
+  "/:courseId",
+  authMiddleware.validateUser,
+  courseController.studentGetCourseById
+);
+
+courseRouter.get("/", courseController.getAllCourse, pagination);
 
 export default courseRouter;

@@ -34,7 +34,7 @@ class User {
     return user;
   }
 
-  async createAccout(disable) {
+  async createAccount(disable) {
     const accountRecord = await auth.createUser({
       email: this.email,
       password: this.password,

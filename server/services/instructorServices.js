@@ -5,28 +5,15 @@ const authAdmin = firebaseAdmin.auth();
 const dbRef = firebaseAdmin.firestore().collection("instructors");
 
 class InstructorService {
-  async getAllInstructor(status, searchParam, limit, page) {
+  async getAllInstructor(status, searchParam) {
     try {
       let query = dbRef;
       if (status != null) {
         query = query.where("status", "==", status);
       }
 
-      query = query.orderBy("fullName");
-
-      let lastDoc = null;
-      const skipDoc = (page - 1) * limit;
-      if (skipDoc > 0) {
-        const snapshot = await query.limit(skipDoc).get();
-        if (snapshot.empty) {
-          return { instructors: [], lastDoc: null };
-        }
-        lastDoc = snapshot.docs[snapshot.docs.length - 1];
-        query = query.startAfter(lastDoc);
-      }
-
       const instructors = [];
-      const snapshot = await query.limit(limit).get();
+      const snapshot = await query.get();
       snapshot.forEach((doc) => {
         const data = doc.data();
         if (searchParam) {

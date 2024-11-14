@@ -5,6 +5,7 @@ const dbRef = firebaseAdmin.firestore().collection("instructors");
 const InstructorStatus = {
   Active: "active",
   Pending: "pending",
+  Inactive: "inactive",
 };
 class Instructor {
   constructor(

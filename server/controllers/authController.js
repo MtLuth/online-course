@@ -16,15 +16,10 @@ class AuthController {
       strict: true,
     });
     const result = await authService.validateUser(email, password);
-    const user = result.user;
-    const data = {
-      uid: user.uid,
-      email: user.email,
-      tokenPairs: user.stsTokenManager,
-    };
+
     res.status(200).json({
       status: "success",
-      message: data,
+      message: result,
     });
   });
 

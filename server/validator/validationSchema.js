@@ -146,15 +146,16 @@ const courseValidationSchema = yup.object({
   isPublished: yup.boolean().default(false),
 });
 
-const paginationValidate = yup.object().shape({
-  limit: yup.number().min(1).max(20).required(),
-  page: yup.number().min(1).required(),
-});
+const buyCoursesSchema = yup
+  .array()
+  .of(yup.string())
+  .required("Vui lòng chọn sản phẩm muốn mua!")
+  .min(1, "Phải có ít nhất 1 khóa học");
 
 export {
   loginParam,
   registerParam,
   becomeInstructorParam,
   courseValidationSchema,
-  paginationValidate,
+  buyCoursesSchema,
 };

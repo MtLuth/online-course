@@ -2,6 +2,7 @@ import courseServices from "../services/courseServices.js";
 import catchAsync from "../utils/catchAsync.js";
 import { courseValidationSchema } from "../validator/validationSchema.js";
 import yup from "yup";
+import paginate from "express-paginate";
 
 class CourseController {
   createCourse = catchAsync(async (req, res, next) => {
@@ -19,11 +20,18 @@ class CourseController {
 
   getAllCourseOfInstructor = catchAsync(async (req, res, next) => {
     const uid = req.uid;
-    const courseData = await courseServices.getAllCourseOfInstructor(uid);
-    res.status(200).json({
-      status: "Successfully",
-      message: courseData,
-    });
+    const isPublishedValidate = yup.boolean();
+    const isPublished = await isPublishedValidate.validate(
+      req.query.isPublished
+    );
+    const searchParam = req.query.searchParam;
+    const courseData = await courseServices.getAllCourseOfInstructor(
+      uid,
+      isPublished,
+      searchParam
+    );
+    req.results = courseData;
+    next();
   });
 
   getCourseById = catchAsync(async (req, res, next) => {
@@ -53,6 +61,30 @@ class CourseController {
     res.status(200).json({
       status: "Successfully",
       message: message,
+    });
+  });
+
+  getAllCourse = catchAsync(async (req, res, next) => {
+    const searchParam = req.query.searchParam;
+    const validateOrderbyPrice = yup.string().oneOf(["asc", "desc"]);
+    const orderByPrice = await validateOrderbyPrice.validate(
+      req.query.orderByPrice
+    );
+    const courseData = await courseServices.getAllCourse(
+      searchParam,
+      orderByPrice
+    );
+    req.results = courseData;
+    next();
+  });
+
+  studentGetCourseById = catchAsync(async (req, res, next) => {
+    const uid = req.uid;
+    const courseId = req.params.courseId;
+    const result = await courseServices.studentGetCourseById(uid, courseId);
+    res.status(200).json({
+      status: "Successfully",
+      message: result,
     });
   });
 }

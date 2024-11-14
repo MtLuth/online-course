@@ -31,10 +31,21 @@ class AuthService {
         email,
         password
       );
-      if (!userCredential.user.emailVerified) {
+
+      const user = userCredential.user;
+      if (!user.emailVerified) {
         throw new AppError("Email chưa được xác minh", 400);
       }
-      return userCredential;
+      const dbRef = this.firestore.collection("users");
+      const doc = await dbRef.doc(user.uid).get();
+      const role = doc.data().role;
+      const result = {
+        uid: user.uid,
+        email: user.email,
+        role: role,
+        tokenPairs: user.stsTokenManager,
+      };
+      return result;
     } catch (error) {
       if (error.code === "auth/wrong-password") {
         throw new AppError(ErrorMessage.InvalidCredential, 401);
@@ -63,7 +74,7 @@ class AuthService {
       account.role = UserRole.Student;
       account.password = password;
 
-      await account.createAccout(false);
+      await account.createAccount(false);
 
       const emailLink =
         await this.authAdmin.generateEmailVerificationLink(email);
