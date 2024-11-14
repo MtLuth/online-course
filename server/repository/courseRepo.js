@@ -79,6 +79,7 @@ class Course {
       category: data.category,
       description: data.description,
       title: data.title,
+      isPublished: data.isPublished,
     };
   }
 

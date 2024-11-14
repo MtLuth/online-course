@@ -1,7 +1,5 @@
 import instructorServices from "../services/instructorServices.js";
 import catchAsync from "../utils/catchAsync.js";
-import { paginationValidate } from "../validator/validationSchema.js";
-import paginate from "express-paginate";
 
 class InstructorController {
   getAllInstructor = catchAsync(async (req, res, next) => {
