@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import {
   Box,
   Tabs,
@@ -18,8 +18,15 @@ import {
   Grid,
   Paper,
   CircularProgress,
+  Tooltip,
 } from "@mui/material";
-import { Add, Remove } from "@mui/icons-material";
+import {
+  Add,
+  Delete,
+  PhotoCamera,
+  Remove,
+  VideoLibrary,
+} from "@mui/icons-material";
 import {
   Formik,
   Form,
@@ -34,7 +41,9 @@ import * as Yup from "yup";
 import Cookies from "js-cookie";
 import { courseApi } from "@/server/Cource";
 import { useRouter } from "next/navigation";
+import { GetServerSideProps } from "next"; // If using server-side rendering
 
+// Extend CourseData to handle thumbnail as string or File
 interface LectureResource {
   title: string;
   fileUrl: string;
@@ -62,7 +71,7 @@ interface CourseData {
   price: number;
   language: string;
   level: string;
-  thumbnail: File | null;
+  thumbnail: string | File | null; // Modified to handle both URL and File
   requirements: string[];
   whatYouWillLearn: string[];
   content: ContentSection[];
@@ -90,6 +99,7 @@ interface CreateCourseData {
         title: string;
         fileUrl: string;
       }[];
+      description?: string;
     }[];
   }[];
   isPublished: boolean;
@@ -101,54 +111,52 @@ interface CreateCourseViewProps {
   courseId?: string;
 }
 
-const validationSchema = Yup.object().shape({
-  title: Yup.string().required("Tiêu đề khóa học là bắt buộc."),
-  description: Yup.string().required("Mô tả khóa học là bắt buộc."),
-  category: Yup.string().required("Danh mục là bắt buộc."),
-  price: Yup.number()
-    .required("Giá là bắt buộc.")
-    .min(1, "Giá phải lớn hơn 0."),
-  language: Yup.string().required("Ngôn ngữ là bắt buộc."),
-  level: Yup.string().required("Cấp độ là bắt buộc."),
-  thumbnail: Yup.mixed().when("isEditMode", {
-    is: false,
-    then: Yup.mixed().required("Ảnh bìa là bắt buộc."),
-    otherwise: Yup.mixed(),
-  }),
-  requirements: Yup.array()
-    .of(Yup.string().required("Yêu cầu không được để trống."))
-    .min(1, "Ít nhất một yêu cầu."),
-  whatYouWillLearn: Yup.array()
-    .of(Yup.string().required("Điểm học không được để trống."))
-    .min(1, "Ít nhất một điểm học."),
-  content: Yup.array()
-    .of(
-      Yup.object().shape({
-        sectionTitle: Yup.string().required("Tiêu đề phần là bắt buộc."),
-        lectures: Yup.array()
-          .of(
-            Yup.object().shape({
-              title: Yup.string().required("Tiêu đề bài giảng là bắt buộc."),
-              duration: Yup.string().required("Thời lượng là bắt buộc."),
-              type: Yup.string()
-                .oneOf(
-                  ["video", "article"],
-                  "Loại bài giảng phải là video hoặc article."
-                )
-                .required("Loại bài giảng là bắt buộc."),
-            })
-          )
-          .min(1, "Ít nhất một bài giảng."),
-      })
-    )
-    .min(1, "Ít nhất một phần."),
-});
+const getValidationSchema = (isEditMode: boolean) =>
+  Yup.object().shape({
+    title: Yup.string().required("Tiêu đề khóa học là bắt buộc."),
+    description: Yup.string().required("Mô tả khóa học là bắt buộc."),
+    category: Yup.string().required("Danh mục là bắt buộc."),
+    price: Yup.number()
+      .required("Giá là bắt buộc.")
+      .min(1, "Giá phải lớn hơn 0."),
+    language: Yup.string().required("Ngôn ngữ là bắt buộc."),
+    level: Yup.string().required("Cấp độ là bắt buộc."),
+    thumbnail: isEditMode
+      ? Yup.mixed()
+      : Yup.mixed().required("Ảnh bìa là bắt buộc."),
+    requirements: Yup.array()
+      .of(Yup.string().required("Yêu cầu không được để trống."))
+      .min(1, "Ít nhất một yêu cầu."),
+    whatYouWillLearn: Yup.array()
+      .of(Yup.string().required("Điểm học không được để trống."))
+      .min(1, "Ít nhất một điểm học."),
+    content: Yup.array()
+      .of(
+        Yup.object().shape({
+          sectionTitle: Yup.string().required("Tiêu đề phần là bắt buộc."),
+          lectures: Yup.array()
+            .of(
+              Yup.object().shape({
+                title: Yup.string().required("Tiêu đề bài giảng là bắt buộc."),
+                duration: Yup.string().required("Thời lượng là bắt buộc."),
+                type: Yup.string()
+                  .oneOf(
+                    ["video", "article"],
+                    "Loại bài giảng phải là video hoặc article."
+                  )
+                  .required("Loại bài giảng là bắt buộc."),
+              })
+            )
+            .min(1, "Ít nhất một bài giảng."),
+        })
+      )
+      .min(1, "Ít nhất một phần."),
+  });
 
-// Component Cấu Hình Khóa Học
+// Component for Course Configuration
 const CourseConfig: React.FC = React.memo(() => {
   const { values, errors, touched, handleChange } =
     useFormikContext<CourseData>();
-
   return (
     <Box>
       <Grid container spacing={2}>
@@ -181,7 +189,7 @@ const CourseConfig: React.FC = React.memo(() => {
               <MenuItem value="Lập trình">Lập trình</MenuItem>
               <MenuItem value="Thiết kế">Thiết kế</MenuItem>
               <MenuItem value="Marketing">Marketing</MenuItem>
-              {/* Thêm các danh mục khác nếu cần */}
+              {/* Add more categories as needed */}
             </Select>
             {touched.category && errors.category && (
               <Typography variant="caption" color="error">
@@ -236,7 +244,7 @@ const CourseConfig: React.FC = React.memo(() => {
             >
               <MenuItem value="Vietnamese">Tiếng Việt</MenuItem>
               <MenuItem value="English">English</MenuItem>
-              {/* Thêm các ngôn ngữ khác nếu cần */}
+              {/* Add more languages as needed */}
             </Select>
             {touched.language && errors.language && (
               <Typography variant="caption" color="error">
@@ -275,194 +283,239 @@ const CourseConfig: React.FC = React.memo(() => {
   );
 });
 
-// Component Hình Ảnh và Yêu Cầu
-const CourseImageRequirements: React.FC = React.memo(() => {
-  const { values, errors, touched, setFieldValue, handleChange } =
-    useFormikContext<CourseData>();
+// Component for Course Image and Requirements
+interface CourseImageRequirementsProps {
+  existingThumbnailUrl?: string;
+}
 
-  const handleThumbnailChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      if (event.currentTarget.files) {
-        setFieldValue("thumbnail", event.currentTarget.files[0]);
-      }
-    },
-    [setFieldValue]
-  );
+const CourseImageRequirements: React.FC<CourseImageRequirementsProps> =
+  React.memo(({ existingThumbnailUrl }) => {
+    const { values, errors, touched, setFieldValue, handleChange } =
+      useFormikContext<CourseData>();
 
-  return (
-    <Box>
-      <Grid container spacing={2}>
-        {/* Thumbnail */}
-        <Grid item xs={12} sm={6}>
-          <Typography variant="h6" gutterBottom>
-            Ảnh bìa
-          </Typography>
-          {/* Hiển thị ảnh hiện có nếu ở chế độ chỉnh sửa và không thay đổi */}
-          {values.thumbnail ? (
-            <Box>
-              <Button variant="contained" component="label">
-                Thay đổi ảnh bìa
-                <input
-                  type="file"
-                  accept="image/*"
-                  hidden
-                  onChange={handleThumbnailChange}
-                />
-              </Button>
-              <Box sx={{ mt: 2 }}>
-                <Image
-                  src={URL.createObjectURL(values.thumbnail)}
-                  alt="Thumbnail"
-                  sx={{
-                    width: 200,
-                    height: 200,
-                    objectFit: "cover",
-                  }}
-                />
+    const handleThumbnailChange = useCallback(
+      (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (event.currentTarget.files && event.currentTarget.files[0]) {
+          setFieldValue("thumbnail", event.currentTarget.files[0]);
+        }
+      },
+      [setFieldValue]
+    );
+
+    const handleRemoveThumbnail = useCallback(() => {
+      setFieldValue("thumbnail", null);
+    }, [setFieldValue]);
+
+    return (
+      <Box>
+        <Grid container spacing={2}>
+          {/* Thumbnail */}
+          <Grid item xs={12} sm={6}>
+            <Typography variant="h6" gutterBottom>
+              Ảnh bìa
+            </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+              }}
+            >
+              {(existingThumbnailUrl || values.thumbnail) && (
+                <Box sx={{ position: "relative", mb: 2 }}>
+                  <Image
+                    src={
+                      typeof values.thumbnail === "string"
+                        ? values.thumbnail
+                        : values.thumbnail
+                        ? URL.createObjectURL(values.thumbnail)
+                        : ""
+                    }
+                    alt="Thumbnail"
+                    sx={{
+                      width: 250,
+                      height: 250,
+                      objectFit: "cover",
+                      borderRadius: 2,
+                      boxShadow: 3,
+                    }}
+                  />
+                  <Tooltip title="Xóa ảnh bìa">
+                    <IconButton
+                      onClick={handleRemoveThumbnail}
+                      sx={{
+                        position: "absolute",
+                        top: 10,
+                        right: 10,
+                        backgroundColor: "rgba(255,255,255,0.7)",
+                        "&:hover": {
+                          backgroundColor: "rgba(255,255,255,0.9)",
+                        },
+                      }}
+                    >
+                      <Delete color="error" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              )}
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                <Button
+                  variant="contained"
+                  component="label"
+                  startIcon={<PhotoCamera />}
+                  sx={{ mr: 2 }}
+                >
+                  {existingThumbnailUrl || values.thumbnail
+                    ? "Thay đổi"
+                    : "Tải lên"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    onChange={handleThumbnailChange}
+                  />
+                </Button>
+                {values.thumbnail && !(values.thumbnail instanceof File) && (
+                  <Typography variant="body2">
+                    {values.thumbnail instanceof File
+                      ? values.thumbnail.name
+                      : "Đang sử dụng ảnh bìa hiện có"}
+                  </Typography>
+                )}
               </Box>
             </Box>
-          ) : (
-            <Button variant="contained" component="label">
-              Tải ảnh bìa
-              <input
-                type="file"
-                accept="image/*"
-                hidden
-                onChange={handleThumbnailChange}
-              />
-            </Button>
-          )}
-          {touched.thumbnail && errors.thumbnail && (
-            <Typography variant="caption" color="error">
-              {errors.thumbnail}
+            {touched.thumbnail && errors.thumbnail && (
+              <Typography variant="caption" color="error">
+                {errors.thumbnail}
+              </Typography>
+            )}
+          </Grid>
+
+          {/* Requirements */}
+          <Grid item xs={12} sm={6}>
+            <Typography variant="h6" gutterBottom>
+              Yêu cầu
             </Typography>
-          )}
-        </Grid>
-
-        {/* Yêu cầu */}
-        <Grid item xs={12} sm={6}>
-          <Typography variant="h6" gutterBottom>
-            Yêu cầu
-          </Typography>
-          <FieldArray name="requirements">
-            {({ push, remove }) => (
-              <Box>
-                {values.requirements.map((req, index) => (
-                  <Box
-                    key={index}
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      mb: 1,
-                    }}
-                  >
-                    <TextField
-                      label={`Yêu cầu ${index + 1}`}
-                      name={`requirements[${index}]`}
-                      value={req}
-                      onChange={handleChange}
-                      fullWidth
-                      required
-                      error={
-                        touched.requirements &&
-                        touched.requirements[index] &&
-                        Boolean(
-                          errors.requirements && errors.requirements[index]
-                        )
-                      }
-                      helperText={
-                        touched.requirements &&
-                        touched.requirements[index] &&
-                        errors.requirements &&
-                        errors.requirements[index]
-                      }
-                    />
-                    <IconButton
-                      aria-label="remove requirement"
-                      onClick={() => remove(index)}
-                      disabled={values.requirements.length === 1}
+            <FieldArray name="requirements">
+              {({ push, remove }) => (
+                <Box>
+                  {values.requirements.map((req, index) => (
+                    <Box
+                      key={index}
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        mb: 1,
+                      }}
                     >
-                      <Remove />
-                    </IconButton>
-                  </Box>
-                ))}
-                <Button
-                  variant="outlined"
-                  startIcon={<Add />}
-                  onClick={() => push("")}
-                >
-                  Thêm Yêu Cầu
-                </Button>
-              </Box>
-            )}
-          </FieldArray>
-        </Grid>
-
-        {/* Bạn sẽ học được gì */}
-        <Grid item xs={12}>
-          <Typography variant="h6" gutterBottom>
-            Bạn sẽ học được gì
-          </Typography>
-          <FieldArray name="whatYouWillLearn">
-            {({ push, remove }) => (
-              <Box>
-                {values.whatYouWillLearn.map((item, index) => (
-                  <Box
-                    key={index}
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      mb: 1,
-                    }}
+                      <TextField
+                        label={`Yêu cầu ${index + 1}`}
+                        name={`requirements[${index}]`}
+                        value={req}
+                        onChange={handleChange}
+                        fullWidth
+                        required
+                        error={
+                          touched.requirements &&
+                          touched.requirements[index] &&
+                          Boolean(
+                            errors.requirements && errors.requirements[index]
+                          )
+                        }
+                        helperText={
+                          touched.requirements &&
+                          touched.requirements[index] &&
+                          errors.requirements &&
+                          errors.requirements[index]
+                        }
+                      />
+                      <IconButton
+                        aria-label="remove requirement"
+                        onClick={() => remove(index)}
+                        disabled={values.requirements.length === 1}
+                        sx={{ ml: 1 }}
+                      >
+                        <Remove />
+                      </IconButton>
+                    </Box>
+                  ))}
+                  <Button
+                    variant="outlined"
+                    startIcon={<Add />}
+                    onClick={() => push("")}
                   >
-                    <TextField
-                      label={`Điểm học ${index + 1}`}
-                      name={`whatYouWillLearn[${index}]`}
-                      value={item}
-                      onChange={handleChange}
-                      fullWidth
-                      required
-                      error={
-                        touched.whatYouWillLearn &&
-                        touched.whatYouWillLearn[index] &&
-                        Boolean(
+                    Thêm Yêu Cầu
+                  </Button>
+                </Box>
+              )}
+            </FieldArray>
+          </Grid>
+
+          {/* What You Will Learn */}
+          <Grid item xs={12}>
+            <Typography variant="h6" gutterBottom>
+              Bạn sẽ học được gì
+            </Typography>
+            <FieldArray name="whatYouWillLearn">
+              {({ push, remove }) => (
+                <Box>
+                  {values.whatYouWillLearn.map((item, index) => (
+                    <Box
+                      key={index}
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        mb: 1,
+                      }}
+                    >
+                      <TextField
+                        label={`Điểm học ${index + 1}`}
+                        name={`whatYouWillLearn[${index}]`}
+                        value={item}
+                        onChange={handleChange}
+                        fullWidth
+                        required
+                        error={
+                          touched.whatYouWillLearn &&
+                          touched.whatYouWillLearn[index] &&
+                          Boolean(
+                            errors.whatYouWillLearn &&
+                              errors.whatYouWillLearn[index]
+                          )
+                        }
+                        helperText={
+                          touched.whatYouWillLearn &&
+                          touched.whatYouWillLearn[index] &&
                           errors.whatYouWillLearn &&
-                            errors.whatYouWillLearn[index]
-                        )
-                      }
-                      helperText={
-                        touched.whatYouWillLearn &&
-                        touched.whatYouWillLearn[index] &&
-                        errors.whatYouWillLearn &&
-                        errors.whatYouWillLearn[index]
-                      }
-                    />
-                    <IconButton
-                      aria-label="remove what you will learn"
-                      onClick={() => remove(index)}
-                      disabled={values.whatYouWillLearn.length === 1}
-                    >
-                      <Remove />
-                    </IconButton>
-                  </Box>
-                ))}
-                <Button
-                  variant="outlined"
-                  startIcon={<Add />}
-                  onClick={() => push("")}
-                >
-                  Thêm Điều Bạn Sẽ Học
-                </Button>
-              </Box>
-            )}
-          </FieldArray>
+                          errors.whatYouWillLearn[index]
+                        }
+                      />
+                      <IconButton
+                        aria-label="remove what you will learn"
+                        onClick={() => remove(index)}
+                        disabled={values.whatYouWillLearn.length === 1}
+                        sx={{ ml: 1 }}
+                      >
+                        <Remove />
+                      </IconButton>
+                    </Box>
+                  ))}
+                  <Button
+                    variant="outlined"
+                    startIcon={<Add />}
+                    onClick={() => push("")}
+                  >
+                    Thêm Điều Bạn Sẽ Học
+                  </Button>
+                </Box>
+              )}
+            </FieldArray>
+          </Grid>
         </Grid>
-      </Grid>
-    </Box>
-  );
-});
+      </Box>
+    );
+  });
 
-// Component Bài Giảng
 interface LectureProps {
   sectionIndex: number;
   lectureIndex: number;
@@ -473,11 +526,20 @@ const LectureItem: React.FC<LectureProps> = React.memo(
   ({ sectionIndex, lectureIndex, removeLecture }) => {
     const { values, errors, touched, handleChange, setFieldValue } =
       useFormikContext<CourseData>();
+
     const lecture = values.content[sectionIndex].lectures[lectureIndex];
     const lectureErrors =
-      errors.content?.[sectionIndex]?.lectures?.[lectureIndex] || {};
+      (errors.content &&
+        errors.content[sectionIndex] &&
+        errors.content[sectionIndex].lectures &&
+        errors.content[sectionIndex].lectures[lectureIndex]) ||
+      {};
     const lectureTouched =
-      touched.content?.[sectionIndex]?.lectures?.[lectureIndex] || {};
+      (touched.content &&
+        touched.content[sectionIndex] &&
+        touched.content[sectionIndex].lectures &&
+        touched.content[sectionIndex].lectures[lectureIndex]) ||
+      {};
 
     const handleVideoChange = useCallback(
       (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -497,6 +559,17 @@ const LectureItem: React.FC<LectureProps> = React.memo(
       [setFieldValue, sectionIndex, lectureIndex]
     );
 
+    const handleRemoveVideo = useCallback(() => {
+      setFieldValue(
+        `content[${sectionIndex}].lectures[${lectureIndex}].videoFile`,
+        null
+      );
+      setFieldValue(
+        `content[${sectionIndex}].lectures[${lectureIndex}].videoUrl`,
+        ""
+      );
+    }, [setFieldValue, sectionIndex, lectureIndex]);
+
     return (
       <Paper
         sx={{
@@ -509,6 +582,7 @@ const LectureItem: React.FC<LectureProps> = React.memo(
         elevation={1}
       >
         <Grid container spacing={2}>
+          {/* Lecture Title */}
           <Grid item xs={12} sm={6}>
             <TextField
               label="Tiêu đề bài giảng"
@@ -521,6 +595,8 @@ const LectureItem: React.FC<LectureProps> = React.memo(
               helperText={lectureTouched.title && lectureErrors.title}
             />
           </Grid>
+
+          {/* Duration */}
           <Grid item xs={12} sm={3}>
             <TextField
               label="Thời lượng"
@@ -533,7 +609,8 @@ const LectureItem: React.FC<LectureProps> = React.memo(
               helperText={lectureTouched.duration && lectureErrors.duration}
             />
           </Grid>
-          {/* Loại */}
+
+          {/* Type */}
           <Grid item xs={12} sm={3}>
             <FormControl
               fullWidth
@@ -561,50 +638,85 @@ const LectureItem: React.FC<LectureProps> = React.memo(
             </FormControl>
           </Grid>
 
+          {/* Video Upload Section */}
           {lecture.type === "video" && (
             <Grid item xs={12} sm={6}>
-              <Typography variant="subtitle1">Video hiện có:</Typography>
-              {lecture.videoUrl && !lecture.videoFile ? (
-                <Box sx={{ mt: 1 }}>
-                  <video
-                    width="100%"
-                    height="200"
-                    controls
-                    src={lecture.videoUrl}
-                  />
-                </Box>
-              ) : null}
-              <Button
-                variant="contained"
-                component="label"
-                fullWidth
-                startIcon={<Add />}
-                sx={{ mt: 1 }}
+              <Typography variant="subtitle1" gutterBottom>
+                Video hiện có:
+              </Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  mb: 2,
+                }}
               >
-                {lecture.videoFile ? "Video đã được chọn" : "Thay đổi Video"}
-                <input
-                  type="file"
-                  accept="video/*"
-                  hidden
-                  onChange={handleVideoChange}
-                />
-              </Button>
-              {lecture.videoUrl && (
-                <Box sx={{ mt: 1 }}>
-                  {lecture.videoFile ? (
+                {/* Video Preview */}
+                {lecture.videoUrl && (
+                  <Box sx={{ position: "relative", mb: 2 }}>
                     <video
-                      width="100%"
+                      width="250"
                       height="200"
                       controls
                       src={lecture.videoUrl}
+                      style={{
+                        borderRadius: 8,
+                        boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+                      }}
                     />
-                  ) : (
-                    <Typography variant="body2" color="primary">
-                      Video đã được chọn!
+                    {/* Remove Video Button */}
+                    <Tooltip title="Xóa video">
+                      <IconButton
+                        onClick={handleRemoveVideo}
+                        sx={{
+                          position: "absolute",
+                          top: 10,
+                          right: 10,
+                          backgroundColor: "rgba(255,255,255,0.7)",
+                          "&:hover": {
+                            backgroundColor: "rgba(255,255,255,0.9)",
+                          },
+                        }}
+                      >
+                        <Delete color="error" />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                )}
+
+                {/* Upload/Change Video Button */}
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <Button
+                    variant="contained"
+                    component="label"
+                    startIcon={<VideoLibrary />}
+                    sx={{ mr: 2 }}
+                  >
+                    {lecture.videoUrl ? "Thay đổi Video" : "Tải Video"}
+                    <input
+                      type="file"
+                      accept="video/*"
+                      hidden
+                      onChange={handleVideoChange}
+                    />
+                  </Button>
+                  {/* Display Selected Video Name */}
+                  {lecture.videoFile && (
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        maxWidth: 200,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {lecture.videoFile.name}
                     </Typography>
                   )}
                 </Box>
-              )}
+              </Box>
+              {/* Video Upload Error */}
               {lectureTouched.videoUrl && lectureErrors.videoUrl && (
                 <Typography variant="caption" color="error">
                   {lectureErrors.videoUrl}
@@ -613,6 +725,7 @@ const LectureItem: React.FC<LectureProps> = React.memo(
             </Grid>
           )}
 
+          {/* Article Description Section */}
           {lecture.type === "article" && (
             <Grid item xs={12}>
               <TextField
@@ -634,6 +747,8 @@ const LectureItem: React.FC<LectureProps> = React.memo(
               />
             </Grid>
           )}
+
+          {/* Resources Section */}
           <Grid item xs={12}>
             <Typography variant="subtitle1" gutterBottom>
               Tài nguyên (tùy chọn)
@@ -690,6 +805,7 @@ const LectureItem: React.FC<LectureProps> = React.memo(
                           aria-label="remove resource"
                           onClick={() => remove(resourceIndex)}
                           disabled={lecture.resources.length === 0}
+                          sx={{ ml: 1 }}
                         >
                           <Remove />
                         </IconButton>
@@ -708,6 +824,7 @@ const LectureItem: React.FC<LectureProps> = React.memo(
             </FieldArray>
           </Grid>
         </Grid>
+        {/* Remove Lecture Button */}
         <Box sx={{ textAlign: "right", mt: 2 }}>
           <Button
             variant="outlined"
@@ -724,7 +841,6 @@ const LectureItem: React.FC<LectureProps> = React.memo(
   }
 );
 
-// Component Phần Nội Dung
 interface SectionProps {
   sectionIndex: number;
   removeSection: (index: number) => void;
@@ -735,8 +851,10 @@ const ContentSectionComponent: React.FC<SectionProps> = React.memo(
     const { values, errors, touched, handleChange } =
       useFormikContext<CourseData>();
     const section = values.content[sectionIndex];
-    const sectionErrors = errors.content?.[sectionIndex] || {};
-    const sectionTouched = touched.content?.[sectionIndex] || {};
+    const sectionErrors =
+      (errors.content && errors.content[sectionIndex]) || {};
+    const sectionTouched =
+      (touched.content && touched.content[sectionIndex]) || {};
 
     return (
       <Paper
@@ -798,6 +916,8 @@ const ContentSectionComponent: React.FC<SectionProps> = React.memo(
                     duration: "",
                     type: "video",
                     videoUrl: "",
+                    videoFile: null,
+                    description: "",
                     resources: [],
                   })
                 }
@@ -812,7 +932,6 @@ const ContentSectionComponent: React.FC<SectionProps> = React.memo(
   }
 );
 
-// Component Nội Dung Khóa Học
 const CourseContent: React.FC = React.memo(() => {
   const { values } = useFormikContext<CourseData>();
 
@@ -857,13 +976,19 @@ const CourseContent: React.FC = React.memo(() => {
   );
 });
 
-// Component Chính Tạo/Chỉnh sửa Khóa Học
 const CreateCourseView: React.FC<CreateCourseViewProps> = ({
   initialValues,
   isEditMode = false,
   courseId,
 }) => {
   const router = useRouter();
+  const [existingThumbnailUrl, setExistingThumbnailUrl] = useState<
+    string | undefined
+  >(
+    isEditMode && initialValues && typeof initialValues.thumbnail === "string"
+      ? initialValues.thumbnail
+      : undefined
+  );
 
   const handleSubmit = useCallback(
     async (values: CourseData, actions: FormikHelpers<CourseData>) => {
@@ -874,7 +999,7 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
         }
 
         let thumbnailUrl = "";
-        if (values.thumbnail) {
+        if (values.thumbnail instanceof File) {
           const uploadImageResponse = await uploadApi.uploadImages(
             [values.thumbnail],
             token
@@ -890,10 +1015,10 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
               uploadImageResponse.message || "Tải lên ảnh bìa thất bại."
             );
           }
-        } else if (isEditMode && initialValues) {
-          // Nếu không thay đổi thumbnail trong chế độ chỉnh sửa, giữ nguyên URL cũ
-          // Giả sử bạn có cách để lấy URL cũ từ initialValues (cần bổ sung nếu cần)
-          // thumbnailUrl = initialValues.thumbnailUrl; // Ví dụ
+        } else if (isEditMode && existingThumbnailUrl) {
+          thumbnailUrl = existingThumbnailUrl;
+        } else {
+          throw new Error("Thumbnail is required.");
         }
 
         const videoFiles: File[] = [];
@@ -925,7 +1050,7 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
           }
         }
 
-        // Gán lại URL video đã tải lên cho các bài giảng tương ứng
+        // Assign uploaded video URLs to lectures
         let videoUrlIndex = 0;
         const updatedContent = values.content.map((section) => {
           const updatedLectures = section.lectures.map((lecture) => {
@@ -937,10 +1062,9 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
                 videoFile: null,
               };
             } else if (lecture.type === "article" && lecture.description) {
-              // Không cần mã hóa thành Data URL nếu backend hỗ trợ nhận trực tiếp
               return {
                 ...lecture,
-                videoUrl: "", // Có thể để trống hoặc xử lý khác tùy backend
+                videoUrl: "", // Optional: handle as needed
                 description: lecture.description,
               };
             }
@@ -957,14 +1081,14 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
 
         let response;
         if (isEditMode && courseId) {
-          // Gọi API cập nhật khóa học
+          // Call API to update course
           response = await courseApi.updateCourse(
             courseId,
             completeCourseData,
             token
           );
         } else {
-          // Gọi API tạo khóa học
+          // Call API to create course
           response = await courseApi.createCourse(completeCourseData, token);
         }
 
@@ -976,7 +1100,7 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
           );
           actions.resetForm();
           if (isEditMode && courseId) {
-            router.push(`/course/${courseId}`); // Chuyển hướng đến trang chi tiết khóa học
+            router.push(`/my-courses`); // Navigate back to My Courses
           }
         } else {
           throw new Error(
@@ -996,7 +1120,7 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
         actions.setSubmitting(false);
       }
     },
-    [isEditMode, courseId, initialValues]
+    [isEditMode, courseId, existingThumbnailUrl, router]
   );
 
   const initialFormValues: CourseData = useMemo(
@@ -1036,9 +1160,10 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
     <WrapperPage title={isEditMode ? "Chỉnh sửa Khóa Học" : "Tạo Khóa Học"}>
       <Formik
         initialValues={initialFormValues}
-        validationSchema={validationSchema}
+        validationSchema={getValidationSchema(isEditMode)}
         onSubmit={handleSubmit}
-        enableReinitialize // Để Formik cập nhật initialValues khi props thay đổi
+        enableReinitialize // To allow Formik to update initialValues when props change
+        context={{ isEditMode }}
       >
         {({
           values,
@@ -1101,10 +1226,9 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
           const handlePrevious = useCallback(() => {
             setActiveTab((prev) => prev - 1);
           }, []);
-
           return (
             <Form>
-              {/* Tabs và Công tắc Xuất bản */}
+              {/* Tabs and Publish Switch */}
               <Box
                 sx={{
                   display: "flex",
@@ -1135,7 +1259,15 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
               <Divider sx={{ mb: 2 }} />
               <Box>
                 {activeTab === 0 && <CourseConfig />}
-                {activeTab === 1 && <CourseImageRequirements />}
+                {activeTab === 1 && (
+                  <CourseImageRequirements
+                    existingThumbnailUrl={
+                      isEditMode && typeof initialValues?.thumbnail === "string"
+                        ? initialValues.thumbnail
+                        : undefined
+                    }
+                  />
+                )}
                 {activeTab === 2 && <CourseContent />}
               </Box>
               <Box
@@ -1180,6 +1312,18 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
                   </Button>
                 )}
               </Box>
+              {/* Back to My Courses Button */}
+              {isEditMode && (
+                <Box sx={{ mt: 2, textAlign: "right" }}>
+                  <Button
+                    variant="text"
+                    color="secondary"
+                    onClick={() => router.push("/my-courses")}
+                  >
+                    Quay lại My Courses
+                  </Button>
+                </Box>
+              )}
             </Form>
           );
         }}

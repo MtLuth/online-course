@@ -73,7 +73,7 @@ export const paths = {
   page404: "/error/404",
   page500: "/error/500",
   components: {
-    root: "/components",
+    root: "/all-courses",
     animate: "/components/animate",
     carousel: "/components/carousel",
     countUp: "/components/count-up",

@@ -1,3 +1,5 @@
+// components/coursecard/CourseCard.tsx
+
 "use client";
 
 import React from "react";
@@ -9,17 +11,21 @@ import {
   Box,
   Button,
   IconButton,
+  CardMedia,
 } from "@mui/material";
-import { Edit as EditIcon } from "@mui/icons-material"; // Import biểu tượng chỉnh sửa
+import { Edit as EditIcon } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
-import { Course } from "@/model/Course.model";
+import { CourseDetail } from "@/interfaces/CourseDetail";
 
 interface CourseCardProps {
-  course: Course;
-  onEdit?: (courseId: string) => void; // Optional callback cho hành động chỉnh sửa
+  course: CourseDetail;
+  showEdit?: boolean; // Controls visibility of edit button
 }
 
-const CourseCard: React.FC<CourseCardProps> = ({ course, onEdit }) => {
+const CourseCard: React.FC<CourseCardProps> = ({
+  course,
+  showEdit = false,
+}) => {
   const router = useRouter();
 
   const handleViewDetails = () => {
@@ -27,12 +33,8 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEdit }) => {
   };
 
   const handleEditCourse = (event: React.MouseEvent) => {
-    event.stopPropagation(); // Ngăn chặn sự kiện lan sang nút "Xem Chi Tiết"
-    if (onEdit) {
-      onEdit(course.id); // Gọi callback chỉnh sửa nếu được cung cấp
-    } else {
-      router.push(`/course/edit/${course.id}`); // Điều hướng mặc định đến trang chỉnh sửa
-    }
+    event.stopPropagation(); // Prevent triggering view details
+    router.push(`/course/edit/${course.id}`);
   };
 
   return (
@@ -43,24 +45,41 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEdit }) => {
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
-        position: "relative", // Để định vị nút chỉnh sửa
+        position: "relative",
+        cursor: "pointer",
+        "&:hover": {
+          boxShadow: 6,
+        },
       }}
+      onClick={handleViewDetails}
     >
-      {/* Nút chỉnh sửa ở góc trên bên phải */}
-      <IconButton
-        size="small"
-        sx={{
-          position: "absolute",
-          top: 8,
-          right: 8,
-          zIndex: 1,
-          backgroundColor: "background.paper",
-          ":hover": { backgroundColor: "grey.300" },
-        }}
-        onClick={handleEditCourse}
-      >
-        <EditIcon />
-      </IconButton>
+      {/* Thumbnail Image */}
+      {course.thumbnail && (
+        <CardMedia
+          component="img"
+          height="140"
+          image={course.thumbnail}
+          alt={course.title || "Course Thumbnail"}
+        />
+      )}
+
+      {/* Edit Button */}
+      {showEdit && (
+        <IconButton
+          size="small"
+          sx={{
+            position: "absolute",
+            top: 8,
+            right: 8,
+            zIndex: 1,
+            backgroundColor: "rgba(255, 255, 255, 0.8)",
+            ":hover": { backgroundColor: "rgba(255, 255, 255, 1)" },
+          }}
+          onClick={handleEditCourse}
+        >
+          <EditIcon />
+        </IconButton>
+      )}
 
       <CardContent>
         <Typography gutterBottom variant="h5" component="div">

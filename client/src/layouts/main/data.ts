@@ -132,7 +132,7 @@ export const _socials = [
 ];
 export const navConfig = [
   { title: "Trang Chủ", path: "/" },
-  { title: "Thành Phần", path: paths.components.root },
+  { title: "Tất Cả Khóa Học", path: paths.components.root },
   {
     title: "Các Trang",
     path: paths.pages,
