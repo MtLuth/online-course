@@ -13,4 +13,17 @@ categoryRouter
   )
   .get(categoryController.getAllCategories);
 
+categoryRouter
+  .route("/:id")
+  .put(
+    authMiddleware.validateUser,
+    authMiddleware.validateRoleAdmin,
+    categoryController.updateCategory
+  )
+  .delete(
+    authMiddleware.validateUser,
+    authMiddleware.validateRoleAdmin,
+    categoryController.deleteCategoryById
+  );
+
 export default categoryRouter;

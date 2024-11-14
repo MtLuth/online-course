@@ -19,14 +19,23 @@ class Category {
     return categories;
   }
 
-  async deleteCategory(name) {
-    await this.dbRef.doc(name).delete();
+  async deleteCategoryById(id) {
+    await this.dbRef.doc(id).delete();
     return "Đã xóa category!";
   }
 
-  async updateCategory(name) {
-    const doc = await this.dbRef.doc(name);
-    // const date = await.
+  async updateCategory(id, newData) {
+    const doc = await this.dbRef.doc(id).get();
+    const data = doc.data();
+    const keys = Object.keys(newData);
+    keys.forEach(([key, value]) => {
+      if (!data.hasOwnProperty(key)) {
+        delete newData[key];
+      }
+    });
+
+    await this.dbRef.doc(id).update({ ...newData });
+    return "Cập nhật category thành công!";
   }
 }
 

@@ -21,6 +21,25 @@ class CategoryController {
       message: results,
     });
   });
+
+  deleteCategoryById = catchAsync(async (req, res, next) => {
+    const id = req.params.id;
+    const message = await categoryServices.deleteCategoryById(id);
+    res.status(200).json({
+      status: "Successfully",
+      message: message,
+    });
+  });
+
+  updateCategory = catchAsync(async (req, res, next) => {
+    const newData = req.body;
+    const id = req.params.id;
+    const message = await categoryServices.updateCategory(id, newData);
+    res.status(200).json({
+      status: "Successfully",
+      message: message,
+    });
+  });
 }
 
 export default new CategoryController();

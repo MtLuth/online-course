@@ -19,6 +19,27 @@ class CategoryService {
       throw new AppError(`Lỗi khi lấy categories: ${error}`, 500);
     }
   }
+
+  async deleteCategoryById(id) {
+    try {
+      const message = await categoryRepo.deleteCategoryById(id);
+      return message;
+    } catch (error) {
+      throw new AppError(`Không thể xóa category trên`);
+    }
+  }
+
+  async updateCategory(id, newData) {
+    try {
+      if (!newData || Object.keys(newData).length === 0) {
+        throw new Error("Không có dữ liệu để cập nhật");
+      }
+      const message = await categoryRepo.updateCategory(id, newData);
+      return message;
+    } catch (error) {
+      throw new AppError(`Không thể cập nhật category: ${error}`, 500);
+    }
+  }
 }
 
 export default new CategoryService();
