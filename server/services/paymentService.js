@@ -8,9 +8,10 @@ class PaymentService {
       "e5a95f3b4f48d9812a9ada502aab43d0a6cfa93f4405a7be39335f75003c878d";
     this.payOs = new PayOs(clientId, apiKey, checksumKey);
   }
-  async createPayment(courses, total, returnUrl, cancelUrl) {
+  async createPayment(orderCode, courses, total, returnUrl, cancelUrl) {
+    console.log(returnUrl);
     const body = {
-      orderCode: Number(String(Date.now()).slice(-6)),
+      orderCode: orderCode,
       amount: total,
       description: "Thanh toán Elearning",
       items: courses,
@@ -22,6 +23,15 @@ class PaymentService {
       return paymentLinkResponse;
     } catch (error) {
       throw new AppError(error, 400);
+    }
+  }
+
+  async getPaymentLinkInfor(id) {
+    try {
+      const paymentLink = await this.payOs.getPaymentLinkInformation(id);
+      return paymentLink;
+    } catch (error) {
+      throw new AppError(error, 500);
     }
   }
 }

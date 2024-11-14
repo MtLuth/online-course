@@ -10,4 +10,6 @@ paymentRoutes.post(
   paymentController.createPaymentLink
 );
 
+paymentRoutes.post("/call-back", paymentController.callbackUrl);
+
 export default paymentRoutes;
