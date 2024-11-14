@@ -152,10 +152,26 @@ const buyCoursesSchema = yup
   .required("Vui lòng chọn sản phẩm muốn mua!")
   .min(1, "Phải có ít nhất 1 khóa học");
 
+const createPaymentLinkSchema = yup
+  .array()
+  .of(
+    yup.object({
+      name: yup.string().required("Tên sản phẩm là bắt buộc"),
+      quantity: yup
+        .number()
+        .required("Số lượng là bắt buộc")
+        .min(1, "Số lượng phải lớn hơn hoặc bằng 1"),
+      price: yup.number().required("Giá là bắt buộc"),
+    })
+  )
+  .required("items is required")
+  .min(1, "Vui lòng chọn ít nhất một sản phẩm muốn mua");
+
 export {
   loginParam,
   registerParam,
   becomeInstructorParam,
   courseValidationSchema,
   buyCoursesSchema,
+  createPaymentLinkSchema,
 };

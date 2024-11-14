@@ -25,19 +25,6 @@ onAuthStateChanged(authClient, async (user) => {
       .get();
     const role = doc.data().role;
     if (role === UserRole.Student) {
-      const snapshot = await firebaseAdmin
-        .firestore()
-        .collection("cart")
-        .doc(user.uid)
-        .get();
-      if (!snapshot.exists) {
-        await firebaseAdmin
-          .firestore()
-          .collection("cart")
-          .doc(user.uid)
-          .set({ courses: {}, total: 0 });
-      }
-
       const purchaseHistorySnapshot = await firebaseAdmin
         .firestore()
         .collection("purchaseHistory")
