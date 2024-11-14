@@ -21,6 +21,22 @@ class MyLearning {
     });
     return "Thêm khóa học mới thành cônng";
   }
+
+  async checkIsValidStudent(uid, courseId) {
+    const snapshot = await this.dbRef.doc(uid).get();
+    console.log(uid, courseId);
+    if (!snapshot.exists) {
+      return false;
+    }
+    const data = snapshot.data();
+    const courses = data.courses;
+    for (let course of courses) {
+      if (course.courseId === courseId) {
+        return true;
+      }
+    }
+    return false;
+  }
 }
 
 export default new MyLearning();

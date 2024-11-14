@@ -25,6 +25,11 @@ courseRouter
     authMiddleware.validateUser,
     authMiddleware.validateRoleInstructor,
     courseController.updateCourse
+  )
+  .get(
+    authMiddleware.validateUser,
+    authMiddleware.validateRoleInstructor,
+    courseController.getCourseById
   );
 
 courseRouter.put(
@@ -34,8 +39,12 @@ courseRouter.put(
   courseController.updateCourseStatus
 );
 
-courseRouter.get("/", courseController.getAllCourse, pagination);
+courseRouter.get(
+  "/:courseId",
+  authMiddleware.validateUser,
+  courseController.studentGetCourseById
+);
 
-courseRouter.get("/:id", courseController.getCourseById);
+courseRouter.get("/", courseController.getAllCourse, pagination);
 
 export default courseRouter;

@@ -77,6 +77,16 @@ class CourseController {
     req.results = courseData;
     next();
   });
+
+  studentGetCourseById = catchAsync(async (req, res, next) => {
+    const uid = req.uid;
+    const courseId = req.params.courseId;
+    const result = await courseServices.studentGetCourseById(uid, courseId);
+    res.status(200).json({
+      status: "Successfully",
+      message: result,
+    });
+  });
 }
 
 export default new CourseController();

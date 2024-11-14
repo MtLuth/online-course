@@ -1,5 +1,6 @@
 import Instructor from "../model/instructorModel.js";
 import Course from "../repository/courseRepo.js";
+import myLearningsRepo from "../repository/myLearningsRepo.js";
 import AppError from "../utils/appError.js";
 
 class CourseService {
@@ -71,6 +72,45 @@ class CourseService {
     } catch (error) {
       throw new AppError(error, 500);
     }
+  }
+
+  async studentGetCourseById(uid, courseId) {
+    try {
+      const courseRepo = new Course();
+      const course = await courseRepo.getCourseById(courseId);
+      let courseContent = course.content;
+      const isValidStudent = await myLearningsRepo.checkIsValidStudent(
+        uid,
+        courseId
+      );
+      delete course["content"];
+      let customContent = [];
+      if (!isValidStudent) {
+        for (let content of courseContent) {
+          const customLectures = this.customLectures(content.lectures);
+          customContent.push({
+            sectionTitle: content.sectionTitle,
+            lectures: customLectures,
+          });
+        }
+        courseContent = customContent;
+      }
+      return {
+        course: { ...course, content: courseContent },
+        isValidStudent,
+      };
+    } catch (error) {
+      console.log(error);
+      throw new AppError("Lỗi khi lấy thông tin khóa học!", 500);
+    }
+  }
+
+  customLectures(lectures) {
+    let results = [];
+    for (let lecture of lectures) {
+      results.push({ title: lecture.title });
+    }
+    return results;
   }
 }
 
