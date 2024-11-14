@@ -21,6 +21,8 @@ import NavMobile from "@/layouts/main/nav/mobile/NavMobile";
 import { useAppContext } from "@/context/AppContext";
 import { Avatar } from "@mui/material";
 import Profile from "@/components/profile/Profile";
+import Cart from "@/components/cart/Cart";
+
 
 type Props = {
   headerOnDark: boolean;
@@ -95,7 +97,12 @@ export default function Header({ headerOnDark }: Props) {
             </Button>
           </>
         )}
-        {sessionToken && <Profile />}
+        {sessionToken && (
+          <>
+            <Cart cartCount={2} />
+            <Profile />
+          </>
+        )}
       </Stack>
 
       {!mdUp && <NavMobile data={navConfig} />}
