@@ -1,5 +1,6 @@
 "use client";
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import {
     Box,
     Typography,
@@ -9,43 +10,100 @@ import {
     IconButton,
     TextField,
     Grid,
+    CircularProgress,
 } from "@mui/material";
 import Image from "next/image";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useRouter } from "next/navigation";
+import { useAppContext } from "@/context/AppContext";
 
 interface Course {
-    id: number;
-    name: string;
+    id: string;
+    title: string;
+    instructor: string;
+    level: string;
     price: number;
-    rating: number;
-    image: string;
+    createdAt: number;
 }
 
-const initialCourses: Course[] = [
-    {
-        id: 1,
-        name: "Complete Search Engine Optimisation (SEO) & ChatGPT Course",
-        price: 1249000,
-        rating: 4.5,
-        image: "/images/course1.jpg",
-    },
-    {
-        id: 2,
-        name: "AI Copywriting Secrets: Work Less & Earn More With ChatGPT",
-        price: 1499000,
-        rating: 4.7,
-        image: "/images/course2.jpg",
-    },
-];
+interface ApiResponse {
+    status: string;
+    message: {
+        courses: {
+            [key: string]: {
+                course: {
+                    title: string;
+                    instructor: string;
+                    level: string;
+                    price: number;
+                };
+                createdAt: number;
+            };
+        };
+        total: number;
+    };
+}
 
 export default function CartShopping() {
-    const [courses, setCourses] = useState<Course[]>(initialCourses);
-    const [selectedCourses, setSelectedCourses] = useState<number[]>(initialCourses.map((course) => course.id));
+    const { sessionToken } = useAppContext();
+    const [courses, setCourses] = useState<Course[]>([]);
+    const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
     const [coupon, setCoupon] = useState<string>("");
+    const [error, setError] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState<boolean>(true);
     const router = useRouter();
 
-    const handleSelectCourse = (courseId: number) => {
+
+
+    useEffect(() => {
+        const fetchCourses = async () => {
+            setIsLoading(true);
+            try {
+                if (!sessionToken) {
+                    setError("Vui lòng đăng nhập lại.");
+                    router.push("/login");
+                    return;
+                }
+
+                const response = await fetch("http://localhost:8080/api/v1/cart", {
+                    headers: {
+                        Authorization: `Bearer ${sessionToken}`,
+                        Accept: "application/json",
+                    },
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error("Lỗi khi tải dữ liệu giỏ hàng:", errorText);
+                    throw new Error("Lỗi khi tải dữ liệu giỏ hàng");
+                }
+
+                const data: ApiResponse = await response.json();
+
+                const coursesArray = Object.entries(data.message.courses).map(([id, courseData]) => ({
+                    id,
+                    title: courseData.course.title,
+                    instructor: courseData.course.instructor,
+                    level: courseData.course.level,
+                    price: courseData.course.price,
+                    createdAt: courseData.createdAt,
+                }));
+
+                setCourses(coursesArray);
+                setSelectedCourses(coursesArray.map((course) => course.id));
+                localStorage.setItem("cartCount", coursesArray.length.toString());
+            } catch (error) {
+                console.error("Error fetching courses:", error);
+                setError("Đã xảy ra lỗi. Vui lòng thử lại sau.");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchCourses();
+    }, [sessionToken, router]);
+
+    const handleSelectCourse = (courseId: string) => {
         setSelectedCourses((prevSelected) =>
             prevSelected.includes(courseId)
                 ? prevSelected.filter((id) => id !== courseId)
@@ -53,14 +111,42 @@ export default function CartShopping() {
         );
     };
 
-    const handleDeleteCourse = (courseId: number) => {
-        setCourses((prevCourses) =>
-            prevCourses.filter((course) => course.id !== courseId)
-        );
-        setSelectedCourses((prevSelected) =>
-            prevSelected.filter((id) => id !== courseId)
-        );
+    const handleDeleteCourse = async (courseId: string) => {
+        try {
+            const response = await fetch(`http://localhost:8080/api/v1/cart/${courseId}`, {
+                method: "DELETE",
+                headers: {
+                    Authorization: `Bearer ${sessionToken}`,
+                    Accept: "application/json",
+                },
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error("Lỗi khi xóa khóa học:", errorText);
+                setError("Không thể xóa khóa học. Vui lòng thử lại.");
+                return;
+            }
+
+            setCourses((prevCourses) => {
+                const updatedCourses = prevCourses.filter((course) => course.id !== courseId);
+
+                localStorage.setItem("cartCount", updatedCourses.length.toString());
+
+                return updatedCourses;
+            });
+
+            setSelectedCourses((prevSelected) =>
+                prevSelected.filter((id) => id !== courseId)
+            );
+
+            console.log("Khóa học đã được xóa thành công.");
+        } catch (error) {
+            console.error("Error deleting course:", error);
+            setError("Đã xảy ra lỗi khi xóa khóa học. Vui lòng thử lại sau.");
+        }
     };
+
 
     const total = courses
         .filter((course) => selectedCourses.includes(course.id))
@@ -87,7 +173,17 @@ export default function CartShopping() {
                 Shopping Cart
             </Typography>
 
-            {courses.length === 0 ? (
+            {error && (
+                <Typography variant="body1" color="error" sx={{ mt: 2 }}>
+                    {error}
+                </Typography>
+            )}
+
+            {isLoading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mt: 4 }}>
+                    <CircularProgress />
+                </Box>
+            ) : courses.length === 0 ? (
                 <Box
                     sx={{
                         textAlign: "center",
@@ -100,7 +196,8 @@ export default function CartShopping() {
                     }}
                 >
                     <Typography variant="body1" color="textSecondary" sx={{ mt: 2 }}>
-                        Giỏ hàng của bạn hiện chưa có khóa học nào. Hãy khám phá thêm để tìm khóa học phù hợp!"                    </Typography>
+                        Giỏ hàng của bạn hiện chưa có khóa học nào. Hãy khám phá thêm để tìm khóa học phù hợp!
+                    </Typography>
                     <Button
                         variant="contained"
                         color="primary"
@@ -133,15 +230,18 @@ export default function CartShopping() {
                                     onChange={() => handleSelectCourse(course.id)}
                                 />
                                 <Image
-                                    src={course.image}
-                                    alt={`Image of ${course.name}`}
+                                    src="/images/course-placeholder.jpg"
+                                    alt={`Image of ${course.title}`}
                                     width={80}
                                     height={80}
                                 />
                                 <Box sx={{ ml: 2, flexGrow: 1 }}>
-                                    <Typography variant="h6">{course.name}</Typography>
+                                    <Typography variant="h6">{course.title}</Typography>
                                     <Typography variant="body2" color="textSecondary">
-                                        Rating: {course.rating} ⭐
+                                        Instructor: {course.instructor}
+                                    </Typography>
+                                    <Typography variant="body2" color="textSecondary">
+                                        Level: {course.level}
                                     </Typography>
                                     <Typography variant="body2">Price: {course.price.toLocaleString()}₫</Typography>
                                 </Box>

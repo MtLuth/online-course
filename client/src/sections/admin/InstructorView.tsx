@@ -85,7 +85,7 @@ const InstructorInfoTable = () => {
       if (response.ok) {
         const data = await response.json();
         setInstructors(data.message.results ?? []);
-        setTotal(data.total ?? 10);
+        setTotal(data.message.itemCount ?? 10);
       } else {
         console.error("Failed to fetch data:", response.statusText);
       }
