@@ -24,7 +24,6 @@ class PurchaseHistory {
 
   async getAllPurchases(uid) {
     const snapshot = await this.dbRef.get();
-    console.log(uid);
     const purchases = snapshot.docs
       .filter((doc) => String(doc.data().uid) === uid)
       .map((doc) => doc.data());

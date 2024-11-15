@@ -18,6 +18,9 @@ class PurchaseService {
             courseId: course.id,
             title: course.title,
             price: course.price,
+            description: course.description,
+            thumbnail: course.thumbnail,
+            level: course.level,
           });
           total += course.price;
         } else {
