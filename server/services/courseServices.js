@@ -17,13 +17,14 @@ class CourseService {
     }
   }
 
-  async getAllCourseOfInstructor(uid, status, searchParam) {
+  async getAllCourseOfInstructor(uid, status, searchParam, category) {
     try {
       const courseModel = new Course();
       const results = await courseModel.getCourseOfInstructor(
         uid,
         status,
-        searchParam
+        searchParam,
+        category
       );
       return results;
     } catch (error) {
@@ -64,10 +65,24 @@ class CourseService {
     }
   }
 
-  async getAllCourse(searchParam, orderByPrice) {
+  async getAllCourse(uid, searchParam, orderByPrice, category) {
     try {
       const courseModel = new Course();
-      const results = await courseModel.getAllCourse(searchParam, orderByPrice);
+      const results = await courseModel.getAllCourse(
+        searchParam,
+        orderByPrice,
+        category
+      );
+      if (uid) {
+        const filteredResults = [];
+        for (const e of results) {
+          const isValid = await myLearningsRepo.checkIsValidStudent(uid, e.id);
+          if (!isValid) {
+            filteredResults.push(e);
+          }
+        }
+        return filteredResults;
+      }
       return results;
     } catch (error) {
       throw new AppError(error, 500);

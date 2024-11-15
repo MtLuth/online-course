@@ -1,6 +1,6 @@
 import firebaseAdmin from "../firebase/firebaseAdmin.js";
 
-class User {
+class UserRepo {
   constructor() {
     this.auth = firebaseAdmin.auth();
     this.dbRef = firebaseAdmin.firestore().collection("users");
@@ -14,8 +14,7 @@ class User {
       emailVerified: false,
       disabled: disable,
     });
-    const user = new User();
-    await this.dbRef.doc(accountRecord.uid).set();
+    await this.dbRef.doc(accountRecord.uid).set(user.toFirestore());
     return accountRecord.uid;
   }
 
@@ -55,3 +54,5 @@ class User {
     await dbRef.doc(uid).delete();
   }
 }
+
+export default new UserRepo();
