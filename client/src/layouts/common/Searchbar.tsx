@@ -10,7 +10,7 @@ import { Theme, alpha, styled, SxProps } from '@mui/material/styles';
 import Iconify from 'src/components/iconify';
 
 import { HEADER } from '../config-layout';
-import {useBoolean} from "@/hook/useBoolean";
+import { useBoolean } from "@/hook/useBoolean";
 
 const StyledSearchbar = styled('div')(({ theme }) => ({
   top: 0,

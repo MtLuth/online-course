@@ -149,6 +149,7 @@ class AuthService {
       const content = getEmailTemplateResetPassword(
         `http://localhost:3000/resetpassword/${resetToken.value}`
       );
+      console.log(resetToken);
       const mailDialup = mailOptions(email, "Reset Password", content);
       await sendEmail(mailDialup);
       return ErrorMessage.SendEmailPasswordSuccessfully;
@@ -156,7 +157,6 @@ class AuthService {
       if (error.code === "auth/user-not-found") {
         throw new AppError(ErrorMessage.EmailNotFound, 400);
       }
-      console.log(error);
       throw new AppError(`${ErrorMessage.Internal}: ${error}`, 500);
     }
   }
