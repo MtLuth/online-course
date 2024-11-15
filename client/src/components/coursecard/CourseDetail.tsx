@@ -28,7 +28,6 @@ interface CourseDetailProps {
 
 const CourseDetail: React.FC<CourseDetailProps> = ({ course }) => {
   const router = useRouter();
-
   const handleStartCourse = () => {
     router.push(`/course/${course.id}/player`);
   };

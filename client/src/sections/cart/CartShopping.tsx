@@ -16,6 +16,8 @@ import Image from "next/image";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useRouter } from "next/navigation";
 import { useAppContext } from "@/context/AppContext";
+import { useCart } from "@/context/CartContext";
+import { useToastNotification } from "@/hook/useToastNotification";
 
 interface Course {
   id: string;
@@ -53,6 +55,8 @@ export default function CartShopping() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const router = useRouter();
 
+  const { notifySuccess, notifyError } = useToastNotification();
+  const { setCartCount } = useCart();
   useEffect(() => {
     const fetchCourses = async () => {
       setIsLoading(true);
@@ -72,12 +76,11 @@ export default function CartShopping() {
 
         if (!response.ok) {
           const errorText = await response.text();
-          console.error("Lỗi khi tải dữ liệu giỏ hàng:", errorText);
+          notifyError("Lỗi khi tải dữ liệu giỏ hàng:" + errorText);
           throw new Error("Lỗi khi tải dữ liệu giỏ hàng");
         }
 
         const data: ApiResponse = await response.json();
-        console.log(data.message.courses);
         const coursesArray = Object.entries(data.message.courses).map(
           ([id, courseData]) => ({
             id,
@@ -93,7 +96,6 @@ export default function CartShopping() {
         setSelectedCourses(coursesArray.map((course) => course.id));
         localStorage.setItem("cartCount", coursesArray.length.toString());
       } catch (error) {
-        console.error("Error fetching courses:", error);
         setError("Đã xảy ra lỗi. Vui lòng thử lại sau.");
       } finally {
         setIsLoading(false);
@@ -126,17 +128,16 @@ export default function CartShopping() {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("Lỗi khi xóa khóa học:", errorText);
+        notifyError("Lỗi khi xóa khóa học:" + errorText);
         setError("Không thể xóa khóa học. Vui lòng thử lại.");
         return;
       }
-
       setCourses((prevCourses) => {
         const updatedCourses = prevCourses.filter(
           (course) => course.id !== courseId
         );
-
         localStorage.setItem("cartCount", updatedCourses.length.toString());
+        setCartCount(updatedCourses.length);
 
         return updatedCourses;
       });
@@ -145,9 +146,8 @@ export default function CartShopping() {
         prevSelected.filter((id) => id !== courseId)
       );
 
-      console.log("Khóa học đã được xóa thành công.");
+      notifySuccess("Khóa học đã được xóa thành công.");
     } catch (error) {
-      console.error("Error deleting course:", error);
       setError("Đã xảy ra lỗi khi xóa khóa học. Vui lòng thử lại sau.");
     }
   };

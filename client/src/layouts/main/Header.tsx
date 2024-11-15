@@ -22,6 +22,7 @@ import { useAppContext } from "@/context/AppContext";
 import { Avatar } from "@mui/material";
 import Profile from "@/components/profile/Profile";
 import Cart from "@/components/cart/Cart";
+import { useCart } from "@/context/CartContext";
 
 type Props = {
   headerOnDark: boolean;
@@ -29,19 +30,10 @@ type Props = {
 
 export default function Header({ headerOnDark }: Props) {
   const theme = useTheme();
+  const { cartCount } = useCart();
   const { sessionToken } = useAppContext();
   const offset = useOffSetTop();
   const mdUp = useResponsive("up", "md");
-
-
-  const [cartCount, setCartCount] = useState<number>(0);
-
-  useEffect(() => {
-    const count = localStorage.getItem("cartCount");
-    if (count) {
-      setCartCount(parseInt(count, 10));
-    }
-  }, []);
 
   const renderContent = (
     <>
@@ -103,7 +95,7 @@ export default function Header({ headerOnDark }: Props) {
           </>
         ) : (
           <>
-            <Cart cartCount={cartCount} setCartCount={setCartCount} />
+            <Cart cartCount={cartCount} />
             <Profile />
           </>
         )}

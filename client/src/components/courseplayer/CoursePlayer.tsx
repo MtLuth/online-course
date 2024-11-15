@@ -22,6 +22,7 @@ const CoursePlayer: React.FC<CoursePlayerProps> = ({
   currentLectureIndex,
   setCurrentLectureIndex,
 }) => {
+  console.log(course);
   const { section, lecture } = currentLectureIndex;
   const currentLecture = course.content[section]?.lectures[lecture];
 

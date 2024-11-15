@@ -23,7 +23,7 @@ const CoursePlayerPage: React.FC = () => {
       try {
         const response = await courseApi.getCourseDetail(id as string);
         if (response.status === "Successfully") {
-          setCourse(response.message);
+          setCourse(response.message.course);
         } else {
           setError(response.message || "Không thể tải chi tiết khóa học.");
         }
