@@ -26,7 +26,7 @@ class PurchaseHistory {
     const snapshot = await this.dbRef.get();
     const purchases = snapshot.docs
       .filter((doc) => String(doc.data().uid) === uid)
-      .map((doc) => doc.data());
+      .map((doc) => ({ code: doc.id, ...doc.data() }));
 
     return {
       prchases: purchases,
