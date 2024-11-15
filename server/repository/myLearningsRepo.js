@@ -47,7 +47,6 @@ class MyLearning {
     const courses = data.courses;
     for (let course of courses) {
       if (course.courseId === courseId) {
-        console.log(courseId, course.courseId);
         return true;
       }
     }

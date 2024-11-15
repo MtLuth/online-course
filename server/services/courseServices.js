@@ -71,18 +71,9 @@ class CourseService {
       const results = await courseModel.getAllCourse(
         searchParam,
         orderByPrice,
-        category
+        category,
+        uid
       );
-      if (uid) {
-        const filteredResults = [];
-        for (const e of results) {
-          const isValid = await myLearningsRepo.checkIsValidStudent(uid, e.id);
-          if (!isValid) {
-            filteredResults.push(e);
-          }
-        }
-        return filteredResults;
-      }
       return results;
     } catch (error) {
       throw new AppError(error, 500);
