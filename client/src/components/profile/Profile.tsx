@@ -16,6 +16,12 @@ import {
   Person as IconProfile,
   Assignment as IconTasks,
 } from "@mui/icons-material";
+import { IconListCheck, IconMail, IconUser } from "@tabler/icons-react";
+import { useRouter } from "next/navigation";
+import { authApi } from "@/server/Auth";
+import { useAppContext } from "@/context/AppContext";
+import { useToastNotification } from "@/hook/useToastNotification";
+
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState(null);
   const router = useRouter();
@@ -83,7 +89,7 @@ const Profile = () => {
             <ListItemText>Khóa học của tôi</ListItemText>
           </MenuItem>
         </Link>
-        <Link href="/dashboard/teacher" passHref>
+        <Link href="/dashboard/admin/teacher" passHref>
           <MenuItem component="a">
             <ListItemIcon>
               <IconDashboard fontSize="small" />
