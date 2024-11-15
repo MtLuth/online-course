@@ -25,13 +25,10 @@ class MyLearning {
   async addCourses(uid, newCourses) {
     const doc = await this.dbRef.doc(uid).get();
     const data = doc.data();
-    if (!data) {
-      return null;
-    }
-    let courses = data.courses;
+    let courses = data?.courses || [];
     courses = courses.concat(newCourses);
     const total = courses.length;
-    await this.dbRef.doc(uid).update({
+    await this.dbRef.doc(uid).set({
       courses: courses,
       total: total,
     });
