@@ -17,13 +17,14 @@ class CourseService {
     }
   }
 
-  async getAllCourseOfInstructor(uid, status, searchParam) {
+  async getAllCourseOfInstructor(uid, status, searchParam, category) {
     try {
       const courseModel = new Course();
       const results = await courseModel.getCourseOfInstructor(
         uid,
         status,
-        searchParam
+        searchParam,
+        category
       );
       return results;
     } catch (error) {
@@ -64,10 +65,14 @@ class CourseService {
     }
   }
 
-  async getAllCourse(searchParam, orderByPrice) {
+  async getAllCourse(searchParam, orderByPrice, category) {
     try {
       const courseModel = new Course();
-      const results = await courseModel.getAllCourse(searchParam, orderByPrice);
+      const results = await courseModel.getAllCourse(
+        searchParam,
+        orderByPrice,
+        category
+      );
       return results;
     } catch (error) {
       throw new AppError(error, 500);

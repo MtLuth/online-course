@@ -15,7 +15,7 @@ class Course {
     return courseRef.id;
   }
 
-  async getCourseOfInstructor(uid, status, searchParam) {
+  async getCourseOfInstructor(uid, status, searchParam, category) {
     const results = [];
     let query = this.courseCollection.where("instructor.uid", "==", uid);
     if (status && status !== "") {
@@ -35,14 +35,10 @@ class Course {
         data.description &&
         data.description.toLowerCase().includes(searchParam);
       const matchCategory =
-        data.category && data.category.toLowerCase().includes(searchParam);
-
+        (data.category && data.category === category) || !category;
       if (
-        matchTitle ||
-        matchLevel ||
-        matchDescription ||
-        matchCategory ||
-        !searchParam
+        (matchTitle || matchLevel || matchDescription || !searchParam) &&
+        matchCategory
       ) {
         results.push({
           id: doc.id,
@@ -105,7 +101,7 @@ class Course {
     return "Cập nhật khóa học thành công!";
   }
 
-  async getAllCourse(searchParam, orderByPrice) {
+  async getAllCourse(searchParam, orderByPrice, category) {
     const results = [];
     let query = this.courseCollection.where("isPublished", "==", true);
     if (orderByPrice && orderByPrice !== "") {
@@ -124,17 +120,15 @@ class Course {
       const matchDescription =
         data.description &&
         data.description.toLowerCase().includes(searchParam);
+      console.log(data.category);
       const matchCategory =
-        data.category && data.category.toLowerCase().includes(searchParam);
-
+        (data.category && data.category === category) ||
+        category === "" ||
+        !category;
       if (
-        matchTitle ||
-        matchLevel ||
-        matchDescription ||
-        matchCategory ||
-        !searchParam
+        (matchTitle || matchLevel || matchDescription || !searchParam) &&
+        matchCategory
       ) {
-        const content = doc.content;
         results.push({
           id: doc.id,
           title: data.title,

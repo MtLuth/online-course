@@ -25,10 +25,12 @@ class CourseController {
       req.query.isPublished
     );
     const searchParam = req.query.searchParam;
+    const category = req.query.category
     const courseData = await courseServices.getAllCourseOfInstructor(
       uid,
       isPublished,
-      searchParam
+      searchParam,
+      category
     );
     req.results = courseData;
     next();
@@ -66,13 +68,15 @@ class CourseController {
 
   getAllCourse = catchAsync(async (req, res, next) => {
     const searchParam = req.query.searchParam;
+    const category = req.query.category;
     const validateOrderbyPrice = yup.string().oneOf(["asc", "desc"]);
     const orderByPrice = await validateOrderbyPrice.validate(
       req.query.orderByPrice
     );
     const courseData = await courseServices.getAllCourse(
       searchParam,
-      orderByPrice
+      orderByPrice,
+      category
     );
     req.results = courseData;
     next();

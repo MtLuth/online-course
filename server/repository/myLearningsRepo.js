@@ -53,6 +53,14 @@ class MyLearning {
     }
     return false;
   }
+
+  async getAllCourses(uid) {
+    const doc = await this.dbRef.doc(uid).get();
+    if (!doc.exists) {
+      return null;
+    }
+    const data = doc.data();
+  }
 }
 
 export default new MyLearning();
