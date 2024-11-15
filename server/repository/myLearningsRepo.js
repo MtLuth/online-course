@@ -56,6 +56,7 @@ class MyLearning {
       return null;
     }
     const data = doc.data();
+    return data.courses;
   }
 }
 
