@@ -1,6 +1,9 @@
 import PayOs from "@payos/node";
 import AppError from "../utils/appError.js";
-import { error } from "console";
+import purchaseHistoryRepo, {
+  PurchaseStatus,
+} from "../repository/purchaseHistoryRepo.js";
+import myLearningsRepo from "../repository/myLearningsRepo.js";
 class PaymentService {
   constructor() {
     const clientId = "e6eed2dd-86ea-4758-b0ab-f49b28057aae";
@@ -36,16 +39,27 @@ class PaymentService {
     }
   }
 
-  async successPayment(id) {
+  async successPayment(statusCode, orderCode) {
     try {
-      const paymentLink = await this.payOs.getPaymentLinkInformation(id);
-      if (!paymentLink) {
-        throw new AppError(
-          `Lỗi khi tìm kiếm thông tin thanh toán: ${error}`,
-          500
+      if (statusCode === "00") {
+        await purchaseHistoryRepo.updateStatusPurchase(
+          String(orderCode),
+          PurchaseStatus.succeed
         );
+        const purchase = await purchaseHistoryRepo.getPurchaseByCode(
+          String(orderCode)
+        );
+        if (purchase === null) {
+          throw new AppError(`Không tìm thấy hóa đơn`, 400);
+        }
+        const uid = purchase.uid;
+        const sku = purchase.sku;
+        const message = await myLearningsRepo.addCourses(uid, sku);
+        return message;
       }
-    } catch (error) {}
+    } catch (error) {
+      throw new AppError(`Lỗi khi thêm khóa học: ${error}`);
+    }
   }
 }
 

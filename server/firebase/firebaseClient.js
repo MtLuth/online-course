@@ -25,19 +25,13 @@ onAuthStateChanged(authClient, async (user) => {
       .get();
     const role = doc.data().role;
     if (role === UserRole.Student) {
-      const purchaseHistorySnapshot = await firebaseAdmin
-        .firestore()
-        .collection("purchaseHistory")
-        .get();
-      if (!purchaseHistorySnapshot.exists) {
-        await firebaseAdmin
-          .firestore()
-          .collection("purchaseHistory")
-          .doc(user.uid)
-          .set({
-            purchase: [],
-            totalResults: 0,
-          });
+      const cartRef = firebaseAdmin.firestore().collection("cart");
+      const cartDoc = await cartRef.doc(user.uid).get();
+      if (!cartDoc.exists) {
+        await cartRef.doc(user.uid).set({
+          courses: [],
+          total: 0,
+        });
       }
     }
   }
