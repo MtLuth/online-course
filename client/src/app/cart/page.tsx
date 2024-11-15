@@ -5,5 +5,7 @@ export const metadata = {
 };
 
 export default function LoginBackgroundPage() {
-    return < CartShopping />;
+    return (
+        <CartShopping />
+    );
 }

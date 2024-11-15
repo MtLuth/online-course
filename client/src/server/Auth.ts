@@ -62,6 +62,15 @@ class Auth extends BaseApi {
       throw error;
     }
   }
+
+  public logout() {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("uid");
+    localStorage.removeItem("expirationTime");
+    Cookies.remove("accessToken");
+    Cookies.remove("expirationTime");
+    return true;
+  }
 }
 
 export const authApi = new Auth();

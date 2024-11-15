@@ -86,8 +86,8 @@ const InstructorInfoTable = () => {
             const response = await fetch(url);
             if (response.ok) {
                 const data = await response.json();
-                setInstructors(data.message ?? []);
-                setTotal(data.total ?? 10);
+                setInstructors(data.message.results ?? []);
+                setTotal(data.message.itemCount ?? 10);
             } else {
                 console.error("Failed to fetch data:", response.statusText);
             }
@@ -95,6 +95,8 @@ const InstructorInfoTable = () => {
             console.error("Error fetching instructors:", error);
         }
     };
+
+
 
     useEffect(() => {
         const timer = setTimeout(() => {

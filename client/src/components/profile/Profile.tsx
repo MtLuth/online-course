@@ -11,9 +11,16 @@ import {
   ListItemText,
 } from "@mui/material";
 import { IconListCheck, IconMail, IconUser } from "@tabler/icons-react";
+import { useRouter } from "next/navigation";
+import { authApi } from "@/server/Auth";
+import { useAppContext } from "@/context/AppContext";
+import { useToastNotification } from "@/hook/useToastNotification";
 
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState(null);
+  const router = useRouter();
+  const { setSessionToken } = useAppContext();
+  const { notifySuccess } = useToastNotification();
 
   const handleClick2 = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl2(event.currentTarget);
@@ -21,6 +28,13 @@ const Profile = () => {
 
   const handleClose2 = () => {
     setAnchorEl2(null);
+  };
+
+  const handleLogout = () => {
+    authApi.logout();
+    setSessionToken(null);
+    notifySuccess("Đã đăng xuất thành công!");
+    router.push("/login");
   };
 
   return (
@@ -83,10 +97,9 @@ const Profile = () => {
         </MenuItem>
         <Box mt={1} py={1} px={2}>
           <Button
-            href="/logout"
+            onClick={handleLogout}
             variant="outlined"
             color="primary"
-            component={Link}
             fullWidth
           >
             Logout
