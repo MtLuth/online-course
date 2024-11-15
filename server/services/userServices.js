@@ -16,6 +16,22 @@ class UserService {
       throw new AppError(error, 500);
     }
   }
+
+  async updateProfileById(uid, newData) {
+    try {
+      const validKey = ["displayName", "phoneNumber", "photoURL"];
+      const filteredData = Object.keys(newData).reduce((acc, key) => {
+        if (validKey.includes(key)) {
+          acc[key] = newData[key];
+        }
+        return acc;
+      }, {});
+      const message = await userRepo.updateAccount(uid, filteredData);
+      return message;
+    } catch (error) {
+      throw new AppError(`Không thể cập nhật thông tin: ${error}`, 500);
+    }
+  }
 }
 
 export default new UserService();

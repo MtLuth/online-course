@@ -15,6 +15,15 @@ class UserController {
       },
     });
   });
+  updateProfile = catchAsync(async (req, res, next) => {
+    const uid = req.uid;
+    const newData = req.body;
+    const message = await userServices.updateProfileById(uid, newData);
+    res.status(200).json({
+      status: "Successfully",
+      message: message,
+    });
+  });
 }
 
 export default new UserController();

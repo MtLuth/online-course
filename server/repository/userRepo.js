@@ -19,14 +19,9 @@ class UserRepo {
     return accountRecord.uid;
   }
 
-  async updateAccount(user) {
-    const newAccout = {
-      displayName: user.fullName,
-      phoneNumber: user.phoneNumber,
-      password: user.password,
-      photoURL: user.avt,
-    };
-    await auth.updateUser(this.uid, newAccout);
+  async updateAccount(uid, newData) {
+    await this.auth.updateUser(uid, { ...newData });
+    return "Cập nhật thông tin mới thành công!";
   }
 
   async getUserByUid(uid) {
