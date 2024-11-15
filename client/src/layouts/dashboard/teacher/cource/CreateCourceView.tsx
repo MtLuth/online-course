@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useMemo, useEffect } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   Box,
   Tabs,
@@ -41,9 +41,8 @@ import * as Yup from "yup";
 import Cookies from "js-cookie";
 import { courseApi } from "@/server/Cource";
 import { useRouter } from "next/navigation";
-import { GetServerSideProps } from "next"; // If using server-side rendering
+import { useToastNotification } from "@/hook/useToastNotification";
 
-// Extend CourseData to handle thumbnail as string or File
 interface LectureResource {
   title: string;
   fileUrl: string;
@@ -71,7 +70,7 @@ interface CourseData {
   price: number;
   language: string;
   level: string;
-  thumbnail: string | File | null; // Modified to handle both URL and File
+  thumbnail: string | File | null;
   requirements: string[];
   whatYouWillLearn: string[];
   content: ContentSection[];
@@ -692,6 +691,7 @@ const LectureItem: React.FC<LectureProps> = React.memo(
                     component="label"
                     startIcon={<VideoLibrary />}
                     sx={{ mr: 2 }}
+                    type="button" // Thêm type="button"
                   >
                     {lecture.videoUrl ? "Thay đổi Video" : "Tải Video"}
                     <input
@@ -832,6 +832,7 @@ const LectureItem: React.FC<LectureProps> = React.memo(
             startIcon={<Remove />}
             onClick={() => removeLecture(lectureIndex)}
             disabled={values.content[sectionIndex].lectures.length === 1}
+            type="button" // Thêm type="button"
           >
             Xóa Bài giảng
           </Button>
@@ -891,6 +892,7 @@ const ContentSectionComponent: React.FC<SectionProps> = React.memo(
             aria-label="remove section"
             onClick={() => removeSection(sectionIndex)}
             disabled={values.content.length === 1}
+            type="button" // Thêm type="button"
           >
             <Remove />
           </IconButton>
@@ -921,6 +923,7 @@ const ContentSectionComponent: React.FC<SectionProps> = React.memo(
                     resources: [],
                   })
                 }
+                type="button" // Thêm type="button"
               >
                 Thêm Bài giảng
               </Button>
@@ -966,6 +969,7 @@ const CourseContent: React.FC = React.memo(() => {
                   ],
                 })
               }
+              type="button" // Thêm type="button"
             >
               Thêm Phần
             </Button>
@@ -982,6 +986,7 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
   courseId,
 }) => {
   const router = useRouter();
+  const { notifySuccess, notifyError } = useToastNotification();
   const [existingThumbnailUrl, setExistingThumbnailUrl] = useState<
     string | undefined
   >(
@@ -1093,14 +1098,14 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
         }
 
         if (response.status === "Successfully") {
-          alert(
+          notifySuccess(
             isEditMode
               ? "Khóa học đã được cập nhật thành công!"
               : "Khóa học đã được tạo thành công!"
           );
           actions.resetForm();
           if (isEditMode && courseId) {
-            router.push(`/my-courses`); // Navigate back to My Courses
+            router.push(`/my-courses`); // Điều hướng về My Courses
           }
         } else {
           throw new Error(
@@ -1112,7 +1117,7 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
         }
       } catch (error: any) {
         console.error("Lỗi khi tạo/chỉnh sửa khóa học:", error);
-        alert(
+        notifyError(
           error.message ||
             "Có lỗi xảy ra khi tạo/chỉnh sửa khóa học. Vui lòng thử lại."
         );
@@ -1120,7 +1125,14 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
         actions.setSubmitting(false);
       }
     },
-    [isEditMode, courseId, existingThumbnailUrl, router]
+    [
+      isEditMode,
+      courseId,
+      existingThumbnailUrl,
+      router,
+      notifySuccess,
+      notifyError,
+    ]
   );
 
   const initialFormValues: CourseData = useMemo(
@@ -1281,11 +1293,16 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
                   variant="contained"
                   onClick={handlePrevious}
                   disabled={activeTab === 0}
+                  type="button"
                 >
                   Trước
                 </Button>
                 {activeTab < 2 ? (
-                  <Button variant="contained" onClick={handleNext}>
+                  <Button
+                    variant="contained"
+                    onClick={handleNext}
+                    type="button"
+                  >
                     Tiếp theo
                   </Button>
                 ) : (
@@ -1312,13 +1329,13 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
                   </Button>
                 )}
               </Box>
-              {/* Back to My Courses Button */}
               {isEditMode && (
                 <Box sx={{ mt: 2, textAlign: "right" }}>
                   <Button
                     variant="text"
                     color="secondary"
                     onClick={() => router.push("/my-courses")}
+                    type="button"
                   >
                     Quay lại My Courses
                   </Button>

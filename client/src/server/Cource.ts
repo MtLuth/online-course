@@ -1,5 +1,3 @@
-// server/Cource.ts
-
 import BaseApi from "./BaseApi";
 import { Course } from "@/model/Course.model";
 

@@ -89,12 +89,14 @@ const Profile = () => {
             <ListItemText>Hồ sơ cá nhân</ListItemText>
           </MenuItem>
         </Link>
-        <MenuItem>
-          <ListItemIcon>
-            <IconTasks fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Công việc của tôi</ListItemText>
-        </MenuItem>
+        <Link href="/history" passHref>
+          <MenuItem component="a">
+            <ListItemIcon>
+              <IconTasks fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Lịch sử mua hàng</ListItemText>
+          </MenuItem>
+        </Link>
         <Box mt={1} py={1} px={2}>
           <Button
             href="/logout"

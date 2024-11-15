@@ -24,7 +24,6 @@ const EditCoursePage: React.FC = () => {
         if (response.status === "Successfully" && response.message) {
           const courseDetail = response.message;
 
-          // Format dữ liệu nhận từ API thành CourseData
           const formattedCourse: CourseData = {
             title: courseDetail.title,
             description: courseDetail.description,
@@ -42,7 +41,7 @@ const EditCoursePage: React.FC = () => {
                 duration: lecture.duration,
                 type: lecture.type,
                 videoUrl: lecture.videoUrl,
-                videoFile: null, // Không tải tệp trong chế độ chỉnh sửa
+                videoFile: null,
                 description: lecture.description || "",
                 resources: lecture.resources || [],
               })),
