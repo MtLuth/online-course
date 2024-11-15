@@ -1,5 +1,6 @@
 import PayOs from "@payos/node";
 import AppError from "../utils/appError.js";
+import { error } from "console";
 class PaymentService {
   constructor() {
     const clientId = "e6eed2dd-86ea-4758-b0ab-f49b28057aae";
@@ -33,6 +34,18 @@ class PaymentService {
     } catch (error) {
       throw new AppError(error, 500);
     }
+  }
+
+  async successPayment(id) {
+    try {
+      const paymentLink = await this.payOs.getPaymentLinkInformation(id);
+      if (!paymentLink) {
+        throw new AppError(
+          `Lỗi khi tìm kiếm thông tin thanh toán: ${error}`,
+          500
+        );
+      }
+    } catch (error) {}
   }
 }
 

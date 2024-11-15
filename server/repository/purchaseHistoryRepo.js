@@ -1,9 +1,9 @@
 import firebaseAdmin from "../firebase/firebaseAdmin.js";
-import AppError from "../utils/appError.js";
 
 const PurchaseStatus = {
-  sold: "Đã mua",
+  succeed: "Thành công",
   refund: "Đã hoàn tiền",
+  pending: "Đang chờ thanh toán",
 };
 
 class PurchaseHistory {
@@ -11,31 +11,51 @@ class PurchaseHistory {
     this.dbRef = firebaseAdmin.firestore().collection("purchaseHistory");
   }
 
-  async createPurchase(uid, data) {
-    const doc = await this.dbRef.doc(uid).get();
-    let purchase = doc.data().purchase;
-    if (purchase) {
-      const id = `MKT_${uid}${Date.now()}`;
-      const history = {
-        code: id,
-        boughtAt: new Date(),
-        ...data,
-      };
-      purchase.push(history);
-      const total = purchase.length;
-      await this.dbRef.doc(uid).set({ purchase: purchase, total: total });
-      return "Tạo đơn hàng thành công";
-    }
-    throw new AppError("Lỗi truy cập lịch sử mua hàng!");
+  async createPurchase(uid, data, status) {
+    const id = String(Date.now()).slice(-6);
+    await this.dbRef.doc(id).set({
+      uid: uid,
+      ...data,
+      boughtAt: new Date(),
+      status,
+    });
+    return id;
   }
 
   async getAllPurchases(uid) {
-    const snapshot = await this.dbRef.doc(uid).get();
-    const data = snapshot.data();
+    const snapshot = await this.dbRef.get();
+    console.log(uid);
+    const purchases = snapshot.docs
+      .filter((doc) => String(doc.data().uid) === uid)
+      .map((doc) => doc.data());
+
     return {
-      ...data,
+      prchases: purchases,
     };
+  }
+
+  async deletePurchase(code) {
+    await this.dbRef.doc(code).delete();
+    return "Đã xóa đơn hàng!";
+  }
+
+  async updateStatusPurchase(code, status) {
+    await this.dbRef.doc(code).update({ status: status });
+    return "Cập nhật mới thành công!";
+  }
+
+  async getPurchaseByCode(code) {
+    const doc = await this.dbRef.doc(code).get();
+    const data = doc.data();
+    if (doc) {
+      return {
+        code: doc.id,
+        ...data,
+      };
+    }
+    return null;
   }
 }
 
 export default new PurchaseHistory();
+export { PurchaseStatus };
