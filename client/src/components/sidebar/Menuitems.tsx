@@ -25,6 +25,27 @@ const Menuitems = [
     icon: IconCopy,
     href: "/dashboard/teacher/create-cource/",
   },
+  {
+    navlabel: true,
+    subheader: "Quản Lý",
+  },
+
+  {
+    id: uniqueId(),
+    title: "Xét Duyệt Chuyên Gia",
+    icon: IconCopy,
+    href: "/dashboard/admin/teacher/",
+  },
+  {
+    navlabel: true,
+    subheader: "Quản Lý Website",
+  },
+  {
+    id: uniqueId(),
+    title: "Danh Sách Danh Mục",
+    icon: IconCopy,
+    href: "/dashboard/admin/categories/",
+  },
 ];
 
 export default Menuitems;

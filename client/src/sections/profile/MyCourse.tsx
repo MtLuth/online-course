@@ -48,7 +48,7 @@ const MyCourses: React.FC<MyCoursesProps> = ({ searchParams }) => {
 
   useEffect(() => {
     const fetchMyCourses = async () => {
-      const token = getAuthToken(); // Implement this function to retrieve the auth token
+      const token = getAuthToken();
 
       if (!token) {
         console.error("User not authenticated.");

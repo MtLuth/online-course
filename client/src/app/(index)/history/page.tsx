@@ -81,7 +81,7 @@ const HistoryPage: React.FC = () => {
         console.log("API Response:", response);
 
         if (response.status === "Successfully") {
-          setHistory(response.message.purchase);
+          setHistory(response.message.prchases);
         } else {
           throw new Error(
             typeof response.message === "string"
