@@ -1,4 +1,5 @@
 import Course from "../repository/courseRepo.js";
+import myLearningsRepo from "../repository/myLearningsRepo.js";
 import purchaseHistoryRepo from "../repository/purchaseHistoryRepo.js";
 import AppError from "../utils/appError.js";
 
@@ -7,6 +8,7 @@ class PurchaseService {
     try {
       let bill;
       let allProducts = [];
+      let myLearnings = [];
       let total = 0;
       const courseRepo = new Course();
       for (const id of products) {
@@ -17,19 +19,26 @@ class PurchaseService {
             title: course.title,
             price: course.price,
           });
+          myLearnings.push({
+            courseId: course.id,
+            title: course.title,
+            thumbnail: course.thumbnail,
+          });
           total += course.price;
         } else {
           throw new AppError(`Khóa học ${course.title} hiện đã ngưng bán!`);
         }
       }
-
       bill = {
         sku: allProducts,
         total: total,
       };
+      const [addMyLearnings, message] = await Promise.all([
+        myLearningsRepo.createMyLearnings(uid, myLearnings),
+        purchaseHistoryRepo.createPurchase(uid, bill),
+      ]);
 
-      const message = await purchaseHistoryRepo.createPurchase(uid, bill);
-      return message;
+      return { addMyLearnings, message };
     } catch (error) {
       throw new AppError(`Lỗi khi tạo đơn hàng ${error}`, 500);
     }

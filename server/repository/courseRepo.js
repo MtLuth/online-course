@@ -95,7 +95,7 @@ class Course {
       ...doc.data(),
     };
     Object.entries(newValues).forEach(([key, value]) => {
-      if (!course[key]) {
+      if (!course.hasOwnProperty(key)) {
         delete newValues[key];
       }
     });

@@ -13,6 +13,8 @@ import instructorRouter from "../routes/instructorRoutes.js";
 import paginate from "express-paginate";
 import cartRouter from "../routes/cartRoutes.js";
 import purchaseRouter from "../routes/purchaseRoutes.js";
+import paymentRoutes from "../routes/paymentRoutes.js";
+import categoryRouter from "../routes/categoryRoutes.js";
 
 dotenv.config("./../config.env");
 
@@ -40,6 +42,8 @@ app.use(`${apiUrlGroup}/course`, courseRouter);
 app.use(`${apiUrlGroup}/instructor`, instructorRouter);
 app.use(`${apiUrlGroup}/cart`, cartRouter);
 app.use(`${apiUrlGroup}/purchase`, purchaseRouter);
+app.use(`${apiUrlGroup}/payment`, paymentRoutes);
+app.use(`${apiUrlGroup}/category`, categoryRouter);
 
 app.all("*", (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
