@@ -1,4 +1,5 @@
 import firebaseAdmin from "../firebase/firebaseAdmin.js";
+import User from "../model/userModel.js";
 
 class UserRepo {
   constructor() {
@@ -18,25 +19,24 @@ class UserRepo {
     return accountRecord.uid;
   }
 
-  async updateAccount() {
+  async updateAccount(user) {
     const newAccout = {
-      displayName: this.fullName,
-      phoneNumber: this.phoneNumber,
-      password: this.password,
-      photoURL: this.avt,
+      displayName: user.fullName,
+      phoneNumber: user.phoneNumber,
+      password: user.password,
+      photoURL: user.avt,
     };
     await auth.updateUser(this.uid, newAccout);
   }
 
-  static async getUserByUid(uid) {
-    console.log(uid);
-    const credential = await firebaseAdmin.auth().getUser(uid);
-    const dbRef = firebaseAdmin.firestore().collection("users");
-    const snapshot = await dbRef.doc(uid).get();
+  async getUserByUid(uid) {
+    const credential = await this.auth.getUser(uid);
+    const snapshot = await this.dbRef.doc(uid).get();
     const user = snapshot.data();
+    console.log(credential);
     return new User(
       credential.uid,
-      credential.fullName,
+      credential.displayName,
       credential.email,
       null,
       credential.phoneNumber,
@@ -45,13 +45,13 @@ class UserRepo {
     );
   }
 
-  static async getRoleById(uid) {
-    const snapshot = await dbRef.doc(uid).get();
+  async getRoleById(uid) {
+    const snapshot = await this.dbRef.doc(uid).get();
     return snapshot.data().role;
   }
 
-  static async deleteUserById(uid) {
-    await dbRef.doc(uid).delete();
+  async deleteUserById(uid) {
+    await this.dbRef.doc(uid).delete();
   }
 }
 

@@ -9,6 +9,9 @@ class UserController {
       status: "Successfully",
       message: {
         email: user.email,
+        fullName: user.fullName,
+        phoneNumber: user.phoneNumber,
+        avt: user.avt,
       },
     });
   });
