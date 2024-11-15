@@ -92,7 +92,7 @@ export const paths = {
   },
   pages: "/pages",
   docs: "http://localhost:3000",
-  instructor: "/become-instructor",
+  instructor: "/become-instructor/intro",
   license: "https://material-ui.com/store/license/#i-standard-license",
   minimalStore: "https://material-ui.com/store/items/minimal-dashboard",
   zoneStore: "https://mui.com/store/items/zone-landing-page/",
