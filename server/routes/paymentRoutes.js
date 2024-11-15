@@ -12,4 +12,6 @@ paymentRoutes.post(
 
 paymentRoutes.post("/call-back", paymentController.callbackUrl);
 
+paymentRoutes.get("/cancel", paymentController.cancelPayment);
+
 export default paymentRoutes;
