@@ -40,7 +40,6 @@ class MyLearning {
 
   async checkIsValidStudent(uid, courseId) {
     const snapshot = await this.dbRef.doc(uid).get();
-    console.log(uid, courseId);
     if (!snapshot.exists) {
       return false;
     }
@@ -48,6 +47,7 @@ class MyLearning {
     const courses = data.courses;
     for (let course of courses) {
       if (course.courseId === courseId) {
+        console.log(courseId, course.courseId);
         return true;
       }
     }

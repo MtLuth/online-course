@@ -2,8 +2,8 @@ import { initializeApp } from "firebase/app";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
-import firebaseAdmin from "./firebaseAdmin.js";
 import { UserRole } from "../model/userModel.js";
+import firebaseAdmin from "./firebaseAdmin.js";
 const firebaseConfig = {
   apiKey: "AIzaSyBEBlr6455VMMBKkEmGHB0c0SN-wbBfZk4",
   authDomain: "journalapp-bb379.firebaseapp.com",
@@ -29,7 +29,7 @@ onAuthStateChanged(authClient, async (user) => {
       const cartDoc = await cartRef.doc(user.uid).get();
       if (!cartDoc.exists) {
         await cartRef.doc(user.uid).set({
-          courses: [],
+          courses: {},
           total: 0,
         });
       }

@@ -120,7 +120,6 @@ class Course {
       const matchDescription =
         data.description &&
         data.description.toLowerCase().includes(searchParam);
-      console.log(data.category);
       const matchCategory =
         (data.category && data.category === category) ||
         category === "" ||
