@@ -12,6 +12,7 @@ class Course {
     const courseRef = await this.courseCollection.add({
       instructor: { ...instructor },
       ...courseData,
+      sale: null,
     });
     return courseRef.id;
   }
@@ -111,6 +112,11 @@ class Course {
     const querySnapshot = await query.get();
     const promises = querySnapshot.docs.map(async (doc) => {
       const data = doc.data();
+      let salePrice = data.price;
+      if (data.sale) {
+        salePrice = (1 - data.sale) * data.price;
+      }
+
       if (searchParam && searchParam !== "") {
         searchParam = searchParam.toLowerCase();
       }
@@ -146,6 +152,7 @@ class Course {
           isPublished: data.isPublished,
           thumbnail: data.thumbnail,
           isMyLearning: isValid,
+          salePrice: salePrice,
         };
       }
 
