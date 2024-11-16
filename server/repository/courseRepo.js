@@ -1,10 +1,11 @@
 import firebaseAdmin from "../firebase/firebaseAdmin.js";
+import AppError from "../utils/appError.js";
 import myLearningsRepo from "./myLearningsRepo.js";
 import userRepo from "./userRepo.js";
 
 const firestore = firebaseAdmin.firestore();
 
-class Course {
+class CourseRepo {
   constructor() {
     this.dbRef = firestore.collection("courses");
   }
@@ -148,6 +149,13 @@ class Course {
         category === "" ||
         !category;
 
+      let score = 0;
+      const rating = data.rating;
+      if (rating.length > 0) {
+        const totalScore = rating.reduce((sum, item) => sum + item.score, 0);
+        score = totalScore / rating.length;
+      }
+
       if (
         (matchTitle || matchLevel || matchDescription || !searchParam) &&
         matchCategory
@@ -166,6 +174,7 @@ class Course {
           sale: data.sale,
           rating: data.rating,
           enrollment: data.enrollment,
+          ratingScore: score,
         };
       }
 
@@ -183,5 +192,40 @@ class Course {
       enrollment: enrollment,
     });
   }
+
+  async studentRating(courseId, ratingInformation) {
+    const doc = await this.dbRef.doc(courseId).get();
+    if (!doc.exists) {
+      return null;
+    }
+    const data = doc.data();
+    const uid = ratingInformation.uid;
+    const score = ratingInformation.score;
+    const content = ratingInformation.content;
+    const firebaseAuth = firebaseAdmin.auth();
+    const userCredential = await firebaseAuth.getUser(uid);
+    let rating = data.rating;
+
+    const hasRated = rating.some(
+      (item) => item.user.uid === ratingInformation.uid
+    );
+    if (hasRated) {
+      throw new AppError("Bạn đã đánh giá khóa học này rồi!");
+    }
+
+    rating.push({
+      user: {
+        uid: uid,
+        fullName: userCredential.displayName,
+        avt: userCredential.photoURL,
+        email: userCredential.email,
+      },
+      score: score,
+      content: content,
+    });
+    await this.dbRef.doc(courseId).update({
+      rating: rating,
+    });
+  }
 }
-export default Course;
+export default new CourseRepo();

@@ -4,7 +4,7 @@ import purchaseHistoryRepo, {
   PurchaseStatus,
 } from "../repository/purchaseHistoryRepo.js";
 import myLearningsRepo from "../repository/myLearningsRepo.js";
-import Course from "../repository/courseRepo.js";
+import courseRepo from "../repository/courseRepo.js";
 class PaymentService {
   constructor() {
     const clientId = "e6eed2dd-86ea-4758-b0ab-f49b28057aae";
@@ -55,7 +55,6 @@ class PaymentService {
         }
         const uid = purchase.uid;
         const sku = purchase.sku;
-        const courseRepo = new Course();
         await Promise.all(
           sku.map((course) =>
             courseRepo.increaseEnrollment(course.courseId).catch((err) => {
