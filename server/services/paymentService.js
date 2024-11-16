@@ -56,10 +56,14 @@ class PaymentService {
         const uid = purchase.uid;
         const sku = purchase.sku;
         const courseRepo = new Course();
-        const { message } = await Promise.all([
-          myLearningsRepo.addCourses(uid, sku),
-          // courseRepo.addEnrollment(),
-        ]);
+        await Promise.all(
+          sku.map((course) =>
+            courseRepo.increaseEnrollment(course.courseId).catch((err) => {
+              throw new AppError(`Error in courseId ${course.courseId}:`, err);
+            })
+          )
+        );
+        const message = await myLearningsRepo.addCourses(uid, sku);
         return message;
       }
     } catch (error) {

@@ -219,7 +219,9 @@ class AuthService {
       await sendEmail(mailDialup);
       return "Thành công!";
     } catch (error) {
-      console.log(error);
+      if (error.code === "auth/user-not-found") {
+        throw new AppError("Không tìm thấy tài khoản này trên hệ thống!", 500);
+      }
       throw new AppError(error, 500);
     }
   }

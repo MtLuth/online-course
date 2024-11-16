@@ -14,7 +14,7 @@ class Course {
       instructor: { ...instructor },
       ...courseData,
       sale: 0,
-      enrollment: [],
+      enrollment: 0,
       reviews: [],
       rating: [],
     });
@@ -86,6 +86,10 @@ class Course {
       description: data.description,
       title: data.title,
       isPublished: data.isPublished,
+      enrollment: data.enrollment,
+      sale: data.sale,
+      salePrice: (1 - data.sale) * data.price,
+      rating,
     };
   }
 
@@ -159,6 +163,9 @@ class Course {
           thumbnail: data.thumbnail,
           isMyLearning: isValid,
           salePrice: salePrice,
+          sale: data.sale,
+          rating: data.rating,
+          enrollment: data.enrollment,
         };
       }
 
@@ -167,19 +174,14 @@ class Course {
     return await Promise.all(promises);
   }
 
-  async addEnrollment(courseId, uid) {
-    const student = await userRepo.getUserByUid(uid);
-    if (!student) {
-      return null;
-    }
-    const doc = await this.dbRef.doc(courseId).get();
-    const course = doc.data();
-    let enrollment = course.enrollment;
-    enrollment.push({
-      uid: uid,
-      ...student,
+  async increaseEnrollment(uid) {
+    const doc = await this.dbRef.doc(uid).get();
+    const data = doc.data();
+    let enrollment = data.enrollment;
+    enrollment = enrollment + 1;
+    await this.dbRef.doc(uid).update({
+      enrollment: enrollment,
     });
-    await this.dbRef.doc(courseId).update({ enrollment: enrollment });
   }
 }
 export default Course;

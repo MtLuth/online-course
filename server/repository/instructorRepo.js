@@ -1,4 +1,4 @@
-import firebaseAdmin from "../firebase/firebaseAdmin";
+import firebaseAdmin from "../firebase/firebaseAdmin.js";
 
 class InstructorRepo {
   constructor() {
@@ -24,12 +24,6 @@ class InstructorRepo {
     const snapshot = await query.get();
     return snapshot;
   }
-
-   async addInstructor(instructor) {
-     await this.dbRef.doc(instructor.uid).set({
-        fullName: 
-     })
-   }
 }
 
 export default new InstructorRepo();
