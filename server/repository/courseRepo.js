@@ -1,4 +1,5 @@
 import firebaseAdmin from "../firebase/firebaseAdmin.js";
+import myLearningsRepo from "./myLearningsRepo.js";
 
 const firestore = firebaseAdmin.firestore();
 
@@ -11,6 +12,7 @@ class Course {
     const courseRef = await this.courseCollection.add({
       instructor: { ...instructor },
       ...courseData,
+      sale: null,
     });
     return courseRef.id;
   }
@@ -101,18 +103,29 @@ class Course {
     return "Cập nhật khóa học thành công!";
   }
 
-  async getAllCourse(searchParam, orderByPrice, category) {
+  async getAllCourse(searchParam, orderByPrice, category, uid) {
     const results = [];
     let query = this.courseCollection.where("isPublished", "==", true);
     if (orderByPrice && orderByPrice !== "") {
       query = query.orderBy("price", orderByPrice);
     }
     const querySnapshot = await query.get();
-    querySnapshot.forEach((doc) => {
+    const promises = querySnapshot.docs.map(async (doc) => {
       const data = doc.data();
+      let salePrice = data.price;
+      if (data.sale) {
+        salePrice = (1 - data.sale) * data.price;
+      }
+
       if (searchParam && searchParam !== "") {
         searchParam = searchParam.toLowerCase();
       }
+
+      let isValid = false;
+      if (uid) {
+        isValid = await myLearningsRepo.checkIsValidStudent(uid, doc.id);
+      }
+
       const matchTitle =
         data.title && data.title.toLowerCase().includes(searchParam);
       const matchLevel =
@@ -124,11 +137,12 @@ class Course {
         (data.category && data.category === category) ||
         category === "" ||
         !category;
+
       if (
         (matchTitle || matchLevel || matchDescription || !searchParam) &&
         matchCategory
       ) {
-        results.push({
+        return {
           id: doc.id,
           title: data.title,
           price: data.price,
@@ -137,10 +151,14 @@ class Course {
           level: data.level,
           isPublished: data.isPublished,
           thumbnail: data.thumbnail,
-        });
+          isMyLearning: isValid,
+          salePrice: salePrice,
+        };
       }
+
+      return results;
     });
-    return results;
+    return await Promise.all(promises);
   }
 }
 export default Course;
