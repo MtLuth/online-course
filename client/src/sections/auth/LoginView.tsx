@@ -61,6 +61,7 @@ export default function LoginView() {
         if (response.status === "success") {
           notifySuccess("Đăng nhập thành công!");
           setSessionToken(response.message.tokenPairs.accessToken);
+          localStorage.setItem("role", response.message.role);
           reset();
           router.push("/");
         }

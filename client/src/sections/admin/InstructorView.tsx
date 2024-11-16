@@ -10,26 +10,21 @@ import {
   IconButton,
   TablePagination,
   Paper,
-  Menu,
-  MenuItem,
   FormControl,
   InputLabel,
   Select,
   SelectChangeEvent,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   TextField,
-  Button,
-  DialogContentText,
   Typography,
+  MenuItem,
 } from "@mui/material";
-import { MoreVert, Search, Close } from "@mui/icons-material";
+import { Visibility, Search, Close } from "@mui/icons-material";
 import BaseCard from "@/components/shared/DashboardCard";
+import DetailInstructor from "@/sections/admin/DetailInstructors";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 type Instructor = {
+  uid: string;
   avt: string;
   fullName: string;
   email: string;
@@ -46,22 +41,21 @@ const InstructorInfoTable = () => {
   const [total, setTotal] = useState(0);
   const [filterStatus, setFilterStatus] = useState("all");
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedInstructor, setSelectedInstructor] =
-    useState<Instructor | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [showSearch, setShowSearch] = useState(false);
-  const [rejectionReason, setRejectionReason] = useState("");
-  const [openDialog, setOpenDialog] = useState(false);
-  const [isRejecting, setIsRejecting] = useState(false);
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
+  const [selectedInstructorDetail, setSelectedInstructorDetail] =
+    useState<Instructor | null>(null);
+  const [openDetailDialog, setOpenDetailDialog] = useState(false);
 
   const { replace } = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+
   useEffect(() => {
-    const initialPage = Number(searchParams.get("page")) || 1;
-    const initialLimit = Number(searchParams.get("limit")) || 5;
+    const initialPage = Number(searchParams.get('page')) || 1;
+    const initialLimit = Number(searchParams.get('limit')) || 5;
     setPage(initialPage);
     setLimit(initialLimit);
   }, [searchParams]);
@@ -69,23 +63,24 @@ const InstructorInfoTable = () => {
   const fetchInstructors = async () => {
     try {
       const queryParams = new URLSearchParams();
-      queryParams.set("page", page.toString());
-      queryParams.set("limit", limit.toString());
+      queryParams.set('page', page.toString());
+      queryParams.set('limit', limit.toString());
       if (filterStatus !== "all") {
-        queryParams.set("status", filterStatus);
+        queryParams.set('status', filterStatus);
       }
       if (debouncedSearchTerm.trim()) {
-        queryParams.set("searchParam", debouncedSearchTerm);
+        queryParams.set('searchParam', debouncedSearchTerm);
       }
-
       const url = `http://localhost:8080/api/v1/instructor?${queryParams.toString()}`;
-      console.log("Fetch URL:", url);
-
       const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
-        setInstructors(data.message.results ?? []);
-        setTotal(data.message.itemCount ?? 10);
+        const instructorsWithUid = data.message.results.map((instr: any) => ({
+          uid: instr.id,
+          ...instr,
+        }));
+        setInstructors(instructorsWithUid);
+        setTotal(data.message.itemCount ?? 0);
       } else {
         console.error("Failed to fetch data:", response.statusText);
       }
@@ -95,6 +90,10 @@ const InstructorInfoTable = () => {
   };
 
   useEffect(() => {
+    fetchInstructors();
+  }, [page, limit, filterStatus, debouncedSearchTerm]);
+
+  useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
     }, 300);
@@ -102,92 +101,77 @@ const InstructorInfoTable = () => {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  useEffect(() => {
-    fetchInstructors();
-  }, [page, limit, filterStatus, debouncedSearchTerm]);
-
-  const handleChangePage = (
-    event: React.MouseEvent<HTMLButtonElement> | null,
-    newPage: number
-  ) => {
+  // Xử lý chuyển trang
+  const handleChangePage = (event: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
     setPage(newPage + 1);
     const params = new URLSearchParams(searchParams.toString());
-    params.set("page", (newPage + 1).toString());
+    params.set('page', (newPage + 1).toString());
     replace(`${pathname}?${params.toString()}`);
   };
 
-  const handleChangeRowsPerPage = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  // Xử lý thay đổi số dòng trên mỗi trang
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const newLimit = parseInt(event.target.value, 10);
     setLimit(newLimit);
     setPage(1);
 
     const params = new URLSearchParams(searchParams.toString());
-    params.set("limit", newLimit.toString());
-    params.set("page", "1");
+    params.set('limit', newLimit.toString());
+    params.set('page', '1');
     replace(`${pathname}?${params.toString()}`);
   };
 
+  // Xử lý tìm kiếm
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
+  };
+
+  // Xử lý lọc trạng thái
   const handleFilterChange = (event: SelectChangeEvent) => {
     setFilterStatus(event.target.value as string);
     setPage(1);
   };
 
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value);
+  // Xem chi tiết giảng viên
+  const handleViewDetails = (instructor: Instructor) => {
+    setSelectedInstructorDetail(instructor);
+    setOpenDetailDialog(true);
   };
 
-  const handleMenuOpen = (
-    event: React.MouseEvent<HTMLElement>,
-    instructor: Instructor
-  ) => {
-    setAnchorEl(event.currentTarget);
-    setSelectedInstructor(instructor);
+  const handleCloseDetailDialog = () => {
+    setOpenDetailDialog(false);
+    setSelectedInstructorDetail(null);
   };
 
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-    setSelectedInstructor(null);
-  };
-
-  const handleOpenDialog = () => {
-    setOpenDialog(true);
-  };
-
-  const handleActionClick = (action: "Duyệt đơn" | "Từ chối") => {
-    if (action === "Duyệt đơn") {
-      setIsRejecting(false);
-      handleOpenDialog();
-    } else if (action === "Từ chối") {
-      setIsRejecting(true);
-      handleOpenDialog();
-    }
-  };
-
-  const handleDialogClose = (decision: "Đồng ý" | "Từ chối") => {
-    if (decision === "Đồng ý") {
-    } else if (decision === "Từ chối" && !rejectionReason.trim()) {
-      alert("Vui lòng nhập lý do từ chối.");
-      return;
-    }
-    setOpenDialog(false);
-    setRejectionReason("");
-  };
-
-  const getStatusColor = (status: string) => {
-    return status === "active" ? "#6fbf73" : "#ff9800";
+  // Cập nhật trạng thái sau khi duyệt hoặc từ chối
+  const handleUpdate = (uid: string, newStatus: string) => {
+    setInstructors((prevInstructors) =>
+      prevInstructors.map((instr) =>
+        instr.uid === uid ? { ...instr, status: newStatus } : instr
+      )
+    );
+    setOpenDetailDialog(false);
+    setSelectedInstructorDetail(null);
   };
 
   return (
-    <BaseCard title="Danh sách Giảng viên">
+    <BaseCard>
       <>
-        <Box
-          mb={2}
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-        >
+        <Box sx={{ textAlign: 'center', py: 2 }}>
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: 'bold',
+              fontSize: '24px',
+              color: '#2c3e50',
+              textTransform: 'uppercase',
+              letterSpacing: '1px',
+            }}
+          >
+            Danh sách Giảng viên
+          </Typography>
+        </Box>
+        <Box mb={2} display="flex" justifyContent="space-between" alignItems="center">
           {showSearch ? (
             <TextField
               label="Tìm kiếm"
@@ -195,16 +179,10 @@ const InstructorInfoTable = () => {
               value={searchTerm}
               onChange={handleSearchChange}
               placeholder="Tìm theo tên"
-              sx={{ width: "60%" }}
+              sx={{ width: '60%' }}
               InputProps={{
                 endAdornment: (
-                  <IconButton
-                    onClick={() => {
-                      setShowSearch(false);
-                      setSearchTerm("");
-                      setPage(1);
-                    }}
-                  >
+                  <IconButton onClick={() => { setShowSearch(false); setSearchTerm(""); setPage(1); }}>
                     <Close />
                   </IconButton>
                 ),
@@ -220,25 +198,15 @@ const InstructorInfoTable = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell align="center">Ảnh đại diện</TableCell>
                 <TableCell>Họ và tên</TableCell>
                 <TableCell>Email</TableCell>
                 <TableCell>Chuyên môn</TableCell>
-                <TableCell align="right">Kinh nghiệm</TableCell>
-                <TableCell>Trình độ học vấn</TableCell>
+                <TableCell>Học vấn</TableCell>
                 <TableCell align="right">
-                  <FormControl
-                    variant="outlined"
-                    size="small"
-                    sx={{ minWidth: 120 }}
-                  >
-                    <InputLabel>Tình trạng</InputLabel>
-                    <Select
-                      value={filterStatus}
-                      onChange={handleFilterChange}
-                      label="Tình trạng"
-                    >
-                      <MenuItem value="all">Tất cả</MenuItem>
+                  <FormControl variant="outlined" size="small" sx={{ minWidth: 120 }}>
+                    <InputLabel>Status</InputLabel>
+                    <Select value={filterStatus} onChange={handleFilterChange} label="Status">
+                      <MenuItem value="all">All</MenuItem>
                       <MenuItem value="active">Hoạt động</MenuItem>
                       <MenuItem value="pending">Chờ duyệt</MenuItem>
                     </Select>
@@ -248,49 +216,30 @@ const InstructorInfoTable = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {instructors.map((instr, index) => (
-                <TableRow key={index}>
-                  <TableCell align="center">
-                    <img
-                      src={instr.avt}
-                      alt="avatar"
-                      width="40"
-                      height="40"
-                      style={{ borderRadius: "50%" }}
-                    />
-                  </TableCell>
+              {instructors.map((instr) => (
+                <TableRow key={instr.uid}>
                   <TableCell>{instr.fullName}</TableCell>
                   <TableCell>{instr.email}</TableCell>
                   <TableCell>{instr.expertise}</TableCell>
-                  <TableCell align="right">{instr.experience}</TableCell>
                   <TableCell>{instr.education}</TableCell>
                   <TableCell align="center">
                     <Typography
                       variant="body2"
                       sx={{
-                        color: getStatusColor(instr.status),
+                        color: instr.status === "active" ? "#6fbf73" : "#ff9800",
                         fontWeight: "bold",
                       }}
                     >
-                      {instr.status}
+                      {instr.status === "active" ? "Hoạt động" : "Chờ duyệt"}
                     </Typography>
                   </TableCell>
                   <TableCell align="center">
-                    <IconButton onClick={(e) => handleMenuOpen(e, instr)}>
-                      <MoreVert />
-                    </IconButton>
-                    <Menu
-                      anchorEl={anchorEl}
-                      open={Boolean(anchorEl)}
-                      onClose={handleMenuClose}
+                    <IconButton
+                      onClick={() => handleViewDetails(instr)}
+                      aria-label="Xem chi tiết"
                     >
-                      <MenuItem
-                        onClick={() => handleActionClick("Duyệt đơn")}
-                        disabled={instr.status === "Active"}
-                      >
-                        Duyệt đơn
-                      </MenuItem>
-                    </Menu>
+                      <Visibility />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               ))}
@@ -304,41 +253,16 @@ const InstructorInfoTable = () => {
           onPageChange={handleChangePage}
           rowsPerPage={limit}
           onRowsPerPageChange={handleChangeRowsPerPage}
-          rowsPerPageOptions={[5, 10, 20, 50]}
+          rowsPerPageOptions={[5, 10, 15, 20]}
           showFirstButton
           showLastButton
         />
-        <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-          <DialogTitle>Xác nhận Duyệt đơn</DialogTitle>
-          <DialogContent>
-            <DialogContentText>
-              Bạn có chắc chắn muốn duyệt đơn này?
-            </DialogContentText>
-            {isRejecting && (
-              <TextField
-                autoFocus
-                margin="dense"
-                label="Lý do từ chối"
-                type="text"
-                fullWidth
-                variant="outlined"
-                value={rejectionReason}
-                onChange={(e) => setRejectionReason(e.target.value)}
-              />
-            )}
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => handleDialogClose("Đồng ý")} color="primary">
-              Đồng ý
-            </Button>
-            <Button onClick={() => setIsRejecting(true)} color="error">
-              Từ chối
-            </Button>
-            <Button onClick={() => setOpenDialog(false)} color="error">
-              Hủy
-            </Button>
-          </DialogActions>
-        </Dialog>
+        <DetailInstructor
+          open={openDetailDialog}
+          instructor={selectedInstructorDetail}
+          onClose={handleCloseDetailDialog}
+          onUpdate={fetchInstructors}
+        />
       </>
     </BaseCard>
   );

@@ -196,7 +196,7 @@ class AuthService {
           this.firestore
             .collection("instructors")
             .doc(uid)
-            .set({ status: InstructorStatus.Active }),
+            .update({ status: InstructorStatus.Active }),
         ]);
         const emailLink = await this.authAdmin.generateEmailVerificationLink(
           instructor.email
