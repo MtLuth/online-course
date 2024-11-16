@@ -115,7 +115,7 @@ class AuthService {
       account.avt = avt;
       account.fullName = fullName;
       account.role = UserRole.Teacher;
-      const uid = await account.createAccout(true);
+      const uid = await userRepo.createAccount(account);
       const newInstructor = new Instructor(
         uid,
         email,
@@ -151,6 +151,7 @@ class AuthService {
       const content = getEmailTemplateResetPassword(
         `http://localhost:3000/resetpassword/${resetToken.value}`
       );
+      console.log(resetToken);
       const mailDialup = mailOptions(email, "Reset Password", content);
       await sendEmail(mailDialup);
       return ErrorMessage.SendEmailPasswordSuccessfully;
@@ -158,7 +159,6 @@ class AuthService {
       if (error.code === "auth/user-not-found") {
         throw new AppError(ErrorMessage.EmailNotFound, 400);
       }
-      console.log(error);
       throw new AppError(`${ErrorMessage.Internal}: ${error}`, 500);
     }
   }
@@ -195,7 +195,7 @@ class AuthService {
           this.authAdmin.updateUser(uid, {
             disabled: false,
           }),
-          instructorRepo.updateStatus(InstructorStatus.Inactive),
+          instructorRepo.updateStatus(uid, InstructorStatus.Inactive),
         ]);
         const emailLink = await this.authAdmin.generateEmailVerificationLink(
           instructor.email

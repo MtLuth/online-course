@@ -59,9 +59,7 @@ export default function LoginView() {
           return;
         }
         if (response.status === "success") {
-          notifySuccess(
-            "Đăng nhập thành công! Vui lòng kiểm tra lại Email để xác thực tài khoản!"
-          );
+          notifySuccess("Đăng nhập thành công!");
           setSessionToken(response.message.tokenPairs.accessToken);
           reset();
           router.push("/");

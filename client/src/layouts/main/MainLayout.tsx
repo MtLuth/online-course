@@ -1,8 +1,9 @@
-import Box, { BoxProps } from '@mui/material/Box';
+import Box, { BoxProps } from "@mui/material/Box";
+import Container from "@mui/material/Container";
 
-import Header from './Header';
-import Footer from './Footer';
-import { HEADER } from '../config-layout';
+import Header from "./Header";
+import Footer from "./Footer";
+import { HEADER } from "../config-layout";
 
 type Props = BoxProps & {
   children: React.ReactNode;
@@ -20,16 +21,25 @@ export default function MainLayout({
   return (
     <Box
       sx={{
-        height: 1,
-        display: 'flex',
-        flexDirection: 'column',
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column",
         ...sx,
       }}
       {...other}
     >
       <Header headerOnDark={headerOnDark} />
-
-      <Box component="main" sx={{ flexGrow: 1 }}>
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: 2,
+        }}
+      >
         {!(disabledSpacing || headerOnDark) && (
           <Box
             sx={{
@@ -38,9 +48,18 @@ export default function MainLayout({
           />
         )}
 
-        {children}
+        <Container
+          sx={{
+            flexGrow: 1,
+            width: "100%",
+            maxWidth: "lg",
+          }}
+        >
+          {children}
+        </Container>
       </Box>
 
+      {/* Footer Section */}
       <Footer />
     </Box>
   );

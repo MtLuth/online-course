@@ -10,10 +10,23 @@ import {
   ListItemIcon,
   ListItemText,
 } from "@mui/material";
+import {
+  School as IconCourses,
+  Dashboard as IconDashboard,
+  Person as IconProfile,
+  Assignment as IconTasks,
+} from "@mui/icons-material";
 import { IconListCheck, IconMail, IconUser } from "@tabler/icons-react";
+import { useRouter } from "next/navigation";
+import { authApi } from "@/server/Auth";
+import { useAppContext } from "@/context/AppContext";
+import { useToastNotification } from "@/hook/useToastNotification";
 
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState(null);
+  const router = useRouter();
+  const { setSessionToken } = useAppContext();
+  const { notifySuccess } = useToastNotification();
 
   const handleClick2 = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl2(event.currentTarget);
@@ -21,6 +34,13 @@ const Profile = () => {
 
   const handleClose2 = () => {
     setAnchorEl2(null);
+  };
+
+  const handleLogout = () => {
+    authApi.logout();
+    setSessionToken(null);
+    notifySuccess("Đã đăng xuất thành công!");
+    router.push("/login");
   };
 
   return (
@@ -61,32 +81,43 @@ const Profile = () => {
           },
         }}
       >
-        <MenuItem>
-          <ListItemIcon>
-            <IconUser width={20} />
-          </ListItemIcon>
-          <ListItemText>Trang cá nhân</ListItemText>
-        </MenuItem>
-        <Link href="/dashboard/teacher" passHref>
+        <Link href="/my-courses" passHref>
           <MenuItem component="a">
             <ListItemIcon>
-              <IconMail width={20} />
+              <IconCourses fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Khóa học của tôi</ListItemText>
+          </MenuItem>
+        </Link>
+        <Link href="/dashboard/admin/teacher" passHref>
+          <MenuItem component="a">
+            <ListItemIcon>
+              <IconDashboard fontSize="small" />
             </ListItemIcon>
             <ListItemText>Bảng điều khiển</ListItemText>
           </MenuItem>
         </Link>
-        <MenuItem>
-          <ListItemIcon>
-            <IconListCheck width={20} />
-          </ListItemIcon>
-          <ListItemText>My Tasks</ListItemText>
-        </MenuItem>
+        <Link href="/profile" passHref>
+          <MenuItem component="a">
+            <ListItemIcon>
+              <IconProfile fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Hồ sơ cá nhân</ListItemText>
+          </MenuItem>
+        </Link>
+        <Link href="/history" passHref>
+          <MenuItem component="a">
+            <ListItemIcon>
+              <IconTasks fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Lịch sử mua hàng</ListItemText>
+          </MenuItem>
+        </Link>
         <Box mt={1} py={1} px={2}>
           <Button
-            href="/logout"
+            onClick={handleLogout}
             variant="outlined"
             color="primary"
-            component={Link}
             fullWidth
           >
             Logout

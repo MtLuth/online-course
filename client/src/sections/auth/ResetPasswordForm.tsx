@@ -1,64 +1,77 @@
-"use client"
-import * as Yup from 'yup';
-import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import { useState } from 'react';
-import { Box, Card, CardContent, Stack, Typography, TextField, Snackbar, Alert } from '@mui/material';
-import LoadingButton from '@mui/lab/LoadingButton';
-import { useRouter } from 'next/navigation';
+"use client";
+import * as Yup from "yup";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { useState } from "react";
+import {
+    Box,
+    Card,
+    CardContent,
+    Stack,
+    Typography,
+    TextField,
+    Snackbar,
+    Alert,
+} from "@mui/material";
+import LoadingButton from "@mui/lab/LoadingButton";
+import { useRouter } from "next/navigation";
 
 interface ResetPasswordFormData {
     password: string;
     confirmPassword: string;
 }
 
-const ResetPasswordForm = () => {
+interface ResetPasswordFormProps {
+    token: string;
+}
+
+const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token }) => {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [successMessageOpen, setSuccessMessageOpen] = useState(false); // State to control snackbar visibility
+    const [successMessageOpen, setSuccessMessageOpen] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const ResetPasswordSchema = Yup.object().shape({
         password: Yup.string()
-            .required('Please enter your new password')
-            .min(8, 'Password is too short - should be 8 chars minimum.')
-            .matches(/[A-Z]/, 'Password must contain at least one uppercase letter')
-            .matches(/[a-z]/, 'Password must contain at least one lowercase letter')
-            .matches(/[0-9]/, 'Password must contain at least one number')
-            .matches(/[@$!%*?&#]/, 'Password must contain at least one special character'),
+            .required("Vui lòng nhập mật khẩu mới")
+            .min(8, "Mật khẩu quá ngắn! Phải từ 8 kí tự")
+            .matches(/[A-Z]/, "Mật khẩu phải có ít nhất 1 kí tự in hoa")
+            .matches(/[a-z]/, "Mật khẩu phải có ít nhất 1 kí tự in thường")
+            .matches(/[0-9]/, "Mật khẩu phải là kí tự số")
+            .matches(/[@$!%*?&#]/, "Mật khẩu phải có ít nhất 1 kí tự đặc biệt"),
         confirmPassword: Yup.string()
-            .oneOf([Yup.ref('password')], 'Passwords must match')
-            .required('Please confirm your new password'),
+            .oneOf([Yup.ref("password")], "Mật khẩu không khớp")
+            .required("Vui lòng xác nhận mật khẩu mới"),
     });
 
-    const methods = useForm<ResetPasswordFormData>({
+    const { handleSubmit, register, formState: { errors } } = useForm<ResetPasswordFormData>({
         resolver: yupResolver(ResetPasswordSchema),
-        defaultValues: { password: '', confirmPassword: '' },
+        defaultValues: { password: "", confirmPassword: "" },
     });
-
-    const { handleSubmit, register } = methods;
 
     const handleResetPassword = async (data: ResetPasswordFormData) => {
         setIsSubmitting(true);
         try {
-            const response = await fetch(`http://localhost:8080/api/v1/auth/reset-password/734f860f550e5396aa7c9360c48b61022ea616896218372da9d4932d597cf27b`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+            const response = await fetch(`http://localhost:8080/api/v1/auth/reset-password/${token}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     password: data.password,
                 }),
             });
 
             if (response.ok) {
-                console.log('Password reset successful');
-                setSuccessMessageOpen(true); // Show success snackbar
+                setSuccessMessageOpen(true);
                 setTimeout(() => {
-                    router.push('/login'); // Redirect to login page after password reset
+                    router.push("/login");
                 }, 2000);
             } else {
-                console.error('Failed to reset password');
+                const errorData = await response.json();
+                setErrorMessage(`Error ${response.status}: ${errorData.message}`);
             }
         } catch (error) {
-            console.error('Error resetting password:', error);
+            console.error("Error resetting password:", error);
+            setErrorMessage("Có lỗi xảy ra. Vui lòng thử lại sau.");
         } finally {
             setIsSubmitting(false);
         }
@@ -66,36 +79,43 @@ const ResetPasswordForm = () => {
 
     const handleCloseSnackbar = () => {
         setSuccessMessageOpen(false);
+        setErrorMessage(null);
     };
 
     return (
         <Box
             sx={{
-                minHeight: '100vh',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: '#f4f6f8',
+                minHeight: "100vh",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: "#f4f6f8",
             }}
         >
-            <Card sx={{ maxWidth: 600, width: '100%', mx: 2, boxShadow: 3, borderRadius: 3, padding: 4 }}>
+            <Card sx={{ maxWidth: 600, width: "100%", mx: 2, boxShadow: 3, borderRadius: 3, padding: 4 }}>
                 <CardContent>
                     <Stack spacing={2}>
-                        <Typography variant="h5" textAlign="center">Reset Your Password</Typography>
+                        <Typography variant="h5" textAlign="center">
+                            Đặt lại mật khẩu
+                        </Typography>
 
                         <TextField
-                            label="New Password"
-                            placeholder="Enter your new password"
+                            label="Nhập mật khẩu mới"
+                            placeholder="Nhập mật khẩu mới của bạn"
                             type="password"
                             fullWidth
-                            {...register('password')}
+                            {...register("password")}
+                            error={Boolean(errors.password)}
+                            helperText={errors.password?.message}
                         />
                         <TextField
-                            label="Confirm New Password"
-                            placeholder="Confirm your new password"
+                            label="Xác nhận mật khẩu"
+                            placeholder="Nhập lại mật khẩu mới của bạn"
                             type="password"
                             fullWidth
-                            {...register('confirmPassword')}
+                            {...register("confirmPassword")}
+                            error={Boolean(errors.confirmPassword)}
+                            helperText={errors.confirmPassword?.message}
                         />
                         <LoadingButton
                             fullWidth
@@ -105,19 +125,31 @@ const ResetPasswordForm = () => {
                             loading={isSubmitting}
                             onClick={handleSubmit(handleResetPassword)}
                         >
-                            Reset Password
+                            Đặt lại mật khẩu
                         </LoadingButton>
                     </Stack>
                 </CardContent>
             </Card>
+            {/* Snackbar cho thành công */}
             <Snackbar
                 open={successMessageOpen}
                 autoHideDuration={3000}
                 onClose={handleCloseSnackbar}
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
             >
-                <Alert onClose={handleCloseSnackbar} severity="success" sx={{ width: '100%' }}>
+                <Alert onClose={handleCloseSnackbar} severity="success" sx={{ width: "100%" }}>
                     Password reset successful! Redirecting to login...
+                </Alert>
+            </Snackbar>
+            {/* Snackbar cho lỗi */}
+            <Snackbar
+                open={!!errorMessage}
+                autoHideDuration={5000}
+                onClose={handleCloseSnackbar}
+                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+            >
+                <Alert onClose={handleCloseSnackbar} severity="error" sx={{ width: "100%" }}>
+                    {errorMessage}
                 </Alert>
             </Snackbar>
         </Box>

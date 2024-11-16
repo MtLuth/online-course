@@ -12,7 +12,7 @@ const Menuitems = [
     id: uniqueId(),
     title: "Bảng điều khiển",
     icon: IconLayoutDashboard,
-    href: "/dashboard/teacher/",
+    href: "/dashboard/admin/teacher",
   },
   {
     navlabel: true,
@@ -24,6 +24,27 @@ const Menuitems = [
     title: "Tạo khóa học",
     icon: IconCopy,
     href: "/dashboard/teacher/create-cource/",
+  },
+  {
+    navlabel: true,
+    subheader: "Quản Lý",
+  },
+
+  {
+    id: uniqueId(),
+    title: "Xét Duyệt Chuyên Gia",
+    icon: IconCopy,
+    href: "/dashboard/admin/teacher/",
+  },
+  {
+    navlabel: true,
+    subheader: "Quản Lý Website",
+  },
+  {
+    id: uniqueId(),
+    title: "Danh Sách Danh Mục",
+    icon: IconCopy,
+    href: "/dashboard/admin/categories/",
   },
 ];
 

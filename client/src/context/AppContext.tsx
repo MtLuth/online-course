@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState } from "react";
 
 const AppContext = createContext({
   token: "",
-  setSectionToken: (token: string) => {},
+  setSectionToken: (token: string) => { },
 });
 
 export const useAppContext = () => {

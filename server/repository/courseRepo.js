@@ -1,25 +1,29 @@
 import firebaseAdmin from "../firebase/firebaseAdmin.js";
 import myLearningsRepo from "./myLearningsRepo.js";
+import userRepo from "./userRepo.js";
 
 const firestore = firebaseAdmin.firestore();
 
 class Course {
   constructor() {
-    this.courseCollection = firestore.collection("courses");
+    this.dbRef = firestore.collection("courses");
   }
 
   async createCourse(instructor, courseData) {
-    const courseRef = await this.courseCollection.add({
+    const courseRef = await this.dbRef.add({
       instructor: { ...instructor },
       ...courseData,
-      sale: null,
+      sale: 0,
+      enrollment: [],
+      reviews: [],
+      rating: [],
     });
     return courseRef.id;
   }
 
   async getCourseOfInstructor(uid, status, searchParam, category) {
     const results = [];
-    let query = this.courseCollection.where("instructor.uid", "==", uid);
+    let query = this.dbRef.where("instructor.uid", "==", uid);
     if (status && status !== "") {
       query = query.where("isPublished", "==", status);
     }
@@ -51,6 +55,10 @@ class Course {
           level: data.level,
           isPublished: data.isPublished,
           thumbnail: data.thumbnail,
+          sale: data.sale,
+          reviews: data.reviews,
+          ratings: data.rating,
+          enrollment: data.enrollment,
         });
       }
     });
@@ -58,7 +66,7 @@ class Course {
   }
 
   async getCourseById(id) {
-    const doc = await this.courseCollection.doc(id).get();
+    const doc = await this.dbRef.doc(id).get();
     const data = doc.data();
     return {
       id: doc.id,
@@ -82,13 +90,13 @@ class Course {
   }
 
   async updateStatusCourse(id, status) {
-    const doc = await this.courseCollection.doc(id);
+    const doc = await this.dbRef.doc(id);
     await doc.update({ isPublished: status, updatedAt: new Date() });
     return "Đã cập trạng thái khóa học!";
   }
 
   async updateCourse(id, newValues) {
-    const doc = await this.courseCollection.doc(id).get();
+    const doc = await this.dbRef.doc(id).get();
     const course = {
       ...doc.data(),
     };
@@ -97,15 +105,13 @@ class Course {
         delete newValues[key];
       }
     });
-    await this.courseCollection
-      .doc(id)
-      .update({ ...newValues, updatedAt: new Date() });
+    await this.dbRef.doc(id).update({ ...newValues, updatedAt: new Date() });
     return "Cập nhật khóa học thành công!";
   }
 
   async getAllCourse(searchParam, orderByPrice, category, uid) {
     const results = [];
-    let query = this.courseCollection.where("isPublished", "==", true);
+    let query = this.dbRef.where("isPublished", "==", true);
     if (orderByPrice && orderByPrice !== "") {
       query = query.orderBy("price", orderByPrice);
     }
@@ -159,6 +165,21 @@ class Course {
       return results;
     });
     return await Promise.all(promises);
+  }
+
+  async addEnrollment(courseId, uid) {
+    const student = await userRepo.getUserByUid(uid);
+    if (!student) {
+      return null;
+    }
+    const doc = await this.dbRef.doc(courseId).get();
+    const course = doc.data();
+    let enrollment = course.enrollment;
+    enrollment.push({
+      uid: uid,
+      ...student,
+    });
+    await this.dbRef.doc(courseId).update({ enrollment: enrollment });
   }
 }
 export default Course;
