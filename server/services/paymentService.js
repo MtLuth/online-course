@@ -4,6 +4,7 @@ import purchaseHistoryRepo, {
   PurchaseStatus,
 } from "../repository/purchaseHistoryRepo.js";
 import myLearningsRepo from "../repository/myLearningsRepo.js";
+import Course from "../repository/courseRepo.js";
 class PaymentService {
   constructor() {
     const clientId = "e6eed2dd-86ea-4758-b0ab-f49b28057aae";
@@ -54,7 +55,11 @@ class PaymentService {
         }
         const uid = purchase.uid;
         const sku = purchase.sku;
-        const message = await myLearningsRepo.addCourses(uid, sku);
+        const courseRepo = new Course();
+        const { message } = await Promise.all([
+          myLearningsRepo.addCourses(uid, sku),
+          // courseRepo.addEnrollment(),
+        ]);
         return message;
       }
     } catch (error) {
