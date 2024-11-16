@@ -62,6 +62,7 @@ export default function LoginView() {
           notifySuccess("Đăng nhập thành công!");
           setSessionToken(response.message.tokenPairs.accessToken);
           localStorage.setItem("role", response.message.role);
+          localStorage.setItem("uid", response.message.uid);
           reset();
           router.push("/");
         }

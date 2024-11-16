@@ -6,12 +6,13 @@ import {
     DialogContent,
     DialogTitle,
     Typography,
-    Container,
-    Divider,
+    Grid,
     Button,
     TextField,
     Snackbar,
     Alert,
+    Avatar,
+    Divider,
 } from "@mui/material";
 import { useAppContext } from "@/context/AppContext";
 
@@ -132,79 +133,98 @@ const DetailInstructor: React.FC<DetailInstructorProps> = ({
                 </DialogTitle>
                 <DialogContent>
                     {instructor && (
-                        <Container sx={{ padding: 2 }}>
-                            <Box display="flex" flexDirection="row" gap={4}>
-                                <Box>
-                                    <img
+                        <Box sx={{ padding: 3 }}>
+                            <Grid container spacing={2} alignItems="center">
+                                <Grid item xs={12} md={4}>
+                                    <Avatar
                                         src={instructor.avt}
                                         alt="Ảnh đại diện"
-                                        style={{
-                                            width: 150,
-                                            height: 150,
-                                            borderRadius: "50%",
-                                            objectFit: "cover",
+                                        sx={{ width: 120, height: 120, margin: "auto" }}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} md={8}>
+                                    <Typography variant="h6" align="center" sx={{ fontWeight: "bold" }}>
+                                        {instructor.fullName}
+                                    </Typography>
+                                    <Typography
+                                        variant="subtitle1"
+                                        align="center"
+                                        sx={{
+                                            color:
+                                                instructor.status === "active"
+                                                    ? "green"
+                                                    : instructor.status === "pending"
+                                                        ? "orange"
+                                                        : "gray",
                                         }}
-                                    />
-                                </Box>
-                                <Box display="flex" flexDirection="column" flex={1}>
-                                    <Box>
-                                        <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
-                                            Họ và tên
-                                        </Typography>
-                                        <Typography>{instructor.fullName}</Typography>
-                                    </Box>
-                                    <Divider sx={{ my: 1 }} />
-                                    <Box>
-                                        <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
-                                            Email
-                                        </Typography>
-                                        <Typography>{instructor.email}</Typography>
-                                    </Box>
-                                    <Divider sx={{ my: 1 }} />
-                                    <Box>
-                                        <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
-                                            Chuyên môn
-                                        </Typography>
-                                        <Typography>{instructor.expertise}</Typography>
-                                    </Box>
-                                    <Divider sx={{ my: 1 }} />
-                                    <Box>
-                                        <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
-                                            Kinh nghiệm
-                                        </Typography>
-                                        <Typography>{instructor.experience}</Typography>
-                                    </Box>
-                                    <Divider sx={{ my: 1 }} />
-                                    <Box>
-                                        <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
-                                            Trình độ học vấn
-                                        </Typography>
-                                        <Typography>{instructor.education}</Typography>
-                                    </Box>
-                                    <Divider sx={{ my: 1 }} />
-                                    <Box>
-                                        <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
-                                            Tình trạng
-                                        </Typography>
-                                        <Typography>{getStatusLabel(instructor.status)}</Typography>
-                                    </Box>
-                                </Box>
-                            </Box>
+                                    >
+                                        {getStatusLabel(instructor.status)}
+                                    </Typography>
 
-                            {isRejecting && (
-                                <Box mt={2}>
+                                </Grid>
+                            </Grid>
+                            <Divider sx={{ my: 3 }} />
+                            <Grid container spacing={2}>
+                                <Grid item xs={12} md={6}>
                                     <TextField
-                                        label="Lý do từ chối"
-                                        variant="outlined"
                                         fullWidth
-                                        multiline
-                                        rows={3}
-                                        value={rejectionReason}
-                                        onChange={(e) => setRejectionReason(e.target.value)}
+                                        label="Họ và tên"
+                                        value={instructor.fullName}
+                                        variant="outlined"
+                                        InputProps={{ readOnly: true }}
                                     />
-                                </Box>
-                            )}
-                        </Container>
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <TextField
+                                        fullWidth
+                                        label="Email"
+                                        value={instructor.email}
+                                        variant="outlined"
+                                        InputProps={{ readOnly: true }}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <TextField
+                                        fullWidth
+                                        label="Chuyên môn"
+                                        value={instructor.expertise}
+                                        variant="outlined"
+                                        InputProps={{ readOnly: true }}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <TextField
+                                        fullWidth
+                                        label="Kinh nghiệm"
+                                        value={instructor.experience}
+                                        variant="outlined"
+                                        InputProps={{ readOnly: true }}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <TextField
+                                        fullWidth
+                                        label="Trình độ học vấn"
+                                        value={instructor.education}
+                                        variant="outlined"
+                                        InputProps={{ readOnly: true }}
+                                    />
+                                </Grid>
+                                {isRejecting && (
+                                    <Grid item xs={12}>
+                                        <TextField
+                                            label="Ghi chú lý do không phê duyệt"
+                                            variant="outlined"
+                                            fullWidth
+                                            multiline
+                                            rows={3}
+                                            value={rejectionReason}
+                                            onChange={(e) => setRejectionReason(e.target.value)}
+                                        />
+                                    </Grid>
+                                )}
+                            </Grid>
+                        </Box>
                     )}
                 </DialogContent>
                 <DialogActions sx={{ justifyContent: "center", gap: 2 }}>

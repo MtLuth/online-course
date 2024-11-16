@@ -101,7 +101,7 @@ const InstructorInfoTable = () => {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Xử lý chuyển trang
+
   const handleChangePage = (event: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
     setPage(newPage + 1);
     const params = new URLSearchParams(searchParams.toString());
@@ -109,7 +109,7 @@ const InstructorInfoTable = () => {
     replace(`${pathname}?${params.toString()}`);
   };
 
-  // Xử lý thay đổi số dòng trên mỗi trang
+
   const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const newLimit = parseInt(event.target.value, 10);
     setLimit(newLimit);
@@ -121,18 +121,18 @@ const InstructorInfoTable = () => {
     replace(`${pathname}?${params.toString()}`);
   };
 
-  // Xử lý tìm kiếm
+
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
   };
 
-  // Xử lý lọc trạng thái
+
   const handleFilterChange = (event: SelectChangeEvent) => {
     setFilterStatus(event.target.value as string);
     setPage(1);
   };
 
-  // Xem chi tiết giảng viên
+
   const handleViewDetails = (instructor: Instructor) => {
     setSelectedInstructorDetail(instructor);
     setOpenDetailDialog(true);
@@ -143,7 +143,7 @@ const InstructorInfoTable = () => {
     setSelectedInstructorDetail(null);
   };
 
-  // Cập nhật trạng thái sau khi duyệt hoặc từ chối
+
   const handleUpdate = (uid: string, newStatus: string) => {
     setInstructors((prevInstructors) =>
       prevInstructors.map((instr) =>
@@ -209,6 +209,7 @@ const InstructorInfoTable = () => {
                       <MenuItem value="all">All</MenuItem>
                       <MenuItem value="active">Hoạt động</MenuItem>
                       <MenuItem value="pending">Chờ duyệt</MenuItem>
+                      <MenuItem value="inactive">Chưa kích hoạt</MenuItem>
                     </Select>
                   </FormControl>
                 </TableCell>
@@ -226,11 +227,20 @@ const InstructorInfoTable = () => {
                     <Typography
                       variant="body2"
                       sx={{
-                        color: instr.status === "active" ? "#6fbf73" : "#ff9800",
+                        color:
+                          instr.status === "active"
+                            ? "#6fbf73"
+                            : instr.status === "pending"
+                              ? "#ff9800"
+                              : "#9e9e9e",
                         fontWeight: "bold",
                       }}
                     >
-                      {instr.status === "active" ? "Hoạt động" : "Chờ duyệt"}
+                      {instr.status === "active"
+                        ? "Hoạt động"
+                        : instr.status === "pending"
+                          ? "Chờ duyệt"
+                          : "Chưa kích hoạt"}
                     </Typography>
                   </TableCell>
                   <TableCell align="center">
