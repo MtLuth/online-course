@@ -25,11 +25,7 @@ class InstructorRepo {
     return snapshot;
   }
 
-   async addInstructor(instructor) {
-     await this.dbRef.doc(instructor.uid).set({
-        fullName: 
-     })
-   }
+
 }
 
 export default new InstructorRepo();
