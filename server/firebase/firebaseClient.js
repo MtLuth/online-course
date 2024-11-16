@@ -38,7 +38,7 @@ onAuthStateChanged(authClient, async (user) => {
     }
     if (role === UserRole.Teacher) {
       if (user.emailVerified) {
-        instructorRepo.updateStatus(InstructorStatus.Active);
+        instructorRepo.updateStatus(user.uid, InstructorStatus.Active);
       }
     }
   }
