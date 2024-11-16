@@ -22,9 +22,24 @@ class MyLearning {
     return "Thêm khóa học mới thành cônng";
   }
 
+  async addCourses(uid, newCourses) {
+    const doc = await this.dbRef.doc(uid).get();
+    const data = doc.data();
+    if (!data) {
+      return null;
+    }
+    let courses = data.courses;
+    courses = courses.concat(newCourses);
+    const total = courses.length;
+    await this.dbRef.doc(uid).update({
+      courses: courses,
+      total: total,
+    });
+    return "Thêm khóa học thành công";
+  }
+
   async checkIsValidStudent(uid, courseId) {
     const snapshot = await this.dbRef.doc(uid).get();
-    console.log(uid, courseId);
     if (!snapshot.exists) {
       return false;
     }
@@ -32,10 +47,19 @@ class MyLearning {
     const courses = data.courses;
     for (let course of courses) {
       if (course.courseId === courseId) {
+        console.log(courseId, course.courseId);
         return true;
       }
     }
     return false;
+  }
+
+  async getAllCourses(uid) {
+    const doc = await this.dbRef.doc(uid).get();
+    if (!doc.exists) {
+      return null;
+    }
+    const data = doc.data();
   }
 }
 

@@ -9,6 +9,7 @@ import SettingsDrawer from "@/components/settings/drawer/SettingsDrawer";
 import { Toaster } from "react-hot-toast";
 import AppProvider from "@/context/AppContext";
 import { cookies } from "next/headers";
+import { CartProvider } from "@/context/CartContext";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -41,12 +42,14 @@ export default async function RootLayout({
         <LocalizationProvider>
           <ThemeProvider>
             <AppProvider initialToken={sessionToken?.value}>
-              <MotionLazy>
-                <Toaster />
-                <ProgressBar />
-                <SettingsDrawer />
-                {children}
-              </MotionLazy>
+              <CartProvider>
+                <MotionLazy>
+                  <Toaster />
+                  <ProgressBar />
+                  <SettingsDrawer />
+                  {children}
+                </MotionLazy>
+              </CartProvider>
             </AppProvider>
           </ThemeProvider>
         </LocalizationProvider>

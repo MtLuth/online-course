@@ -225,23 +225,6 @@ const CoursesList: React.FC<CoursesListProps> = ({
         {!showEdit && (
           <>
             <FormControl size="small" sx={{ minWidth: 150 }}>
-              <InputLabel id="is-published-label">Trạng thái</InputLabel>
-              <Select
-                labelId="is-published-label"
-                id="is-published-select"
-                value={localIsPublished}
-                label="Trạng thái"
-                onChange={(e) => setLocalIsPublished(e.target.value as string)}
-              >
-                <MenuItem value="">
-                  <em>Tất cả</em>
-                </MenuItem>
-                <MenuItem value="true">Đã xuất bản</MenuItem>
-                <MenuItem value="false">Chưa xuất bản</MenuItem>
-              </Select>
-            </FormControl>
-
-            <FormControl size="small" sx={{ minWidth: 150 }}>
               <InputLabel id="order-price-label">Sắp xếp giá</InputLabel>
               <Select
                 labelId="order-price-label"

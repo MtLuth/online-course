@@ -24,8 +24,8 @@ class PaymentController {
       orderCode,
       items,
       total,
-      "http://localhost:3000",
-      `http://localhost:8080/api/v1/payment/cancel`
+      "http://localhost:3000/succeedpayment",
+      "http://localhost:3000/cancelpayment"
     );
     res.status(200).json({
       status: "Successfully",
@@ -39,15 +39,14 @@ class PaymentController {
   callbackUrl = catchAsync(async (req, res, next) => {
     const statusCode = req.body.code;
     const data = req.body.data;
-    if (statusCode === "00") {
-      const orderCode = data.orderCode;
-      await purchaseServices.updateStatusPurchase(
-        orderCode,
-        PurchaseStatus.succeed
-      );
-    }
-    console.log(req.body);
-    res.status(200).json({ paymentLink });
+    const orderCode = data.orderCode;
+    const message = await paymentService.successPayment(statusCode, orderCode);
+    const body = req.body;
+    console.log(body);
+    res.status(200).json({
+      status: 200,
+      message: message,
+    });
   });
 
   cancelPayment = catchAsync(async (req, res, next) => {

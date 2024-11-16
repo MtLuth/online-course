@@ -108,7 +108,7 @@ export default function InstructorBecomeView() {
   const renderHead = (
     <Stack spacing={1} alignItems="center">
       <Typography variant="h3" paragraph>
-        Bắt đầu trở thành Chuyên
+        Bắt đầu trở thành Chuyên Gia
       </Typography>
     </Stack>
   );
@@ -231,7 +231,7 @@ export default function InstructorBecomeView() {
   );
 
   return (
-    <Card sx={{ maxWidth: 800, mx: "auto", mt: 16, mb: 4, boxShadow: 3 }}>
+    <Card sx={{ maxWidth: 800, mx: "auto", mt: 2, mb: 4, boxShadow: 3 }}>
       <CardContent>
         {renderHead}
         <Divider sx={{ my: 4 }} />

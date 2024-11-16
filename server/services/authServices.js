@@ -17,6 +17,7 @@ import {
   sendEmail,
 } from "./emailService.js";
 import Instructor, { InstructorStatus } from "../model/instructorModel.js";
+import userRepo from "../repository/userRepo.js";
 
 class AuthService {
   constructor() {
@@ -74,7 +75,7 @@ class AuthService {
       account.role = UserRole.Student;
       account.password = password;
 
-      await account.createAccount(false);
+      await userRepo.createAccount(account, false);
 
       const emailLink =
         await this.authAdmin.generateEmailVerificationLink(email);
