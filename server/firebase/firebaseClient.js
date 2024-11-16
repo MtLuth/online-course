@@ -4,6 +4,8 @@ import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { UserRole } from "../model/userModel.js";
 import firebaseAdmin from "./firebaseAdmin.js";
+import instructorRepo from "../repository/instructorRepo.js";
+import { InstructorStatus } from "../model/instructorModel.js";
 const firebaseConfig = {
   apiKey: "AIzaSyBEBlr6455VMMBKkEmGHB0c0SN-wbBfZk4",
   authDomain: "journalapp-bb379.firebaseapp.com",
@@ -32,6 +34,11 @@ onAuthStateChanged(authClient, async (user) => {
           courses: {},
           total: 0,
         });
+      }
+    }
+    if (role === UserRole.Teacher) {
+      if (user.emailVerified) {
+        instructorRepo.updateStatus(InstructorStatus.Active);
       }
     }
   }

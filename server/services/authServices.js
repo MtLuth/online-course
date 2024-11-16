@@ -18,6 +18,7 @@ import {
 } from "./emailService.js";
 import Instructor, { InstructorStatus } from "../model/instructorModel.js";
 import userRepo from "../repository/userRepo.js";
+import instructorRepo from "../repository/instructorRepo.js";
 
 class AuthService {
   constructor() {
@@ -194,10 +195,7 @@ class AuthService {
           this.authAdmin.updateUser(uid, {
             disabled: false,
           }),
-          this.firestore
-            .collection("instructors")
-            .doc(uid)
-            .update({ status: InstructorStatus.Active }),
+          instructorRepo.updateStatus(InstructorStatus.Inactive),
         ]);
         const emailLink = await this.authAdmin.generateEmailVerificationLink(
           instructor.email
