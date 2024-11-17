@@ -172,6 +172,11 @@ const ratingSchema = yup.object({
   content: yup.string().required(),
 });
 
+const messageSchema = yup.object({
+  content: yup.string().required(),
+  contentType: yup.string().required().oneOf(["text", "image"]),
+});
+
 export {
   loginParam,
   registerParam,
@@ -181,4 +186,5 @@ export {
   createPaymentLinkSchema,
   categorySchema,
   ratingSchema,
+  messageSchema,
 };

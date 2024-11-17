@@ -99,7 +99,7 @@ class CourseRepo {
       isPublished: data.isPublished,
       enrollment: data.enrollment,
       sale: data.sale,
-      salePrice: (1 - data.sale) * data.price,
+      salePrice: Math.round((1 - data.sale) * data.price),
       rating: data.rating,
     };
   }
@@ -135,7 +135,7 @@ class CourseRepo {
       const data = doc.data();
       let salePrice = data.price;
       if (data.sale) {
-        salePrice = (1 - data.sale) * data.price;
+        salePrice = Math.round((1 - data.sale) * data.price);
       }
 
       if (searchParam && searchParam !== "") {
@@ -180,7 +180,7 @@ class CourseRepo {
           isPublished: data.isPublished,
           thumbnail: data.thumbnail,
           isMyLearning: isValid,
-          salePrice: salePrice,
+          salePrice: Math.round(salePrice),
           sale: data.sale,
           enrollment: data.enrollment,
           ratingScore: score,

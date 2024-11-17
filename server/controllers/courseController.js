@@ -62,7 +62,12 @@ class CourseController {
   updateCourse = catchAsync(async (req, res, next) => {
     const id = req.params.id;
     const newValues = { ...req.body };
-    const message = await courseServices.updateCourse(id, newValues);
+    const saleValidate = yup.number().min(0).max(1);
+    const sale = await saleValidate.validate(req.body.sale);
+    const message = await courseServices.updateCourse(id, {
+      ...newValues,
+      ...sale,
+    });
     res.status(200).json({
       status: "Successfully",
       message: message,

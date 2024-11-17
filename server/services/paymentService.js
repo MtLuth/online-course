@@ -5,6 +5,8 @@ import purchaseHistoryRepo, {
 } from "../repository/purchaseHistoryRepo.js";
 import myLearningsRepo from "../repository/myLearningsRepo.js";
 import courseRepo from "../repository/courseRepo.js";
+import incomeRepo from "../repository/incomeRepo.js";
+import Income, { IncomeStatus } from "../model/incomeModel.js";
 class PaymentService {
   constructor() {
     const clientId = "e6eed2dd-86ea-4758-b0ab-f49b28057aae";
@@ -56,17 +58,41 @@ class PaymentService {
         const uid = purchase.uid;
         const sku = purchase.sku;
         await Promise.all(
-          sku.map((course) =>
+          sku.map((course) => {
             courseRepo.increaseEnrollment(course.courseId).catch((err) => {
               throw new AppError(`Error in courseId ${course.courseId}:`, err);
-            })
-          )
+            });
+            let amount = course.salePrice * 0.94;
+            amount = Math.round(amount);
+
+            const income = new Income(
+              amount,
+              course,
+              IncomeStatus.InProgress,
+              orderCode,
+              new Date()
+            );
+            this.addIncome(course.instructor, income).catch((err) => {
+              throw new AppError(`Error in courseId ${course.courseId}:`, err);
+            });
+          })
         );
         const message = await myLearningsRepo.addCourses(uid, sku);
         return message;
       }
     } catch (error) {
       throw new AppError(`Lỗi khi thêm khóa học: ${error}`);
+    }
+  }
+
+  async addIncome(uid, income) {
+    try {
+      const newId = await incomeRepo.addIncome(uid, income);
+      setTimeout(async () => {
+        await incomeRepo.updateStatusIncome(newId, IncomeStatus.Withdrawable);
+      }, 1000 * 60);
+    } catch (error) {
+      throw new AppError(error, 500);
     }
   }
 }
