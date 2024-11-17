@@ -98,9 +98,9 @@ const CourseCard: React.FC<CourseCardProps> = ({
 
       setIsAddingToCart(true);
       try {
-        await cartApi.addToCart(course.id, token);
+        const res = await cartApi.addToCart(course.id, token);
         notifySuccess("Đã thêm vào giỏ hàng thành công!");
-        setCartCount((prevCount) => prevCount + 1);
+        setCartCount(res.message.total);
       } catch (error) {
         notifyError("Có lỗi xảy ra khi thêm khóa học vào giỏ!");
       } finally {

@@ -5,7 +5,6 @@ import { cookies } from "next/headers";
 import { GetAllCoursesResponse } from "@/interfaces/CourseDetail";
 import { jwtDecode } from "jwt-decode";
 import { courseApi } from "@/server/Cource";
-import { getAuthToken } from "@/utils/auth";
 
 interface AllCoursesProps {
   searchParams: { [key: string]: string | string[] | undefined };
@@ -43,11 +42,20 @@ const AllCourses = async ({ searchParams }: AllCoursesProps) => {
   const orderByPrice = Array.isArray(searchParams.orderByPrice)
     ? searchParams.orderByPrice[0]
     : searchParams.orderByPrice || "asc";
-  const token = getAuthToken();
-  const uid: any = "";
+  const cookieStore = cookies();
+  const token = cookieStore.get("accessToken")?.value || null;
+
+  let uid = "";
   if (token) {
-    const userId = localStorage.getItem(uid);
-    uid = userId;
+    try {
+      // Giải mã token
+      const decoded: any = jwtDecode(token);
+      if (decoded && decoded.user_id) {
+        uid = decoded.user_id;
+      }
+    } catch (error) {
+      console.error("Error decoding token:", error);
+    }
   }
   console.log(uid);
   const coursesResponse: GetAllCoursesResponse = await courseApi.getAllCourses(
@@ -60,7 +68,7 @@ const AllCourses = async ({ searchParams }: AllCoursesProps) => {
     uid
   );
 
-  const courses = coursesResponse?.message?.results || [];);
+  const courses = coursesResponse?.message?.results || [];
   const itemCount = coursesResponse?.message?.itemCount || 0;
   const pageCount = coursesResponse?.message?.pageCount || 1;
 

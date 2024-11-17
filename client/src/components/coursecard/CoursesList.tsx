@@ -62,13 +62,10 @@ const CoursesList: React.FC<CoursesListProps> = ({
   const [localOrderByPrice, setLocalOrderByPrice] =
     useState<string>(orderByPrice);
   const [localLimit, setLocalLimit] = useState<number>(limit);
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>(
-    []
-  );
+  const [categories, setCategories] = useState([]);
   const [isLoadingCategories, setIsLoadingCategories] =
     useState<boolean>(false);
   const [errorCategories, setErrorCategories] = useState<string>("");
-
   useEffect(() => {
     if (!showEdit) {
       const fetchCategories = async () => {
@@ -76,7 +73,7 @@ const CoursesList: React.FC<CoursesListProps> = ({
         try {
           const response = await categoriesApi.getCategories(token || "");
           if (response && response.message) {
-            setCategories(response.message);
+            setCategories(response.message.results);
           } else {
             setErrorCategories("Không thể tải danh mục.");
           }

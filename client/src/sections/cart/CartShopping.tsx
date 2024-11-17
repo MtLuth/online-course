@@ -142,7 +142,7 @@ export default function CartShopping() {
     try {
       const selectedCoursesData = courses
         .filter((course) => selectedCourses.includes(course.id))
-        .map((course) => course.id); // Chọn các khóa học đã được chọn
+        .map((course) => course.id);
 
       const purchaseData = { courses: selectedCoursesData };
 
