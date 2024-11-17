@@ -21,6 +21,30 @@ class IncomeRepo {
       throw new AppError(`Lỗi trong quá trình tạo thu nhập: ${error}`);
     }
   }
+
+  async getAllIncome(uid) {
+    let query = this.dbRef;
+    const snapshot = await query.get();
+    const incomes = snapshot.docs
+      .filter((doc) => doc.data().uid === uid)
+      .map((doc) => {
+        const data = doc.data();
+        const course = data.course;
+        return {
+          uid: data.uid,
+          course: {
+            courseId: course.courseId,
+            title: course.title,
+            price: course.salePrice,
+          },
+          date: data.date._seconds,
+          orderCode: data.orderCode,
+          status: data.status,
+          amount: data.amount,
+        };
+      });
+    return incomes;
+  }
 }
 
 export default new IncomeRepo();

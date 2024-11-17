@@ -45,13 +45,16 @@ class PaymentService {
   async successPayment(statusCode, orderCode) {
     try {
       if (statusCode === "00") {
+        let stringOrderCode = String(orderCode);
+        while (stringOrderCode < 6) {
+          stringOrderCode = "0" + stringOrderCode;
+        }
         await purchaseHistoryRepo.updateStatusPurchase(
-          String(orderCode),
+          stringOrderCode,
           PurchaseStatus.succeed
         );
-        const purchase = await purchaseHistoryRepo.getPurchaseByCode(
-          String(orderCode)
-        );
+        const purchase =
+          await purchaseHistoryRepo.getPurchaseByCode(stringOrderCode);
         if (purchase === null) {
           throw new AppError(`Không tìm thấy hóa đơn`, 400);
         }
@@ -89,7 +92,7 @@ class PaymentService {
     try {
       const newId = await incomeRepo.addIncome(uid, income);
       setTimeout(async () => {
-        await incomeRepo.updateStatusIncome(newId, IncomeStatus.Withdrawable);
+        await incomeRepo.updateStatusIncome(newId, IncomeStatus.Complete);
       }, 1000 * 60);
     } catch (error) {
       throw new AppError(error, 500);
