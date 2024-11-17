@@ -18,6 +18,7 @@ import {
 } from "./emailService.js";
 import Instructor, { InstructorStatus } from "../model/instructorModel.js";
 import userRepo from "../repository/userRepo.js";
+import instructorRepo from "../repository/instructorRepo.js";
 
 class AuthService {
   constructor() {
@@ -114,7 +115,7 @@ class AuthService {
       account.avt = avt;
       account.fullName = fullName;
       account.role = UserRole.Teacher;
-      const uid = await account.createAccout(true);
+      const uid = await userRepo.createAccount(account);
       const newInstructor = new Instructor(
         uid,
         email,
@@ -194,10 +195,7 @@ class AuthService {
           this.authAdmin.updateUser(uid, {
             disabled: false,
           }),
-          this.firestore
-            .collection("instructors")
-            .doc(uid)
-            .set({ status: InstructorStatus.Active }),
+          instructorRepo.updateStatus(uid, InstructorStatus.Inactive),
         ]);
         const emailLink = await this.authAdmin.generateEmailVerificationLink(
           instructor.email
@@ -221,7 +219,9 @@ class AuthService {
       await sendEmail(mailDialup);
       return "Thành công!";
     } catch (error) {
-      console.log(error);
+      if (error.code === "auth/user-not-found") {
+        throw new AppError("Không tìm thấy tài khoản này trên hệ thống!", 500);
+      }
       throw new AppError(error, 500);
     }
   }

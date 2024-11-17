@@ -1,4 +1,5 @@
 import Instructor from "../model/instructorModel.js";
+import courseRepo from "../repository/courseRepo.js";
 import Course from "../repository/courseRepo.js";
 import myLearningsRepo from "../repository/myLearningsRepo.js";
 import AppError from "../utils/appError.js";
@@ -8,8 +9,7 @@ class CourseService {
     try {
       const modelInstrutor = new Instructor();
       const instructor = await modelInstrutor.getById(uid);
-      const courseModel = new Course();
-      const result = await courseModel.createCourse(instructor, courseData);
+      const result = await courseRepo.createCourse(instructor, courseData);
       return result;
     } catch (error) {
       console.log(error);
@@ -19,8 +19,7 @@ class CourseService {
 
   async getAllCourseOfInstructor(uid, status, searchParam, category) {
     try {
-      const courseModel = new Course();
-      const results = await courseModel.getCourseOfInstructor(
+      const results = await courseRepo.getCourseOfInstructor(
         uid,
         status,
         searchParam,
@@ -34,8 +33,7 @@ class CourseService {
 
   async getCourseById(id) {
     try {
-      const courseModel = new Course();
-      const result = await courseModel.getCourseById(id);
+      const result = await courseRepo.getCourseById(id);
       return result;
     } catch (error) {
       throw new AppError("Khóa học không tồn tại!", 500);
@@ -44,8 +42,7 @@ class CourseService {
 
   async updateCourseStatus(id, status) {
     try {
-      const courseModel = new Course();
-      const message = await courseModel.updateStatusCourse(id, status);
+      const message = await courseRepo.updateStatusCourse(id, status);
       return message;
     } catch (error) {
       throw new AppError(
@@ -57,8 +54,7 @@ class CourseService {
 
   async updateCourse(id, newValue) {
     try {
-      const courseModel = new Course();
-      const message = await courseModel.updateCourse(id, newValue);
+      const message = await courseRepo.updateCourse(id, newValue);
       return message;
     } catch (error) {
       throw new AppError("Bạn không thể cập nhật khóa học này!", 500);
@@ -67,22 +63,12 @@ class CourseService {
 
   async getAllCourse(uid, searchParam, orderByPrice, category) {
     try {
-      const courseModel = new Course();
-      const results = await courseModel.getAllCourse(
+      const results = await courseRepo.getAllCourse(
         searchParam,
         orderByPrice,
-        category
+        category,
+        uid
       );
-      if (uid) {
-        const filteredResults = [];
-        for (const e of results) {
-          const isValid = await myLearningsRepo.checkIsValidStudent(uid, e.id);
-          if (!isValid) {
-            filteredResults.push(e);
-          }
-        }
-        return filteredResults;
-      }
       return results;
     } catch (error) {
       throw new AppError(error, 500);
@@ -91,7 +77,6 @@ class CourseService {
 
   async studentGetCourseById(uid, courseId) {
     try {
-      const courseRepo = new Course();
       const course = await courseRepo.getCourseById(courseId);
       let courseContent = course.content;
       const isValidStudent = await myLearningsRepo.checkIsValidStudent(
@@ -126,6 +111,23 @@ class CourseService {
       results.push({ title: lecture.title });
     }
     return results;
+  }
+
+  async studentRatingCourse(courseId, ratingInformation) {
+    try {
+      const uid = ratingInformation.uid;
+      const isValid = await myLearningsRepo.checkIsValidStudent(uid, courseId);
+      if (!isValid) {
+        throw new AppError("Bạn không có quyền đánh giá khóa học!");
+      }
+      await courseRepo.studentRating(courseId, ratingInformation);
+      return "Cảm ơn bạn vì đã đánh giá khóa học!";
+    } catch (error) {
+      if (error.code === "auth/user-not-found") {
+        throw new AppError("Không tìm thấy người dùng!", 400);
+      }
+      throw new AppError(error, 500);
+    }
   }
 }
 

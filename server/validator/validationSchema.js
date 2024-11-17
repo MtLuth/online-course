@@ -167,6 +167,11 @@ const categorySchema = yup.object({
   ),
 });
 
+const ratingSchema = yup.object({
+  score: yup.number().required().min(1).max(5),
+  content: yup.string().required(),
+});
+
 export {
   loginParam,
   registerParam,
@@ -175,4 +180,5 @@ export {
   buyCoursesSchema,
   createPaymentLinkSchema,
   categorySchema,
+  ratingSchema,
 };

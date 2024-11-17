@@ -10,14 +10,13 @@ class Cart {
     let courses = data.courses;
     const id = course.id;
 
-    console.log(course);
-
     courses[id] = {
       course: {
         title: course.title,
         instructor: course.instructor.fullName,
         level: course.level,
         price: course.price,
+        thumbnail: course.thumbnail,
       },
       createdAt: Date.now(),
     };

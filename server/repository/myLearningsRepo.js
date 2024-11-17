@@ -25,13 +25,10 @@ class MyLearning {
   async addCourses(uid, newCourses) {
     const doc = await this.dbRef.doc(uid).get();
     const data = doc.data();
-    if (!data) {
-      return null;
-    }
-    let courses = data.courses;
+    let courses = data?.courses || [];
     courses = courses.concat(newCourses);
     const total = courses.length;
-    await this.dbRef.doc(uid).update({
+    await this.dbRef.doc(uid).set({
       courses: courses,
       total: total,
     });
@@ -47,7 +44,6 @@ class MyLearning {
     const courses = data.courses;
     for (let course of courses) {
       if (course.courseId === courseId) {
-        console.log(courseId, course.courseId);
         return true;
       }
     }
@@ -60,6 +56,7 @@ class MyLearning {
       return null;
     }
     const data = doc.data();
+    return data.courses;
   }
 }
 

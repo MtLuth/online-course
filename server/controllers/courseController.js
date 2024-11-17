@@ -1,6 +1,9 @@
 import courseServices from "../services/courseServices.js";
 import catchAsync from "../utils/catchAsync.js";
-import { courseValidationSchema } from "../validator/validationSchema.js";
+import {
+  courseValidationSchema,
+  ratingSchema,
+} from "../validator/validationSchema.js";
 import yup from "yup";
 import paginate from "express-paginate";
 
@@ -91,6 +94,20 @@ class CourseController {
     res.status(200).json({
       status: "Successfully",
       message: result,
+    });
+  });
+
+  studentRatingCourse = catchAsync(async (req, res, next) => {
+    const courseId = req.params.courseId;
+    const uid = req.uid;
+    const ratingInformation = await ratingSchema.validate(req.body);
+    const message = await courseServices.studentRatingCourse(courseId, {
+      uid: uid,
+      ...ratingInformation,
+    });
+    res.status(200).json({
+      status: "Successfully",
+      message: message,
     });
   });
 }

@@ -1,19 +1,10 @@
-import firebaseAdmin from "../firebase/firebaseAdmin.js";
+import instructorRepo from "../repository/instructorRepo.js";
 import AppError from "../utils/appError.js";
-
-const authAdmin = firebaseAdmin.auth();
-const dbRef = firebaseAdmin.firestore().collection("instructors");
-
 class InstructorService {
   async getAllInstructor(status, searchParam) {
     try {
-      let query = dbRef;
-      if (status != null) {
-        query = query.where("status", "==", status);
-      }
-
-      const instructors = [];
-      const snapshot = await query.get();
+      let instructors = [];
+      const snapshot = await instructorRepo.getAllInstructor(status);
       snapshot.forEach((doc) => {
         const data = doc.data();
         if (searchParam) {

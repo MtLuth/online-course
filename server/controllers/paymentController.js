@@ -40,12 +40,14 @@ class PaymentController {
     const statusCode = req.body.code;
     const data = req.body.data;
     const orderCode = data.orderCode;
-    const message = await paymentService.successPayment(statusCode, orderCode);
-    const body = req.body;
-    console.log(body);
+    let message = "hello";
+    if (orderCode !== 123) {
+      message = await paymentService.successPayment(statusCode, orderCode);
+    }
+    console.log(req.body);
     res.status(200).json({
       status: 200,
-      message: message,
+      message: req.body,
     });
   });
 

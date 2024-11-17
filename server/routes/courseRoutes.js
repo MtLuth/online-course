@@ -45,6 +45,12 @@ courseRouter.get(
   courseController.studentGetCourseById
 );
 
+courseRouter.post(
+  "/rating/:courseId",
+  authMiddleware.validateUser,
+  courseController.studentRatingCourse
+);
+
 courseRouter.get("/", courseController.getAllCourse, pagination);
 
 export default courseRouter;

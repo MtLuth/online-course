@@ -3,6 +3,7 @@ import firebaseAdmin from "../firebase/firebaseAdmin.js";
 import AppError from "../utils/appError.js";
 import ErrorMessage from "../messages/errorMessage.js";
 import User, { UserRole } from "../model/userModel.js";
+import userRepo from "../repository/userRepo.js";
 
 class CustomMiddleware {
   validateUser = catchAsync(async (req, res, next) => {
@@ -26,7 +27,7 @@ class CustomMiddleware {
 
   validateRoleStudent = catchAsync(async (req, res, next) => {
     const uid = req.uid;
-    const role = await User.getRoleById(uid);
+    const role = await userRepo.getRoleById(uid);
     if (role !== UserRole.Student) {
       next(new AppError(ErrorMessage.InvalidRole, 401));
     }
@@ -35,7 +36,7 @@ class CustomMiddleware {
 
   validateRoleAdmin = catchAsync(async (req, res, next) => {
     const uid = req.uid;
-    const role = await User.getRoleById(uid);
+    const role = await userRepo.getRoleById(uid);
     console.log(role);
     if (role !== UserRole.Admin) {
       next(new AppError(ErrorMessage.InvalidRole, 401));
@@ -45,7 +46,7 @@ class CustomMiddleware {
 
   validateRoleInstructor = catchAsync(async (req, res, next) => {
     const uid = req.uid;
-    const role = await User.getRoleById(uid);
+    const role = await userRepo.getRoleById(uid);
     if (role !== UserRole.Teacher) {
       next(new AppError(ErrorMessage.InvalidRole, 401));
     }

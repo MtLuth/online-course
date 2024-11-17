@@ -1,4 +1,4 @@
-import Course from "../repository/courseRepo.js";
+import courseRepo from "../repository/courseRepo.js";
 import purchaseHistoryRepo, {
   PurchaseStatus,
 } from "../repository/purchaseHistoryRepo.js";
@@ -10,7 +10,6 @@ class PurchaseService {
       let bill;
       let allProducts = [];
       let total = 0;
-      const courseRepo = new Course();
       for (const id of products) {
         const course = await courseRepo.getCourseById(id);
         if (course.isPublished) {
