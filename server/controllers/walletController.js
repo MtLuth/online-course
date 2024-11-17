@@ -11,6 +11,15 @@ class WalletController {
       message: "Thành công",
     });
   });
+
+  getWallet = catchAsync(async (req, res, next) => {
+    const uid = req.uid;
+    const result = await walletService.getWalletByUid(uid);
+    res.status(200).json({
+      status: "Successfully",
+      message: result,
+    });
+  });
 }
 
 export default new WalletController();

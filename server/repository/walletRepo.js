@@ -23,9 +23,20 @@ class WalletRepo {
     await this.dbRef.doc(uid).set({ ...wallet });
   }
 
-  //   async updateAmountInProgress(uid, number) {
-  //     let in
-  //   }
+  async getWalletByUid(uid) {
+    const doc = await this.dbRef.doc(uid).get();
+    const data = doc.exists
+      ? doc.data()
+      : {
+          inProgress: 0,
+          withdrawable: 0,
+          withdrawnAmount: 0,
+        };
+    return {
+      uid: doc.id,
+      ...data,
+    };
+  }
 }
 
 export default new WalletRepo();
