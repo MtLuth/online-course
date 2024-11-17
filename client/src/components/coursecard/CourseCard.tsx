@@ -10,7 +10,10 @@ import {
   CardMedia,
   CircularProgress,
 } from "@mui/material";
-import { ShoppingCart as ShoppingCartIcon } from "@mui/icons-material";
+import {
+  ShoppingCart as ShoppingCartIcon,
+  Edit as EditIcon,
+} from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { getAuthToken } from "@/utils/auth";
 import { CourseDetail } from "@/model/CourseDetail.model";
@@ -46,6 +49,11 @@ const CourseCard: React.FC<CourseCardProps> = ({
   const { cartCount, setCartCount } = useCart();
   const { notifySuccess, notifyError } = useToastNotification();
 
+  const handleEditCourse = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    router.push(`/course/edit/${course.id}`);
+  };
+
   useEffect(() => {
     const fetchedToken = getAuthToken();
     setToken(fetchedToken);
@@ -55,14 +63,14 @@ const CourseCard: React.FC<CourseCardProps> = ({
     async (event: React.MouseEvent) => {
       event.stopPropagation(); // Ngăn chặn sự kiện click tiếp tục gây ra điều hướng
       if (!token) {
-        notifySuccess("Vui lòng đăng nhập trước khi thêm vào giỏ!");
+        notifyError("Vui lòng đăng nhập trước khi thêm vào giỏ!");
         return;
       }
 
       setIsAddingToCart(true);
       try {
         await cartApi.addToCart(course.id, token);
-        notifySuccess("Đã thêm vào giỏ hàng Thành Công!");
+        notifySuccess("Đã thêm vào giỏ hàng thành công!");
 
         // Sau khi thêm vào giỏ hàng thành công, cập nhật lại số lượng giỏ hàng
         setCartCount((prevCount) => prevCount + 1); // Giả sử thêm 1 khóa học vào giỏ
@@ -72,7 +80,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
         setIsAddingToCart(false);
       }
     },
-    [token, course.id, notifySuccess, notifyError, setCartCount] // Thêm setCartCount vào dependency array
+    [token, course.id, notifySuccess, notifyError, setCartCount]
   );
 
   return (
@@ -84,6 +92,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
         flexDirection: "column",
         justifyContent: "space-between",
         position: "relative",
+        cursor: "pointer",
         borderRadius: 2,
         overflow: "hidden",
         boxShadow: 3,
@@ -101,6 +110,23 @@ const CourseCard: React.FC<CourseCardProps> = ({
           alt={course.title || "Course Thumbnail"}
           sx={{ objectFit: "cover" }}
         />
+      )}
+
+      {showEdit && (
+        <IconButton
+          size="small"
+          sx={{
+            position: "absolute",
+            top: 8,
+            right: 8,
+            zIndex: 1,
+            backgroundColor: "rgba(255, 255, 255, 0.8)",
+            ":hover": { backgroundColor: "rgba(255, 255, 255, 1)" },
+          }}
+          onClick={handleEditCourse}
+        >
+          <EditIcon />
+        </IconButton>
       )}
 
       <CardContent>
@@ -134,6 +160,19 @@ const CourseCard: React.FC<CourseCardProps> = ({
               backgroundColor: "#f0f0f0",
             }}
           />
+          {showEdit && (
+            <Chip
+              label={course.isPublished ? "Đã xuất bản" : "Đã khóa"}
+              variant="outlined"
+              sx={{
+                mr: 1,
+                mb: 1,
+                fontSize: "0.8rem",
+                backgroundColor: course.isPublished ? "#d4edda" : "#f8d7da",
+                color: course.isPublished ? "#155724" : "#721c24",
+              }}
+            />
+          )}
         </Box>
       </CardContent>
 
@@ -150,14 +189,13 @@ const CourseCard: React.FC<CourseCardProps> = ({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            mt: 1,
           }}
         >
           <Button
             variant="contained"
             color="primary"
-            fullWidth
             sx={{
-              mt: 1,
               borderRadius: 2,
               boxShadow: 3,
               fontWeight: "bold",
@@ -166,6 +204,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
                 transform: "scale(1.05)",
                 backgroundColor: "#1976d2",
               },
+              flex: 1,
             }}
             onClick={() => router.push(`/course/${course.id}`)}
           >
@@ -176,9 +215,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
             <Button
               variant="outlined"
               color="secondary"
-              fullWidth
               sx={{
-                mt: 1,
                 borderRadius: 2,
                 boxShadow: 3,
                 fontWeight: "bold",
@@ -189,6 +226,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
                   transform: "scale(1.05)",
                   backgroundColor: "#1976d2",
                 },
+                flex: 1,
               }}
               onClick={handleAddToCart}
               startIcon={

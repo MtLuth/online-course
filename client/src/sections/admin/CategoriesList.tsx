@@ -76,7 +76,7 @@ const CategoriesList = ({ token }) => {
         notifySuccess("Thêm danh mục thành công");
       }
       setOpenDialog(false);
-      fetchCategories(); // Reload danh mục
+      fetchCategories();
     } catch (error) {
       console.error("Error saving category:", error);
       notifyError("Lỗi khi lưu danh mục");

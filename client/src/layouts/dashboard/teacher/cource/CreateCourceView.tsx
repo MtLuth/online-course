@@ -42,6 +42,7 @@ import Cookies from "js-cookie";
 import { courseApi } from "@/server/Cource";
 import { useRouter } from "next/navigation";
 import { useToastNotification } from "@/hook/useToastNotification";
+import CategorySelect from "./CategorySelect";
 
 interface LectureResource {
   title: string;
@@ -172,30 +173,7 @@ const CourseConfig: React.FC = React.memo(() => {
           />
         </Grid>
         <Grid item xs={12} sm={6}>
-          <FormControl
-            fullWidth
-            required
-            error={touched.category && Boolean(errors.category)}
-          >
-            <InputLabel id="category-label">Danh mục</InputLabel>
-            <Select
-              labelId="category-label"
-              label="Danh mục"
-              name="category"
-              value={values.category}
-              onChange={handleChange}
-            >
-              <MenuItem value="Lập trình">Lập trình</MenuItem>
-              <MenuItem value="Thiết kế">Thiết kế</MenuItem>
-              <MenuItem value="Marketing">Marketing</MenuItem>
-              {/* Add more categories as needed */}
-            </Select>
-            {touched.category && errors.category && (
-              <Typography variant="caption" color="error">
-                {errors.category}
-              </Typography>
-            )}
-          </FormControl>
+          <CategorySelect />
         </Grid>
 
         <Grid item xs={12}>

@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState, useEffect } from "react";
 import {
   Box,
@@ -18,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { useAppContext } from "@/context/AppContext";
 import { useCart } from "@/context/CartContext";
 import { useToastNotification } from "@/hook/useToastNotification";
+import { purchaseApi } from "@/server/Purchase";
 
 interface Course {
   id: string;
@@ -28,24 +28,6 @@ interface Course {
   createdAt: number;
 }
 
-interface ApiResponse {
-  status: string;
-  message: {
-    courses: {
-      [key: string]: {
-        course: {
-          title: string;
-          instructor: string;
-          level: string;
-          price: number;
-        };
-        createdAt: number;
-      };
-    };
-    total: number;
-  };
-}
-
 export default function CartShopping() {
   const { sessionToken } = useAppContext();
   const [courses, setCourses] = useState<Course[]>([]);
@@ -54,9 +36,9 @@ export default function CartShopping() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const router = useRouter();
-
   const { notifySuccess, notifyError } = useToastNotification();
   const { setCartCount } = useCart();
+
   useEffect(() => {
     const fetchCourses = async () => {
       setIsLoading(true);
@@ -80,7 +62,7 @@ export default function CartShopping() {
           throw new Error("Lỗi khi tải dữ liệu giỏ hàng");
         }
 
-        const data: ApiResponse = await response.json();
+        const data = await response.json();
         const coursesArray = Object.entries(data.message.courses).map(
           ([id, courseData]) => ({
             id,
@@ -156,8 +138,30 @@ export default function CartShopping() {
     .filter((course) => selectedCourses.includes(course.id))
     .reduce((sum, course) => sum + course.price, 0);
 
-  const handleCheckout = () => {
-    router.push("/checkout");
+  const handleCheckout = async () => {
+    try {
+      const selectedCoursesData = courses
+        .filter((course) => selectedCourses.includes(course.id))
+        .map((course) => course.id); // Chọn các khóa học đã được chọn
+
+      const purchaseData = { courses: selectedCoursesData };
+
+      const response = await purchaseApi.purchaseCourse(
+        purchaseData,
+        sessionToken
+      );
+
+      if (response.status === "Successfully") {
+        const paymentLink = response.message.paymentLink.checkoutUrl;
+        // Chuyển hướng người dùng đến URL thanh toán
+        window.location.href = paymentLink;
+      } else {
+        throw new Error("Lỗi khi tạo đơn hàng");
+      }
+    } catch (error) {
+      setError("Đã xảy ra lỗi khi thanh toán. Vui lòng thử lại.");
+      notifyError("Lỗi khi thanh toán.");
+    }
   };
 
   return (
