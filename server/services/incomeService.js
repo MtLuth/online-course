@@ -1,18 +1,15 @@
-import Income, { IncomeStatus } from "../model/incomeModel";
-import incomeRepo from "../repository/incomeRepo";
-import AppError from "../utils/appError";
+import incomeRepo from "../repository/incomeRepo.js";
+import AppError from "../utils/appError.js";
 
 class IncomeService {
-  async addIncome(uid, income) {
+  async getAllIncome(uid, statusFilter) {
     try {
-      const newIncome = new Income(
-        income.amount,
-        income.course,
-        IncomeStatus.InProgress
-      );
-      await incomeRepo.addIncome(uid, newIncome);
+      const results = await incomeRepo.getAllIncome(uid);
+      return results;
     } catch (error) {
-      throw new AppError(`Lỗi trong quá trình xử lý thu nhập: ${error}`);
+      throw new AppError(`Lỗi khi lấy thông tin thu nhập: ${error}`);
     }
   }
 }
+
+export default new IncomeService();

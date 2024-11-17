@@ -32,7 +32,9 @@ class Cart {
     let results = [];
     const keys = Object.keys(courses);
     keys.forEach((key) => {
-      results.push(courses[key]);
+      let map = {};
+      map[key] = courses[key];
+      results.push(map);
     });
     results.sort((a, b) => {
       const dateA = a.createdAt;

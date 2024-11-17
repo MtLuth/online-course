@@ -7,6 +7,7 @@ import myLearningsRepo from "../repository/myLearningsRepo.js";
 import courseRepo from "../repository/courseRepo.js";
 import incomeRepo from "../repository/incomeRepo.js";
 import Income, { IncomeStatus } from "../model/incomeModel.js";
+import walletRepo from "../repository/walletRepo.js";
 class PaymentService {
   constructor() {
     const clientId = "e6eed2dd-86ea-4758-b0ab-f49b28057aae";
@@ -45,13 +46,16 @@ class PaymentService {
   async successPayment(statusCode, orderCode) {
     try {
       if (statusCode === "00") {
+        let stringOrderCode = String(orderCode);
+        while (stringOrderCode.length < 6) {
+          stringOrderCode = "0" + stringOrderCode;
+        }
         await purchaseHistoryRepo.updateStatusPurchase(
-          String(orderCode),
+          stringOrderCode,
           PurchaseStatus.succeed
         );
-        const purchase = await purchaseHistoryRepo.getPurchaseByCode(
-          String(orderCode)
-        );
+        const purchase =
+          await purchaseHistoryRepo.getPurchaseByCode(stringOrderCode);
         if (purchase === null) {
           throw new AppError(`Không tìm thấy hóa đơn`, 400);
         }
@@ -88,8 +92,22 @@ class PaymentService {
   async addIncome(uid, income) {
     try {
       const newId = await incomeRepo.addIncome(uid, income);
+      await walletRepo.updateWallet(uid, {
+        inProgress: income.amount,
+      });
+
       setTimeout(async () => {
-        await incomeRepo.updateStatusIncome(newId, IncomeStatus.Withdrawable);
+        try {
+          await Promise.all([
+            incomeRepo.updateStatusIncome(newId, IncomeStatus.Complete),
+            walletRepo.updateWallet(uid, {
+              inProgress: -income.amount,
+              withdrawable: income.amount,
+            }),
+          ]);
+        } catch (error) {
+          console.error("Error updating wallet or income status:", error);
+        }
       }, 1000 * 60);
     } catch (error) {
       throw new AppError(error, 500);
