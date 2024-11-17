@@ -1,5 +1,11 @@
+// sections/allcourses/AllCourses.tsx
+
 import CoursesList from "@/components/coursecard/CoursesList";
+import { cookies } from "next/headers";
+import { GetAllCoursesResponse } from "@/interfaces/CourseDetail";
+import { jwtDecode } from "jwt-decode";
 import { courseApi } from "@/server/Cource";
+import { getAuthToken } from "@/utils/auth";
 
 interface AllCoursesProps {
   searchParams: { [key: string]: string | string[] | undefined };
@@ -25,6 +31,10 @@ const AllCourses = async ({ searchParams }: AllCoursesProps) => {
     ? searchParams.searchParam[0]
     : searchParams.searchParam || "";
 
+  const category = Array.isArray(searchParams.category)
+    ? searchParams.category[0]
+    : searchParams.category || "";
+
   const isPublished =
     searchParams.isPublished !== undefined
       ? searchParams.isPublished === "true"
@@ -33,17 +43,24 @@ const AllCourses = async ({ searchParams }: AllCoursesProps) => {
   const orderByPrice = Array.isArray(searchParams.orderByPrice)
     ? searchParams.orderByPrice[0]
     : searchParams.orderByPrice || "asc";
-
-  // Fetch courses from the API
-  const coursesResponse = await courseApi.getAllCourses(
+  const token = getAuthToken();
+  const uid: any = "";
+  if (token) {
+    const userId = localStorage.getItem(uid);
+    uid = userId;
+  }
+  console.log(uid);
+  const coursesResponse: GetAllCoursesResponse = await courseApi.getAllCourses(
     page,
     limit,
     searchParam,
+    category,
     isPublished,
-    orderByPrice
+    orderByPrice,
+    uid
   );
 
-  const courses = coursesResponse?.message?.results || [];
+  const courses = coursesResponse?.message?.results || [];);
   const itemCount = coursesResponse?.message?.itemCount || 0;
   const pageCount = coursesResponse?.message?.pageCount || 1;
 
@@ -55,9 +72,10 @@ const AllCourses = async ({ searchParams }: AllCoursesProps) => {
       itemCount={itemCount}
       limit={limit}
       searchParam={searchParam}
+      category={category}
       isPublished={isPublished}
       orderByPrice={orderByPrice}
-      showEdit={false} // Hide edit button on All Courses page
+      showEdit={false}
     />
   );
 };

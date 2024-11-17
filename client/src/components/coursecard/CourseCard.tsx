@@ -191,7 +191,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
         </Box>
 
         <Box sx={{ mt: 2, display: "flex", alignItems: "center" }}>
-          {renderRating(course.ratingScore)}
+          Đánh giá: {renderRating(course.ratingScore)}
         </Box>
 
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>

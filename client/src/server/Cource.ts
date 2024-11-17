@@ -105,8 +105,10 @@ class CourseApi extends BaseApi {
     page: number = 1,
     limit: number = 10,
     searchParam: string = "",
+    category?: string,
     isPublished?: boolean,
-    orderByPrice: string = "asc"
+    orderByPrice: string = "asc",
+    uid?: string // Thêm tham số uid
   ): Promise<GetAllCoursesResponse> {
     const queryParams = new URLSearchParams({
       page: page.toString(),
@@ -118,8 +120,16 @@ class CourseApi extends BaseApi {
       queryParams.append("searchParam", searchParam.trim());
     }
 
+    if (category) {
+      queryParams.append("category", category);
+    }
+
     if (isPublished !== undefined) {
       queryParams.append("isPublished", isPublished.toString());
+    }
+
+    if (uid) {
+      queryParams.append("uid", uid);
     }
 
     const response = await this.get(`/course?${queryParams.toString()}`, {

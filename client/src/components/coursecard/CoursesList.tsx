@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Grid,
   Box,
@@ -19,10 +19,13 @@ import {
   TextField,
   Card,
   CardActions,
+  CircularProgress,
 } from "@mui/material";
 import CourseCard from "./CourseCard";
 import { CourseDetail } from "@/interfaces/CourseDetail";
 import { useRouter } from "next/navigation";
+import { categoriesApi } from "@/server/Categories";
+import { getAuthToken } from "@/utils/auth";
 
 interface CoursesListProps {
   courses: CourseDetail[] | undefined;
@@ -31,6 +34,7 @@ interface CoursesListProps {
   itemCount: number;
   limit: number;
   searchParam?: string;
+  category?: string;
   isPublished?: boolean;
   orderByPrice?: string;
   showEdit?: boolean; // Controls visibility of edit button in CourseCard
@@ -43,19 +47,49 @@ const CoursesList: React.FC<CoursesListProps> = ({
   itemCount,
   limit,
   searchParam = "",
+  category = "",
   isPublished,
   orderByPrice = "asc",
   showEdit = false,
 }) => {
   const router = useRouter();
-
+  const token = getAuthToken();
   const [localSearchParam, setLocalSearchParam] = useState<string>(searchParam);
+  const [localCategory, setLocalCategory] = useState<string>(category);
   const [localIsPublished, setLocalIsPublished] = useState<string>(
     isPublished !== undefined ? isPublished.toString() : ""
   );
   const [localOrderByPrice, setLocalOrderByPrice] =
     useState<string>(orderByPrice);
   const [localLimit, setLocalLimit] = useState<number>(limit);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>(
+    []
+  );
+  const [isLoadingCategories, setIsLoadingCategories] =
+    useState<boolean>(false);
+  const [errorCategories, setErrorCategories] = useState<string>("");
+
+  useEffect(() => {
+    if (!showEdit) {
+      const fetchCategories = async () => {
+        setIsLoadingCategories(true);
+        try {
+          const response = await categoriesApi.getCategories(token || "");
+          if (response && response.message) {
+            setCategories(response.message);
+          } else {
+            setErrorCategories("Không thể tải danh mục.");
+          }
+        } catch (error) {
+          setErrorCategories("Có lỗi xảy ra khi tải danh mục.");
+        } finally {
+          setIsLoadingCategories(false);
+        }
+      };
+
+      fetchCategories();
+    }
+  }, [showEdit, token]);
 
   const handleSearchSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -67,6 +101,10 @@ const CoursesList: React.FC<CoursesListProps> = ({
 
     if (localSearchParam.trim() !== "") {
       params.searchParam = localSearchParam.trim();
+    }
+
+    if (localCategory !== "") {
+      params.category = localCategory;
     }
 
     if (localIsPublished !== "") {
@@ -102,6 +140,10 @@ const CoursesList: React.FC<CoursesListProps> = ({
       params.append("searchParam", localSearchParam.trim());
     }
 
+    if (localCategory !== "") {
+      params.append("category", localCategory);
+    }
+
     if (localIsPublished !== "") {
       params.append("isPublished", localIsPublished);
     }
@@ -114,9 +156,11 @@ const CoursesList: React.FC<CoursesListProps> = ({
 
     router.push(`/all-courses?${query}`);
   };
+
   const handleAddCourse = () => {
-    router.push("/dashboard/teacher/create-cource/");
+    router.push("/dashboard/teacher/create-course/"); // Corrected URL
   };
+
   const handleLimitChange = (event: React.ChangeEvent<{ value: unknown }>) => {
     const newLimit = event.target.value as number;
     setLocalLimit(newLimit);
@@ -128,6 +172,10 @@ const CoursesList: React.FC<CoursesListProps> = ({
 
     if (localSearchParam.trim() !== "") {
       params.searchParam = localSearchParam.trim();
+    }
+
+    if (localCategory !== "") {
+      params.category = localCategory;
     }
 
     if (localIsPublished !== "") {
@@ -163,12 +211,51 @@ const CoursesList: React.FC<CoursesListProps> = ({
       params.searchParam = localSearchParam.trim();
     }
 
-    if (localIsPublished !== "") {
-      params.isPublished = localIsPublished;
+    if (localCategory !== "") {
+      params.category = localCategory;
     }
 
     if (newOrder !== "asc") {
       params.orderByPrice = newOrder;
+    }
+
+    const query = new URLSearchParams(
+      Object.entries(params).reduce((acc, [key, value]) => {
+        if (value !== undefined && value !== "") {
+          acc[key] = value.toString();
+        }
+        return acc;
+      }, {} as { [key: string]: string })
+    ).toString();
+
+    router.push(`/all-courses?${query}`);
+  };
+
+  const handleCategoryChange = (
+    event: React.ChangeEvent<{ value: unknown }>
+  ) => {
+    const newCategory = event.target.value as string;
+    setLocalCategory(newCategory);
+
+    const params: { [key: string]: string | number | undefined } = {
+      page: 1, // Reset to first page on category change
+      limit: localLimit,
+    };
+
+    if (localSearchParam.trim() !== "") {
+      params.searchParam = localSearchParam.trim();
+    }
+
+    if (newCategory !== "") {
+      params.category = newCategory;
+    }
+
+    if (localIsPublished !== "") {
+      params.isPublished = localIsPublished;
+    }
+
+    if (localOrderByPrice !== "asc") {
+      params.orderByPrice = localOrderByPrice;
     }
 
     const query = new URLSearchParams(
@@ -200,8 +287,6 @@ const CoursesList: React.FC<CoursesListProps> = ({
       <Typography variant="h4" gutterBottom sx={{ fontWeight: "bold" }}>
         {showEdit ? "Các Khóa Học Của Tôi" : "Tất cả các Khóa Học"}
       </Typography>
-
-      {/* Search and Filter Form */}
       <Box
         component="form"
         onSubmit={handleSearchSubmit}
@@ -223,21 +308,52 @@ const CoursesList: React.FC<CoursesListProps> = ({
         />
 
         {!showEdit && (
-          <>
-            <FormControl size="small" sx={{ minWidth: 150 }}>
-              <InputLabel id="order-price-label">Sắp xếp giá</InputLabel>
-              <Select
-                labelId="order-price-label"
-                id="order-price-select"
-                value={localOrderByPrice}
-                label="Sắp xếp giá"
-                onChange={handleOrderChange}
-              >
-                <MenuItem value="asc">Tăng dần</MenuItem>
-                <MenuItem value="desc">Giảm dần</MenuItem>
-              </Select>
-            </FormControl>
-          </>
+          <FormControl size="small" sx={{ minWidth: 200 }}>
+            <InputLabel id="category-select-label">Danh mục</InputLabel>
+            <Select
+              labelId="category-select-label"
+              id="category-select"
+              value={localCategory}
+              label="Danh mục"
+              onChange={handleCategoryChange}
+              disabled={isLoadingCategories}
+            >
+              <MenuItem value="">
+                <em>Tất cả</em>
+              </MenuItem>
+              {categories.map((cat) => (
+                <MenuItem key={cat.id} value={cat.name}>
+                  {cat.name}
+                </MenuItem>
+              ))}
+            </Select>
+            {isLoadingCategories && (
+              <Box sx={{ display: "flex", justifyContent: "center", mt: 1 }}>
+                <CircularProgress size={24} />
+              </Box>
+            )}
+            {errorCategories && (
+              <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+                {errorCategories}
+              </Typography>
+            )}
+          </FormControl>
+        )}
+
+        {!showEdit && (
+          <FormControl size="small" sx={{ minWidth: 150 }}>
+            <InputLabel id="order-price-label">Sắp xếp giá</InputLabel>
+            <Select
+              labelId="order-price-label"
+              id="order-price-select"
+              value={localOrderByPrice}
+              label="Sắp xếp giá"
+              onChange={handleOrderChange}
+            >
+              <MenuItem value="asc">Tăng dần</MenuItem>
+              <MenuItem value="desc">Giảm dần</MenuItem>
+            </Select>
+          </FormControl>
         )}
 
         <Button

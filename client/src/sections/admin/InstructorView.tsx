@@ -180,7 +180,7 @@ const InstructorInfoTable = () => {
   };
 
   return (
-    <BaseCard title="Danh sách Giảng viên">
+    <BaseCard title="Danh sách Chuyên gia">
       <>
         <Box
           mb={2}

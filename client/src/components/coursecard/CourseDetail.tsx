@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -14,30 +14,145 @@ import {
   Paper,
   Button,
   Avatar,
-  Card,
-  CardContent,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  CircularProgress,
+  TextField,
 } from "@mui/material";
+import { ShoppingCart as ShoppingCartIcon } from "@mui/icons-material";
 import CheckIcon from "@mui/icons-material/Check";
+import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
+import DescriptionIcon from "@mui/icons-material/Description";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import Pagination from "@mui/material/Pagination";
 import { useRouter } from "next/navigation";
 import { CourseDetail as CourseDetailType } from "@/interfaces/CourseDetail";
+import Rating from "@mui/material/Rating";
+import { useToastNotification } from "@/hook/useToastNotification";
+import { getAuthToken } from "@/utils/auth";
+import { useCart } from "@/context/CartContext";
+import { cartApi } from "@/server/Cart";
 
 interface CourseDetailProps {
-  course: CourseDetailType;
+  courses: {
+    course: CourseDetailType;
+    isValidStudent: boolean;
+  };
 }
 
-const CourseDetail: React.FC<CourseDetailProps> = ({ course }) => {
+const getLevelLabel = (level: string) => {
+  switch (level) {
+    case "Beginner":
+      return "Người mới";
+    case "Intermediate":
+      return "Trung cấp";
+    case "Advanced":
+      return "Nâng cao";
+    default:
+      return "Chưa xác định";
+  }
+};
+
+// Hàm để render rating sao
+const renderRating = (ratingScore: number) => {
+  const fullStars = Math.floor(ratingScore);
+  const halfStars = ratingScore % 1 !== 0 ? 1 : 0;
+  const emptyStars = 5 - fullStars - halfStars;
+
+  const stars = [];
+
+  for (let i = 0; i < fullStars; i++) {
+    stars.push(<CheckIcon key={`full-${i}`} sx={{ color: "#FFD700" }} />);
+  }
+
+  if (halfStars === 1) {
+    stars.push(<CheckIcon key="half" sx={{ color: "#FFD700" }} />);
+  }
+
+  for (let i = 0; i < emptyStars; i++) {
+    stars.push(<CheckIcon key={`empty-${i}`} sx={{ color: "#C0C0C0" }} />);
+  }
+
+  return stars;
+};
+
+const CourseDetail: React.FC<CourseDetailProps> = ({ courses }) => {
+  const { course, isValidStudent } = courses;
   const router = useRouter();
+  const [newComment, setNewComment] = useState<string>("");
+  const [newRating, setNewRating] = useState<number>(0);
+  const [token, setToken] = useState<string | null>(null);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const { cartCount, setCartCount } = useCart();
+  const { notifySuccess, notifyError } = useToastNotification();
+
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const commentsPerPage = 5;
+
+  const totalComments = course.rating.length;
+  const totalPages = Math.ceil(totalComments / commentsPerPage);
+
+  const indexOfLastComment = currentPage * commentsPerPage;
+  const indexOfFirstComment = indexOfLastComment - commentsPerPage;
+  const currentComments = course.rating.slice(
+    indexOfFirstComment,
+    indexOfLastComment
+  );
+
+  const handleChangePage = (
+    event: React.ChangeEvent<unknown>,
+    value: number
+  ) => {
+    setCurrentPage(value);
+  };
+
   const handleStartCourse = () => {
     router.push(`/course/${course.id}/player`);
   };
 
-  const handleEnroll = () => {
-    alert("Bạn đã đăng ký khóa học!");
-  };
+  useEffect(() => {
+    const fetchedToken = getAuthToken();
+    setToken(fetchedToken);
+  }, []);
+
+  const handleEnroll = useCallback(
+    async (event: React.MouseEvent) => {
+      event.stopPropagation();
+      if (!token) {
+        notifyError("Vui lòng đăng nhập trước khi thêm vào giỏ!");
+        return;
+      }
+
+      setIsAddingToCart(true);
+      try {
+        await cartApi.addToCart(course.id, token);
+        notifySuccess("Đã thêm vào giỏ hàng thành công!");
+        setCartCount((prevCount) => prevCount + 1);
+      } catch (error) {
+        notifyError("Có lỗi xảy ra khi thêm khóa học vào giỏ!");
+      } finally {
+        setIsAddingToCart(false);
+      }
+    },
+    [token, course.id, notifySuccess, notifyError, setCartCount]
+  );
 
   const handleLectureClick = (lectureId: string) => {
-    alert(`Chọn bài giảng: ${lectureId}`);
+    // Xử lý khi người dùng click vào bài giảng (có thể điều hướng đến video hoặc nội dung bài giảng)
+    router.push(`/course/${course.id}/lecture/${lectureId}`);
+  };
+
+  const handleSubmitComment = () => {
+    if (newRating > 0 && newComment.trim() !== "") {
+      // Thực hiện gửi comment và rating đến API (chưa được triển khai)
+      alert(`Đã gửi đánh giá: ${newRating} sao và nhận xét: ${newComment}`);
+      setNewRating(0);
+      setNewComment("");
+    } else {
+      alert("Vui lòng đánh giá và nhập nhận xét.");
+    }
   };
 
   return (
@@ -73,27 +188,115 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ course }) => {
 
           {/* Price and Details */}
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mt: 2 }}>
-            <Typography
-              variant="h5"
+            {course.sale > 0 ? (
+              <>
+                {/* Giá cũ */}
+                <Box display="flex" alignItems="center" sx={{ mb: 1 }}>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{
+                      textDecoration: "line-through",
+                      fontSize: "0.9rem",
+                    }}
+                  >
+                    {new Intl.NumberFormat("vi-VN", {
+                      style: "currency",
+                      currency: "VND",
+                    }).format(course.price)}
+                  </Typography>
+                  {/* Nhãn giảm giá */}
+                  <Box
+                    sx={{
+                      ml: 1,
+                      backgroundColor: "error.main",
+                      color: "white",
+                      borderRadius: 1,
+                      px: 1,
+                      py: 0.25,
+                      fontSize: "0.8rem",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    -{Math.round((1 - course.salePrice / course.price) * 100)}%
+                  </Box>
+                </Box>
+
+                {/* Giá mới */}
+                <Typography
+                  variant="h5"
+                  color="primary"
+                  fontWeight="bold"
+                  sx={{
+                    fontSize: "1.5rem",
+                  }}
+                >
+                  {new Intl.NumberFormat("vi-VN", {
+                    style: "currency",
+                    currency: "VND",
+                  }).format(course.salePrice)}
+                </Typography>
+              </>
+            ) : (
+              <Typography
+                variant="h5"
+                color="primary"
+                fontWeight="bold"
+                sx={{
+                  fontSize: "1.5rem",
+                }}
+              >
+                {new Intl.NumberFormat("vi-VN", {
+                  style: "currency",
+                  currency: "VND",
+                }).format(course.price)}
+              </Typography>
+            )}
+          </Box>
+
+          {/* Thông tin Danh mục, Cấp độ, Ngôn ngữ và Số người tham gia */}
+          <Box
+            sx={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 1,
+              mt: 2,
+              alignItems: "center",
+            }}
+          >
+            <Chip
+              label={`Danh mục: ${course.category}`}
               color="primary"
-              sx={{ fontWeight: "bold" }}
-            >
-              {new Intl.NumberFormat("vi-VN", {
-                style: "currency",
-                currency: "VND",
-              }).format(course.price)}
-            </Typography>
-            <Chip label={`Danh mục: ${course.category}`} color="primary" />
-            <Chip label={`Cấp độ: ${course.level}`} color="secondary" />
+              sx={{ fontSize: "0.9rem" }}
+            />
+            <Chip
+              label={`Cấp độ: ${getLevelLabel(course.level)}`}
+              color="secondary"
+              sx={{ fontSize: "0.9rem" }}
+            />
+            <Chip
+              label={`Ngôn ngữ: ${course.language}`}
+              color="success"
+              sx={{ fontSize: "0.9rem" }}
+            />
+            <Chip
+              label={`Người tham gia: ${course.enrollment}`}
+              color="info"
+              sx={{ fontSize: "0.9rem" }}
+            />
           </Box>
 
           {/* Instructor */}
           <Box sx={{ display: "flex", alignItems: "center", mt: 3 }}>
-            <Avatar sx={{ bgcolor: "secondary.main", mr: 2 }}>
+            <Avatar
+              src={course.instructor.avt}
+              alt={course.instructor.fullName}
+              sx={{ mr: 2 }}
+            >
               {course.instructor.fullName.charAt(0)}
             </Avatar>
             <Typography variant="subtitle1">
-              Giảng viên:{" "}
+              Chuyên gia:{" "}
               <Typography
                 component="span"
                 variant="subtitle1"
@@ -106,23 +309,34 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ course }) => {
 
           {/* Enrollment Buttons */}
           <Box sx={{ mt: 4, display: "flex", gap: 2 }}>
-            <Button
-              variant="contained"
-              color="primary"
-              size="large"
-              onClick={handleEnroll}
-            >
-              Đăng ký Ngay
-            </Button>
-            <Button
-              variant="outlined"
-              color="secondary"
-              size="large"
-              onClick={handleStartCourse}
-              startIcon={<PlayArrowIcon />}
-            >
-              Bắt đầu khóa học
-            </Button>
+            {isValidStudent ? (
+              <Button
+                variant="contained"
+                color="primary"
+                size="large"
+                onClick={handleStartCourse}
+                startIcon={<PlayArrowIcon />}
+              >
+                Bắt đầu khóa học
+              </Button>
+            ) : (
+              <Button
+                variant="contained"
+                color="secondary"
+                size="large"
+                onClick={handleEnroll}
+                startIcon={
+                  isAddingToCart ? (
+                    <CircularProgress size={20} color="inherit" />
+                  ) : (
+                    <ShoppingCartIcon />
+                  )
+                }
+                disabled={isAddingToCart}
+              >
+                Thêm vào giỏ hàng
+              </Button>
+            )}
           </Box>
         </Grid>
       </Grid>
@@ -139,44 +353,66 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ course }) => {
               Nội dung khóa học
             </Typography>
             {course.content.map((section, sectionIndex) => (
-              <Box key={sectionIndex} sx={{ mb: 3 }}>
-                <Typography
-                  variant="subtitle1"
-                  sx={{ fontWeight: "bold", color: "primary.main" }}
+              <Accordion key={sectionIndex} sx={{ mb: 2 }}>
+                <AccordionSummary
+                  expandIcon={<ExpandMoreIcon />}
+                  aria-controls={`panel-content-${sectionIndex}`}
+                  id={`panel-header-${sectionIndex}`}
                 >
-                  {`Phần ${sectionIndex + 1}: ${section.sectionTitle}`}
-                </Typography>
-                <List>
-                  {section.lectures.map(
-                    (lecture: any, lectureIndex: number) => (
-                      <ListItem
-                        button
-                        key={lectureIndex}
-                        onClick={() => handleLectureClick(lecture.id)}
-                      >
-                        <ListItemIcon>
-                          <CheckIcon color="success" />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={lecture.title}
-                          secondary={lecture.duration}
-                        />
-                      </ListItem>
-                    )
-                  )}
-                </List>
-              </Box>
+                  <Typography
+                    variant="subtitle1"
+                    sx={{ fontWeight: "bold", color: "primary.main" }}
+                  >
+                    {`Phần ${sectionIndex + 1}: ${section.sectionTitle}`}
+                  </Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <List>
+                    {section.lectures.map(
+                      (lecture: any, lectureIndex: number) => (
+                        <ListItem
+                          button
+                          key={lectureIndex}
+                          onClick={() => handleLectureClick(lecture.id)}
+                          sx={{
+                            "&:hover": {
+                              backgroundColor: "#f5f5f5",
+                            },
+                          }}
+                        >
+                          <ListItemIcon>
+                            {lecture.type === "video" ? (
+                              <PlayCircleOutlineIcon color="primary" />
+                            ) : (
+                              <DescriptionIcon color="action" />
+                            )}
+                          </ListItemIcon>
+                          <ListItemText
+                            primary={lecture.title}
+                            secondary={lecture.duration}
+                          />
+                        </ListItem>
+                      )
+                    )}
+                  </List>
+                </AccordionDetails>
+              </Accordion>
             ))}
           </Paper>
         </Grid>
 
         {/* Main Content: What You Will Learn and Requirements */}
         <Grid item xs={12} md={8}>
-          <Card elevation={3} sx={{ mb: 4, borderRadius: 2 }}>
-            <CardContent>
-              <Typography variant="h5" gutterBottom>
-                Bạn sẽ học được gì
-              </Typography>
+          {/* Bạn sẽ học được gì */}
+          <Accordion elevation={3} sx={{ mb: 4, borderRadius: 2 }}>
+            <AccordionSummary
+              expandIcon={<ExpandMoreIcon />}
+              aria-controls="learn-content"
+              id="learn-header"
+            >
+              <Typography variant="h5">Bạn sẽ học được gì</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
               <List>
                 {course.whatYouWillLearn.map((item: string, index: number) => (
                   <ListItem key={index}>
@@ -187,14 +423,19 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ course }) => {
                   </ListItem>
                 ))}
               </List>
-            </CardContent>
-          </Card>
+            </AccordionDetails>
+          </Accordion>
 
-          <Card elevation={3} sx={{ borderRadius: 2 }}>
-            <CardContent>
-              <Typography variant="h5" gutterBottom>
-                Yêu cầu
-              </Typography>
+          {/* Yêu cầu */}
+          <Accordion elevation={3} sx={{ borderRadius: 2 }}>
+            <AccordionSummary
+              expandIcon={<ExpandMoreIcon />}
+              aria-controls="requirements-content"
+              id="requirements-header"
+            >
+              <Typography variant="h5">Yêu cầu</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
               <List>
                 {course.requirements.map((req: string, index: number) => (
                   <ListItem key={index}>
@@ -205,8 +446,141 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ course }) => {
                   </ListItem>
                 ))}
               </List>
-            </CardContent>
-          </Card>
+            </AccordionDetails>
+          </Accordion>
+
+          {/* Divider */}
+          <Divider sx={{ my: 4 }} />
+
+          {/* Rating and Comments */}
+          <Box>
+            {isValidStudent && (
+              <Box
+                sx={{
+                  mb: 3,
+                  padding: 2,
+                  backgroundColor: "#f0f0f06a",
+                  borderRadius: 2,
+                }}
+              >
+                <Typography
+                  variant="h5"
+                  gutterBottom
+                  align={"center"}
+                  sx={{
+                    mb: 3,
+                    padding: 2,
+                    backgroundColor: "#c9c9c992",
+                    borderRadius: 2,
+                  }}
+                >
+                  Đánh giá của bạn
+                </Typography>
+                <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                  <Typography variant="body1" sx={{ mr: 2 }}>
+                    Đánh giá sao:
+                  </Typography>
+                  <Rating
+                    name="rating"
+                    value={newRating}
+                    precision={0.5}
+                    onChange={(event, newValue) => {
+                      setNewRating(newValue || 0);
+                    }}
+                  />
+                </Box>
+                <TextField
+                  label="Nhận xét của bạn"
+                  multiline
+                  rows={4}
+                  variant="outlined"
+                  fullWidth
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  sx={{ mb: 2 }}
+                />
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleSubmitComment}
+                >
+                  Gửi Đánh Giá
+                </Button>
+              </Box>
+            )}
+
+            {/* Hiển thị các bình luận hiện tại */}
+            <Box sx={{ mt: 6 }}>
+              <Typography variant="h5" gutterBottom align={"center"}>
+                Nhận xét
+              </Typography>
+              {currentComments.length > 0 ? (
+                currentComments.map((r, index) => (
+                  <Box
+                    key={index}
+                    sx={{
+                      mb: 3,
+                      padding: 2,
+                      backgroundColor: "#f0f0f06a",
+                      borderRadius: 2,
+                    }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                      <Avatar
+                        src={r.user.avt}
+                        alt={r.user.fullName}
+                        sx={{ mr: 2 }}
+                      />
+                      <Typography
+                        variant="subtitle1"
+                        sx={{ fontWeight: "bold", mr: 1 }}
+                      >
+                        {r.user.fullName}
+                      </Typography>
+                      <Rating value={r.score} readOnly />
+                    </Box>
+                    {/* Làm nổi bật nội dung nhận xét */}
+                    <Box
+                      sx={{
+                        backgroundColor: "#f0f0f0",
+                        padding: 2,
+                        borderRadius: 2,
+                        mt: 1,
+                        borderLeft: "4px solid #1976d2",
+                      }}
+                    >
+                      <Typography
+                        variant="body1"
+                        sx={{
+                          fontWeight: "medium",
+                          color: "#333",
+                          fontSize: "1rem",
+                        }}
+                      >
+                        {r.content}
+                      </Typography>
+                    </Box>
+                  </Box>
+                ))
+              ) : (
+                <Typography variant="body1" color="text.secondary">
+                  Chưa có bình luận nào.
+                </Typography>
+              )}
+
+              {/* Phân trang */}
+              {totalPages > 1 && (
+                <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+                  <Pagination
+                    count={totalPages}
+                    page={currentPage}
+                    onChange={handleChangePage}
+                    color="primary"
+                  />
+                </Box>
+              )}
+            </Box>
+          </Box>
         </Grid>
       </Grid>
     </Box>
