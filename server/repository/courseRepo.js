@@ -124,12 +124,10 @@ class CourseRepo {
     return "Cập nhật khóa học thành công!";
   }
 
-  async getAllCourse(searchParam, orderByPrice, category, uid) {
+  async getAllCourse(searchParam, category, uid) {
     const results = [];
     let query = this.dbRef.where("isPublished", "==", true);
-    if (orderByPrice && orderByPrice !== "") {
-      query = query.orderBy("price", orderByPrice);
-    }
+
     const querySnapshot = await query.get();
     const promises = querySnapshot.docs.map(async (doc) => {
       const data = doc.data();
