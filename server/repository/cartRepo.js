@@ -22,6 +22,7 @@ class Cart {
     };
     const totalCourse = Object.keys(courses).length;
     await this.dbRef.doc(uid).update({ courses: courses, total: totalCourse });
+    return totalCourse;
   }
 
   async getAllCourseInCart(uid) {
@@ -33,8 +34,14 @@ class Cart {
     keys.forEach((key) => {
       results.push(courses[key]);
     });
+    results.sort((a, b) => {
+      const dateA = a.createdAt;
+      const dateB = b.createdAt;
+      return dateB - dateA;
+    });
+
     return {
-      courses: courses,
+      courses: results,
       total: data.total,
     };
   }
