@@ -18,13 +18,25 @@ import { useAppContext } from "@/context/AppContext";
 import { useCart } from "@/context/CartContext";
 import { useToastNotification } from "@/hook/useToastNotification";
 import { purchaseApi } from "@/server/Purchase";
-
+const getLevelLabel = (level: string) => {
+  switch (level) {
+    case "Beginner":
+      return "Người mới";
+    case "Intermediate":
+      return "Trung cấp";
+    case "Advanced":
+      return "Nâng cao";
+    default:
+      return "Chưa xác định";
+  }
+};
 interface Course {
   id: string;
   title: string;
   instructor: string;
   level: string;
   price: number;
+  thumbnail: string;
   createdAt: number;
 }
 
@@ -58,26 +70,34 @@ export default function CartShopping() {
 
         if (!response.ok) {
           const errorText = await response.text();
-          notifyError("Lỗi khi tải dữ liệu giỏ hàng:" + errorText);
+          notifyError("Lỗi khi tải dữ liệu giỏ hàng: " + errorText);
           throw new Error("Lỗi khi tải dữ liệu giỏ hàng");
         }
 
         const data = await response.json();
-        const coursesArray = Object.entries(data.message.courses).map(
-          ([id, courseData]) => ({
+        if (!data.message || !Array.isArray(data.message.courses)) {
+          throw new Error("Dữ liệu giỏ hàng không hợp lệ");
+        }
+
+        const coursesArray: Course[] = data.message.courses.map((item: any) => {
+          const [id, courseData] = Object.entries(item)[0];
+          return {
             id,
             title: courseData.course.title,
             instructor: courseData.course.instructor,
             level: courseData.course.level,
             price: courseData.course.price,
+            thumbnail: courseData.course.thumbnail,
             createdAt: courseData.createdAt,
-          })
-        );
+          };
+        });
 
         setCourses(coursesArray);
         setSelectedCourses(coursesArray.map((course) => course.id));
         localStorage.setItem("cartCount", coursesArray.length.toString());
-      } catch (error) {
+        setCartCount(coursesArray.length);
+      } catch (error: any) {
+        console.error("Error fetching cart data:", error);
         setError("Đã xảy ra lỗi. Vui lòng thử lại sau.");
       } finally {
         setIsLoading(false);
@@ -85,7 +105,7 @@ export default function CartShopping() {
     };
 
     fetchCourses();
-  }, [sessionToken, router]);
+  }, [sessionToken, router, setCartCount]);
 
   const handleSelectCourse = (courseId: string) => {
     setSelectedCourses((prevSelected) =>
@@ -110,17 +130,17 @@ export default function CartShopping() {
 
       if (!response.ok) {
         const errorText = await response.text();
-        notifyError("Lỗi khi xóa khóa học:" + errorText);
+        notifyError("Lỗi khi xóa khóa học: " + errorText);
         setError("Không thể xóa khóa học. Vui lòng thử lại.");
         return;
       }
+
       setCourses((prevCourses) => {
         const updatedCourses = prevCourses.filter(
           (course) => course.id !== courseId
         );
         localStorage.setItem("cartCount", updatedCourses.length.toString());
         setCartCount(updatedCourses.length);
-
         return updatedCourses;
       });
 
@@ -129,7 +149,8 @@ export default function CartShopping() {
       );
 
       notifySuccess("Khóa học đã được xóa thành công.");
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Error deleting course:", error);
       setError("Đã xảy ra lỗi khi xóa khóa học. Vui lòng thử lại sau.");
     }
   };
@@ -153,14 +174,61 @@ export default function CartShopping() {
 
       if (response.status === "Successfully") {
         const paymentLink = response.message.paymentLink.checkoutUrl;
-        // Chuyển hướng người dùng đến URL thanh toán
+        // Redirect user to the payment URL
         window.location.href = paymentLink;
       } else {
         throw new Error("Lỗi khi tạo đơn hàng");
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Error during checkout:", error);
       setError("Đã xảy ra lỗi khi thanh toán. Vui lòng thử lại.");
       notifyError("Lỗi khi thanh toán.");
+    }
+  };
+
+  // Function to format the createdAt timestamp to Vietnamese date string
+  const formatDate = (timestamp: number): string => {
+    const date = new Date(timestamp);
+    return date.toLocaleString("vi-VN", {
+      day: "numeric",
+      month: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric",
+    });
+  };
+
+  // Function to apply coupon
+  const handleApplyCoupon = async () => {
+    try {
+      if (!coupon.trim()) {
+        notifyError("Vui lòng nhập mã khuyến mãi.");
+        return;
+      }
+
+      const response = await fetch(
+        "http://localhost:8080/api/v1/coupon/apply",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${sessionToken}`,
+          },
+          body: JSON.stringify({ coupon }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok && data.status === "Successfully") {
+        notifySuccess("Mã khuyến mãi đã được áp dụng thành công.");
+      } else {
+        notifyError("Mã khuyến mãi không hợp lệ hoặc đã được sử dụng.");
+      }
+    } catch (error: any) {
+      console.error("Error applying coupon:", error);
+      notifyError("Đã xảy ra lỗi khi áp dụng mã khuyến mãi.");
     }
   };
 
@@ -222,7 +290,7 @@ export default function CartShopping() {
         <Grid container spacing={4}>
           <Grid item xs={12} md={8}>
             <Typography variant="h6" gutterBottom>
-              Có {selectedCourses.length} khóa học trong giỏ hàng
+              Có {selectedCourses.length} khóa học đã được chọn
             </Typography>
             {courses.map((course) => (
               <Box
@@ -240,23 +308,31 @@ export default function CartShopping() {
                   checked={selectedCourses.includes(course.id)}
                   onChange={() => handleSelectCourse(course.id)}
                 />
-                <Image
-                  src={course.thumbnail ? course.thumbnail : ""}
-                  alt={`Image of ${course.title}`}
-                  width={80}
-                  height={80}
-                />
+                <Box sx={{ position: "relative", width: 80, height: 80 }}>
+                  <Image
+                    src={
+                      course.thumbnail ||
+                      "https://i.postimg.cc/Bb5stQX0/Screenshot-2024-11-15-141350.png"
+                    }
+                    alt={`Hình ảnh của ${course.title}`}
+                    layout="fill"
+                    objectFit="cover"
+                  />
+                </Box>
 
                 <Box sx={{ ml: 2, flexGrow: 1 }}>
                   <Typography variant="h6">{course.title}</Typography>
                   <Typography variant="body2" color="textSecondary">
-                    Instructor: {course.instructor}
+                    Giảng viên: {course.instructor}
                   </Typography>
                   <Typography variant="body2" color="textSecondary">
-                    Level: {course.level}
+                    Cấp độ: {getLevelLabel(course.level)}
                   </Typography>
                   <Typography variant="body2">
-                    Price: {course.price.toLocaleString()}₫
+                    Giá: {course.price.toLocaleString()}₫
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    Thêm vào giỏ hàng vào lúc: {formatDate(course.createdAt)}
                   </Typography>
                 </Box>
                 <IconButton
@@ -308,7 +384,12 @@ export default function CartShopping() {
                   onChange={(e) => setCoupon(e.target.value)}
                   sx={{ mb: 2 }}
                 />
-                <Button variant="contained" color="secondary" fullWidth>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  fullWidth
+                  onClick={handleApplyCoupon}
+                >
                   Áp dụng
                 </Button>
               </Box>
