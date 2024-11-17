@@ -184,8 +184,6 @@ class CourseRepo {
           ratingScore: score,
         };
       }
-
-      return results;
     });
     return await Promise.all(promises);
   }

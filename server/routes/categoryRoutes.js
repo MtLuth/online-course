@@ -1,6 +1,7 @@
 import e from "express";
 import authMiddleware from "../middleware/authMiddleware.js";
 import categoryController from "../controllers/categoryController.js";
+import pagination from "../middleware/paginateMiddleware.js";
 
 const categoryRouter = e.Router();
 
@@ -11,7 +12,7 @@ categoryRouter
     authMiddleware.validateRoleAdmin,
     categoryController.createCategory
   )
-  .get(categoryController.getAllCategories);
+  .get(categoryController.getAllCategories, pagination);
 
 categoryRouter
   .route("/:id")
