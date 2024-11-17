@@ -34,6 +34,16 @@ class CourseRepo {
       if (searchParam && searchParam !== "") {
         searchParam = searchParam.toLowerCase();
       }
+
+      let ratingScore = 0;
+      if (data.rating.length > 0) {
+        const totalScore = data.rating.reduce(
+          (sum, item) => sum + item.score,
+          0
+        );
+        ratingScore = totalScore / data.rating.length;
+      }
+
       const matchTitle =
         data.title && data.title.toLowerCase().includes(searchParam);
       const matchLevel =
@@ -58,8 +68,8 @@ class CourseRepo {
           thumbnail: data.thumbnail,
           sale: data.sale,
           reviews: data.reviews,
-          ratings: data.rating,
           enrollment: data.enrollment,
+          ratingScore: ratingScore,
         });
       }
     });
@@ -172,7 +182,6 @@ class CourseRepo {
           isMyLearning: isValid,
           salePrice: salePrice,
           sale: data.sale,
-          rating: data.rating,
           enrollment: data.enrollment,
           ratingScore: score,
         };
