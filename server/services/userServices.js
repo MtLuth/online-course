@@ -10,6 +10,7 @@ class UserService {
   async getProfileById(uid) {
     try {
       const user = await userRepo.getUserByUid(uid);
+      console.log(user);
       return user;
     } catch (error) {
       console.log(error);

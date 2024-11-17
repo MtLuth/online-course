@@ -13,15 +13,22 @@ class PurchaseService {
       for (const id of products) {
         const course = await courseRepo.getCourseById(id);
         if (course.isPublished) {
+          let salePrice = course.price;
+          if (course.sale > 0) {
+            salePrice = course.price * (1 - course.sale);
+            salePrice = Math.round(salePrice);
+          }
           allProducts.push({
             courseId: course.id,
             title: course.title,
             price: course.price,
+            salePrice: salePrice,
             description: course.description,
             thumbnail: course.thumbnail,
             level: course.level,
+            instructor: course.instructor.uid,
           });
-          total += course.price;
+          total += salePrice;
         } else {
           throw new AppError(`Khóa học ${course.title} hiện đã ngưng bán!`);
         }

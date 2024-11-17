@@ -63,12 +63,17 @@ class CourseService {
 
   async getAllCourse(uid, searchParam, orderByPrice, category) {
     try {
-      const results = await courseRepo.getAllCourse(
-        searchParam,
-        orderByPrice,
-        category,
-        uid
-      );
+      let results = await courseRepo.getAllCourse(searchParam, category, uid);
+      if (orderByPrice && orderByPrice !== "") {
+        results = results.sort((a, b) => {
+          if (orderByPrice === "asc") {
+            return a.salePrice - b.salePrice;
+          } else if (orderByPrice === "desc") {
+            return b.salePrice - a.salePrice;
+          }
+          return 0;
+        });
+      }
       return results;
     } catch (error) {
       throw new AppError(error, 500);

@@ -14,7 +14,7 @@ class PaymentController {
       const item = {
         name: e.title,
         quantity: 1,
-        price: e.price,
+        price: e.salePrice,
       };
       items.push(item);
     }

@@ -34,6 +34,16 @@ class CourseRepo {
       if (searchParam && searchParam !== "") {
         searchParam = searchParam.toLowerCase();
       }
+
+      let ratingScore = 0;
+      if (data.rating.length > 0) {
+        const totalScore = data.rating.reduce(
+          (sum, item) => sum + item.score,
+          0
+        );
+        ratingScore = totalScore / data.rating.length;
+      }
+
       const matchTitle =
         data.title && data.title.toLowerCase().includes(searchParam);
       const matchLevel =
@@ -58,8 +68,8 @@ class CourseRepo {
           thumbnail: data.thumbnail,
           sale: data.sale,
           reviews: data.reviews,
-          ratings: data.rating,
           enrollment: data.enrollment,
+          ratingScore: ratingScore,
         });
       }
     });
@@ -89,8 +99,8 @@ class CourseRepo {
       isPublished: data.isPublished,
       enrollment: data.enrollment,
       sale: data.sale,
-      salePrice: (1 - data.sale) * data.price,
-      rating,
+      salePrice: Math.round((1 - data.sale) * data.price),
+      rating: data.rating,
     };
   }
 
@@ -114,18 +124,16 @@ class CourseRepo {
     return "Cập nhật khóa học thành công!";
   }
 
-  async getAllCourse(searchParam, orderByPrice, category, uid) {
+  async getAllCourse(searchParam, category, uid) {
     const results = [];
     let query = this.dbRef.where("isPublished", "==", true);
-    if (orderByPrice && orderByPrice !== "") {
-      query = query.orderBy("price", orderByPrice);
-    }
+
     const querySnapshot = await query.get();
     const promises = querySnapshot.docs.map(async (doc) => {
       const data = doc.data();
       let salePrice = data.price;
       if (data.sale) {
-        salePrice = (1 - data.sale) * data.price;
+        salePrice = Math.round((1 - data.sale) * data.price);
       }
 
       if (searchParam && searchParam !== "") {
@@ -170,9 +178,8 @@ class CourseRepo {
           isPublished: data.isPublished,
           thumbnail: data.thumbnail,
           isMyLearning: isValid,
-          salePrice: salePrice,
+          salePrice: Math.round(salePrice),
           sale: data.sale,
-          rating: data.rating,
           enrollment: data.enrollment,
           ratingScore: score,
         };

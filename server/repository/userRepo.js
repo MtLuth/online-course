@@ -12,6 +12,7 @@ class UserRepo {
       email: user.email,
       password: user.password,
       displayName: user.fullName,
+      photoURL: user.avt,
       emailVerified: false,
       disabled: disable,
     });
@@ -28,6 +29,7 @@ class UserRepo {
     const credential = await this.auth.getUser(uid);
     const snapshot = await this.dbRef.doc(uid).get();
     const user = snapshot.data();
+    console.log(credential.photoURL);
     console.log(credential);
     return new User(
       credential.uid,
