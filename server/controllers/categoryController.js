@@ -16,10 +16,8 @@ class CategoryController {
 
   getAllCategories = catchAsync(async (req, res, next) => {
     const results = await categoryServices.getAllCategories();
-    res.status(200).json({
-      status: "Successfully",
-      message: results,
-    });
+    req.results = results;
+    next();
   });
 
   deleteCategoryById = catchAsync(async (req, res, next) => {
