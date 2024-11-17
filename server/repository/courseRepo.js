@@ -90,7 +90,7 @@ class CourseRepo {
       enrollment: data.enrollment,
       sale: data.sale,
       salePrice: (1 - data.sale) * data.price,
-      rating,
+      rating: data.rating,
     };
   }
 
