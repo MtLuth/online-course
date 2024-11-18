@@ -9,6 +9,7 @@ import {
     Button,
     Snackbar,
     Alert,
+    Card
 } from "@mui/material";
 import Sidebar from "@/components/sidebar-profile/Sidebar-Profile";
 import { useProfileContext } from "@/context/ProfileContext";
@@ -128,92 +129,94 @@ const UpdatePhoto = () => {
 
     return (
         <Box sx={{ maxWidth: 1200, margin: "auto", mt: 4, p: 2 }}>
-            <Box sx={{ display: "flex" }}>
-                {/* Sidebar */}
-                <Sidebar />
+            <Card sx={{ display: "flex", flexDirection: "column" }}>
+                <Box sx={{ display: "flex" }}>
+                    {/* Sidebar */}
+                    <Sidebar />
 
-                {/* Main Content */}
-                <Box sx={{ flex: 1, padding: 3 }}>
-                    <Box sx={{ textAlign: "center", mb: 5 }}>
-                        {/* Tiêu đề */}
-                        <Typography variant="h5" fontWeight="bold" sx={{ mb: 1 }}>
-                            Cập nhật ảnh đại diện
-                        </Typography>
-                    </Box>
-
-                    {isLoading && (
-                        <Box
-                            display="flex"
-                            justifyContent="center"
-                            alignItems="center"
-                            sx={{ mb: 3 }}
-                        >
-                            <CircularProgress />
+                    {/* Main Content */}
+                    <Box sx={{ flex: 1, padding: 3 }}>
+                        <Box sx={{ textAlign: "center", mb: 5 }}>
+                            {/* Tiêu đề */}
+                            <Typography variant="h5" fontWeight="bold" sx={{ mb: 1 }}>
+                                Cập nhật ảnh đại diện
+                            </Typography>
                         </Box>
-                    )}
 
-                    {/* Avatar */}
-                    <Box sx={{ textAlign: "center", mb: 5 }}>
-                        <Avatar
-                            src={preview || "https://via.placeholder.com/150"}
-                            alt="Profile Preview"
-                            sx={{
-                                width: 150,
-                                height: 150,
-                                margin: "auto",
-                                mb: 2,
-                                border: "2px solid #ccc",
-                            }}
-                        />
-                    </Box>
+                        {isLoading && (
+                            <Box
+                                display="flex"
+                                justifyContent="center"
+                                alignItems="center"
+                                sx={{ mb: 3 }}
+                            >
+                                <CircularProgress />
+                            </Box>
+                        )}
 
-                    {/* Nút Tải lên */}
-                    <Box sx={{ textAlign: "center", mb: 3 }}>
-                        <Button
-                            variant="contained"
-                            component="label"
-                            sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                margin: "auto",
-                                width: "120px",
-                                height: "40px",
-                                mb: 2,
-                            }}
-                            disabled={isLoading}
-                        >
-                            Tải lên
-                            <input
-                                type="file"
-                                accept="image/*"
-                                hidden
-                                onChange={handleUpload}
+                        {/* Avatar */}
+                        <Box sx={{ textAlign: "center", mb: 5 }}>
+                            <Avatar
+                                src={preview || "https://via.placeholder.com/150"}
+                                alt="Profile Preview"
+                                sx={{
+                                    width: 150,
+                                    height: 150,
+                                    margin: "auto",
+                                    mb: 2,
+                                    border: "2px solid #ccc",
+                                }}
                             />
-                        </Button>
-                    </Box>
+                        </Box>
 
-                    {/* Nút Save */}
-                    <Box sx={{ textAlign: "center" }}>
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                margin: "auto",
-                                width: "120px",
-                                height: "40px",
-                            }}
-                            onClick={handleSave}
-                            disabled={!isSaveEnabled || isLoading}
-                        >
-                            Save
-                        </Button>
+                        {/* Nút Tải lên */}
+                        <Box sx={{ textAlign: "center", mb: 3 }}>
+                            <Button
+                                variant="contained"
+                                component="label"
+                                sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    margin: "auto",
+                                    width: "120px",
+                                    height: "40px",
+                                    mb: 2,
+                                }}
+                                disabled={isLoading}
+                            >
+                                Tải lên
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    hidden
+                                    onChange={handleUpload}
+                                />
+                            </Button>
+                        </Box>
+
+                        {/* Nút Save */}
+                        <Box sx={{ textAlign: "center" }}>
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    margin: "auto",
+                                    width: "120px",
+                                    height: "40px",
+                                }}
+                                onClick={handleSave}
+                                disabled={!isSaveEnabled || isLoading}
+                            >
+                                Save
+                            </Button>
+                        </Box>
                     </Box>
                 </Box>
-            </Box>
+            </Card>
 
             {/* Snackbar */}
             <Snackbar

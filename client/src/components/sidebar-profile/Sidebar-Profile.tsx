@@ -42,7 +42,7 @@ const Sidebar = () => {
                     </ListItemButton>
                 </ListItem>
                 <ListItem disablePadding>
-                    <ListItemButton onClick={() => router.push("/profile/security")}>
+                    <ListItemButton onClick={() => router.push("/profile/edit-account")}>
                         <ListItemText primary="Bảo mật tài khoản" />
                     </ListItemButton>
                 </ListItem>
