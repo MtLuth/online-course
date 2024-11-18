@@ -167,6 +167,21 @@ const categorySchema = yup.object({
   ),
 });
 
+const ratingSchema = yup.object({
+  score: yup.number().required().min(1).max(5),
+  content: yup.string().required(),
+});
+
+const messageSchema = yup.object({
+  content: yup.string().required(),
+  contentType: yup.string().required().oneOf(["text", "image"]),
+});
+
+const newPasswordSchema = yup.object({
+  oldPassword: yup.string().password().required(),
+  newPassword: yup.string().password().required(),
+});
+
 export {
   loginParam,
   registerParam,
@@ -175,4 +190,7 @@ export {
   buyCoursesSchema,
   createPaymentLinkSchema,
   categorySchema,
+  ratingSchema,
+  messageSchema,
+  newPasswordSchema,
 };

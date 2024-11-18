@@ -34,6 +34,8 @@ class AuthService {
         password
       );
 
+      console.log(authClient.currentUser);
+
       const user = userCredential.user;
       if (!user.emailVerified) {
         throw new AppError("Email chưa được xác minh", 400);
@@ -90,7 +92,6 @@ class AuthService {
       if (error.code === "auth/email-already-exists") {
         throw new AppError(ErrorMessage.EmailAlreadyExist, 500);
       }
-      console.log(error);
       throw new AppError(error, 500);
     }
   }
@@ -219,7 +220,21 @@ class AuthService {
       await sendEmail(mailDialup);
       return "Thành công!";
     } catch (error) {
-      console.log(error);
+      if (error.code === "auth/user-not-found") {
+        throw new AppError("Không tìm thấy tài khoản này trên hệ thống!", 500);
+      }
+      throw new AppError(error, 500);
+    }
+  }
+
+  async newPassword(uid, oldPassword, newPassword) {
+    try {
+      const message = await userRepo.newPassword(uid, oldPassword, newPassword);
+      return message;
+    } catch (error) {
+      if (error.code === "auth/invalid-credential") {
+        throw new AppError("Mật khẩu cũ không chính xác!", 400);
+      }
       throw new AppError(error, 500);
     }
   }

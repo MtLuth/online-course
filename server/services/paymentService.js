@@ -4,7 +4,10 @@ import purchaseHistoryRepo, {
   PurchaseStatus,
 } from "../repository/purchaseHistoryRepo.js";
 import myLearningsRepo from "../repository/myLearningsRepo.js";
-import Course from "../repository/courseRepo.js";
+import courseRepo from "../repository/courseRepo.js";
+import incomeRepo from "../repository/incomeRepo.js";
+import Income, { IncomeStatus } from "../model/incomeModel.js";
+import walletRepo from "../repository/walletRepo.js";
 class PaymentService {
   constructor() {
     const clientId = "e6eed2dd-86ea-4758-b0ab-f49b28057aae";
@@ -43,27 +46,71 @@ class PaymentService {
   async successPayment(statusCode, orderCode) {
     try {
       if (statusCode === "00") {
+        let stringOrderCode = String(orderCode);
+        while (stringOrderCode.length < 6) {
+          stringOrderCode = "0" + stringOrderCode;
+        }
         await purchaseHistoryRepo.updateStatusPurchase(
-          String(orderCode),
+          stringOrderCode,
           PurchaseStatus.succeed
         );
-        const purchase = await purchaseHistoryRepo.getPurchaseByCode(
-          String(orderCode)
-        );
+        const purchase =
+          await purchaseHistoryRepo.getPurchaseByCode(stringOrderCode);
         if (purchase === null) {
           throw new AppError(`Không tìm thấy hóa đơn`, 400);
         }
         const uid = purchase.uid;
         const sku = purchase.sku;
-        const courseRepo = new Course();
-        const { message } = await Promise.all([
-          myLearningsRepo.addCourses(uid, sku),
-          // courseRepo.addEnrollment(),
-        ]);
+        await Promise.all(
+          sku.map((course) => {
+            courseRepo.increaseEnrollment(course.courseId).catch((err) => {
+              throw new AppError(`Error in courseId ${course.courseId}:`, err);
+            });
+            let amount = course.salePrice * 0.94;
+            amount = Math.round(amount);
+
+            const income = new Income(
+              amount,
+              course,
+              IncomeStatus.InProgress,
+              orderCode,
+              new Date()
+            );
+            this.addIncome(course.instructor, income).catch((err) => {
+              throw new AppError(`Error in courseId ${course.courseId}:`, err);
+            });
+          })
+        );
+        const message = await myLearningsRepo.addCourses(uid, sku);
         return message;
       }
     } catch (error) {
       throw new AppError(`Lỗi khi thêm khóa học: ${error}`);
+    }
+  }
+
+  async addIncome(uid, income) {
+    try {
+      const newId = await incomeRepo.addIncome(uid, income);
+      await walletRepo.updateWallet(uid, {
+        inProgress: income.amount,
+      });
+
+      setTimeout(async () => {
+        try {
+          await Promise.all([
+            incomeRepo.updateStatusIncome(newId, IncomeStatus.Complete),
+            walletRepo.updateWallet(uid, {
+              inProgress: -income.amount,
+              withdrawable: income.amount,
+            }),
+          ]);
+        } catch (error) {
+          console.error("Error updating wallet or income status:", error);
+        }
+      }, 1000 * 60);
+    } catch (error) {
+      throw new AppError(error, 500);
     }
   }
 }

@@ -24,8 +24,6 @@ class InstructorRepo {
     const snapshot = await query.get();
     return snapshot;
   }
-
-
 }
 
 export default new InstructorRepo();

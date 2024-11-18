@@ -33,44 +33,6 @@ class User {
     user.uid = snapshot.id;
     return user;
   }
-
-  // async createAccount(disable) {
-  //   const accountRecord = await auth.createUser({
-  //     email: this.email,
-  //     password: this.password,
-  //     displayName: this.fullName,
-  //     emailVerified: false,
-  //     disabled: disable,
-  //   });
-  //   await dbRef.doc(accountRecord.uid).set(this.toFirestore());
-  //   return accountRecord.uid;
-  // }
-
-  // static async getUserByUid(uid) {
-  //   console.log(uid);
-  //   const credential = await firebaseAdmin.auth().getUser(uid);
-  //   const dbRef = firebaseAdmin.firestore().collection("users");
-  //   const snapshot = await dbRef.doc(uid).get();
-  //   const user = snapshot.data();
-  //   return new User(
-  //     credential.uid,
-  //     credential.fullName,
-  //     credential.email,
-  //     null,
-  //     credential.phoneNumber,
-  //     user.role,
-  //     credential.photoURL
-  //   );
-  // }
-
-  // static async getRoleById(uid) {
-  //   const snapshot = await dbRef.doc(uid).get();
-  //   return snapshot.data().role;
-  // }
-
-  // static async deleteUserById(uid) {
-  //   await dbRef.doc(uid).delete();
-  // }
 }
 
 export default User;

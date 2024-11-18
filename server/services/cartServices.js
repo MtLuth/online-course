@@ -1,16 +1,19 @@
 import cartRepo from "../repository/cartRepo.js";
-import Course from "../repository/courseRepo.js";
+import courseRepo from "../repository/courseRepo.js";
 import AppError from "../utils/appError.js";
 
 class CartService {
   async addCourse(uid, courseId) {
     try {
-      const courseRepo = new Course();
       const course = await courseRepo.getCourseById(courseId);
+      let total;
       if (course) {
-        await cartRepo.addCourse(uid, course);
+        total = await cartRepo.addCourse(uid, course);
       }
-      return "Đã thêm khóa học vào giỏ hàng!";
+      return {
+        notify: "Thêm khóa học thành công!",
+        total: total,
+      };
     } catch (error) {
       throw new AppError(error, 500);
     }

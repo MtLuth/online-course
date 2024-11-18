@@ -14,7 +14,7 @@ class PaymentController {
       const item = {
         name: e.title,
         quantity: 1,
-        price: e.price,
+        price: e.salePrice,
       };
       items.push(item);
     }
@@ -44,9 +44,10 @@ class PaymentController {
     if (orderCode !== 123) {
       message = await paymentService.successPayment(statusCode, orderCode);
     }
+    console.log(req.body);
     res.status(200).json({
       status: 200,
-      message: message,
+      message: req.body,
     });
   });
 
