@@ -177,6 +177,11 @@ const messageSchema = yup.object({
   contentType: yup.string().required().oneOf(["text", "image"]),
 });
 
+const newPasswordSchema = yup.object({
+  oldPassword: yup.string().password().required(),
+  newPassword: yup.string().password().required(),
+});
+
 export {
   loginParam,
   registerParam,
@@ -187,4 +192,5 @@ export {
   categorySchema,
   ratingSchema,
   messageSchema,
+  newPasswordSchema,
 };

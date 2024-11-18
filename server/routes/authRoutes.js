@@ -23,4 +23,10 @@ authRouter.post(
   authMiddleware.validateRoleAdmin,
   authController.AdminCheckInstructor
 );
+
+authRouter.post(
+  "/new-password",
+  authMiddleware.validateUser,
+  authController.newPassword
+);
 export default authRouter;
