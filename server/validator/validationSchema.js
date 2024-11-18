@@ -185,6 +185,11 @@ const newPasswordSchema = yup.object({
   newPassword: yup.string().password().required(),
 });
 
+const refundSchema = yup.object({
+  orderCode: yup.string().required(),
+  
+})
+
 export {
   loginParam,
   registerParam,
