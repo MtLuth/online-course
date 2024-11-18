@@ -15,7 +15,7 @@ class Cart {
         title: course.title,
         instructor: course.instructor.fullName,
         level: course.level,
-        price: course.price,
+        price: Math.round((1 - course.sale) * course.price),
         thumbnail: course.thumbnail,
       },
       createdAt: Date.now(),
@@ -27,8 +27,8 @@ class Cart {
 
   async getAllCourseInCart(uid) {
     const snapshot = await this.dbRef.doc(uid).get();
-    const data = snapshot.data();
-    const courses = data.courses;
+    const data = snapshot.exists ? snapshot.data() : {};
+    const courses = data.courses ? data.courses : [];
     let results = [];
     const keys = Object.keys(courses);
     keys.forEach((key) => {
