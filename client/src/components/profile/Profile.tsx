@@ -97,6 +97,14 @@ const Profile = () => {
             <ListItemText>Bảng điều khiển</ListItemText>
           </MenuItem>
         </Link>
+        <Link href="/mylearning" passHref>
+          <MenuItem component="a">
+            <ListItemIcon>
+              <IconDashboard fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Học tập</ListItemText>
+          </MenuItem>
+        </Link>
         <Link href="/profile" passHref>
           <MenuItem component="a">
             <ListItemIcon>

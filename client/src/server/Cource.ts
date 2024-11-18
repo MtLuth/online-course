@@ -72,7 +72,8 @@ class CourseApi extends BaseApi {
   public async getAllMyCourses(
     token: string,
     page: number = 1,
-    limit: number = 5,
+    limit: number = 10,
+    category?: string,
     searchParam?: string,
     isPublished?: boolean
   ): Promise<GetAllMyCoursesResponse> {
@@ -87,6 +88,9 @@ class CourseApi extends BaseApi {
 
     if (isPublished !== undefined) {
       queryParams.append("isPublished", isPublished.toString());
+    }
+    if (category !== undefined) {
+      queryParams.append("category", category.toString());
     }
 
     const response = await this.get(
@@ -108,7 +112,7 @@ class CourseApi extends BaseApi {
     category?: string,
     isPublished?: boolean,
     orderByPrice: string = "asc",
-    uid?: string // Thêm tham số uid
+    uid?: string
   ): Promise<GetAllCoursesResponse> {
     const queryParams = new URLSearchParams({
       page: page.toString(),

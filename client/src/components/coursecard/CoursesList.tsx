@@ -10,17 +10,22 @@ import {
   Pagination,
   Stack,
   CardContent,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Paper,
   Button,
   TextField,
   Card,
   CardActions,
   CircularProgress,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  IconButton,
 } from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import CourseCard from "./CourseCard";
 import { CourseDetail } from "@/interfaces/CourseDetail";
 import { useRouter } from "next/navigation";
@@ -37,7 +42,7 @@ interface CoursesListProps {
   category?: string;
   isPublished?: boolean;
   orderByPrice?: string;
-  showEdit?: boolean; // Controls visibility of edit button in CourseCard
+  showEdit?: boolean;
 }
 
 const CoursesList: React.FC<CoursesListProps> = ({
@@ -66,33 +71,32 @@ const CoursesList: React.FC<CoursesListProps> = ({
   const [isLoadingCategories, setIsLoadingCategories] =
     useState<boolean>(false);
   const [errorCategories, setErrorCategories] = useState<string>("");
-  useEffect(() => {
-    if (!showEdit) {
-      const fetchCategories = async () => {
-        setIsLoadingCategories(true);
-        try {
-          const response = await categoriesApi.getCategories(token || "");
-          if (response && response.message) {
-            setCategories(response.message.results);
-          } else {
-            setErrorCategories("Không thể tải danh mục.");
-          }
-        } catch (error) {
-          setErrorCategories("Có lỗi xảy ra khi tải danh mục.");
-        } finally {
-          setIsLoadingCategories(false);
-        }
-      };
 
-      fetchCategories();
-    }
+  useEffect(() => {
+    const fetchCategories = async () => {
+      setIsLoadingCategories(true);
+      try {
+        const response = await categoriesApi.getCategories(token || "");
+        if (response && response.message) {
+          setCategories(response.message.results);
+        } else {
+          setErrorCategories("Không thể tải danh mục.");
+        }
+      } catch (error) {
+        setErrorCategories("Có lỗi xảy ra khi tải danh mục.");
+      } finally {
+        setIsLoadingCategories(false);
+      }
+    };
+
+    fetchCategories();
   }, [showEdit, token]);
 
   const handleSearchSubmit = (event: React.FormEvent) => {
     event.preventDefault();
 
     const params: { [key: string]: string | number | undefined } = {
-      page: 1, // Reset to first page on new search
+      page: 1,
       limit: localLimit,
     };
 
@@ -155,7 +159,7 @@ const CoursesList: React.FC<CoursesListProps> = ({
   };
 
   const handleAddCourse = () => {
-    router.push("/dashboard/teacher/create-course/"); // Corrected URL
+    router.push("/dashboard/teacher/create-course/");
   };
 
   const handleLimitChange = (event: React.ChangeEvent<{ value: unknown }>) => {
@@ -163,7 +167,7 @@ const CoursesList: React.FC<CoursesListProps> = ({
     setLocalLimit(newLimit);
 
     const params: { [key: string]: string | number | undefined } = {
-      page: 1, // Reset to first page when limit changes
+      page: 1,
       limit: newLimit,
     };
 
@@ -200,7 +204,7 @@ const CoursesList: React.FC<CoursesListProps> = ({
     setLocalOrderByPrice(newOrder);
 
     const params: { [key: string]: string | number | undefined } = {
-      page: 1, // Reset to first page on order change
+      page: 1,
       limit: localLimit,
     };
 
@@ -235,7 +239,7 @@ const CoursesList: React.FC<CoursesListProps> = ({
     setLocalCategory(newCategory);
 
     const params: { [key: string]: string | number | undefined } = {
-      page: 1, // Reset to first page on category change
+      page: 1,
       limit: localLimit,
     };
 
@@ -280,184 +284,172 @@ const CoursesList: React.FC<CoursesListProps> = ({
   }
 
   return (
-    <Box sx={{ flexGrow: 1, padding: 4 }}>
-      <Typography variant="h4" gutterBottom sx={{ fontWeight: "bold" }}>
+    <Box>
+      <Typography
+        variant="h4"
+        gutterBottom
+        align="center"
+        sx={{ fontWeight: "bold" }}
+      >
         {showEdit ? "Các Khóa Học Của Tôi" : "Tất cả các Khóa Học"}
       </Typography>
-      <Box
-        component="form"
-        onSubmit={handleSearchSubmit}
-        sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 2,
-          alignItems: "center",
-          mb: 4,
-        }}
-      >
-        <TextField
-          label="Tìm kiếm theo tên khóa học"
-          variant="outlined"
-          size="small"
-          value={localSearchParam}
-          onChange={(e) => setLocalSearchParam(e.target.value)}
-          sx={{ minWidth: 350 }}
-        />
+      <Box sx={{ display: "flex", flexGrow: 1, padding: 4 }}>
+        <Box sx={{ minWidth: 270, pr: 2 }}>
+          <Typography variant="h6" sx={{ mb: 2 }}>
+            Tìm kiếm khóa học
+          </Typography>
 
-        {!showEdit && (
-          <FormControl size="small" sx={{ minWidth: 200 }}>
-            <InputLabel id="category-select-label">Danh mục</InputLabel>
-            <Select
-              labelId="category-select-label"
-              id="category-select"
-              value={localCategory}
-              label="Danh mục"
-              onChange={handleCategoryChange}
-              disabled={isLoadingCategories}
-            >
-              <MenuItem value="">
-                <em>Tất cả</em>
-              </MenuItem>
-              {categories.map((cat) => (
-                <MenuItem key={cat.id} value={cat.name}>
-                  {cat.name}
-                </MenuItem>
-              ))}
-            </Select>
-            {isLoadingCategories && (
-              <Box sx={{ display: "flex", justifyContent: "center", mt: 1 }}>
-                <CircularProgress size={24} />
-              </Box>
+          {/* Thêm Accordion cho chọn limit */}
+          <Accordion>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography>Hiển thị số lượng</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <FormControl fullWidth>
+                <InputLabel>Chọn số lượng</InputLabel>
+                <Select
+                  value={localLimit}
+                  onChange={handleLimitChange}
+                  label="Chọn số lượng"
+                >
+                  <MenuItem value={5}>5</MenuItem>
+                  <MenuItem value={10}>10</MenuItem>
+                  <MenuItem value={20}>20</MenuItem>
+                  <MenuItem value={50}>50</MenuItem>
+                </Select>
+              </FormControl>
+            </AccordionDetails>
+          </Accordion>
+
+          {/* Các phần filter và tìm kiếm */}
+          <Accordion>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography>Danh mục</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <FormControl fullWidth>
+                <InputLabel>Danh mục</InputLabel>
+                <Select
+                  value={localCategory}
+                  onChange={handleCategoryChange}
+                  label="Danh mục"
+                >
+                  <MenuItem value="">
+                    <em>Tất cả</em>
+                  </MenuItem>
+                  {categories.map((category) => (
+                    <MenuItem key={category.id} value={category.id}>
+                      {category.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </AccordionDetails>
+          </Accordion>
+
+          <Accordion>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography>Sắp xếp theo giá</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <FormControl fullWidth>
+                <InputLabel>Sắp xếp</InputLabel>
+                <Select
+                  value={localOrderByPrice}
+                  onChange={handleOrderChange}
+                  label="Sắp xếp theo giá"
+                >
+                  <MenuItem value="asc">Giá từ thấp đến cao</MenuItem>
+                  <MenuItem value="desc">Giá từ cao đến thấp</MenuItem>
+                </Select>
+              </FormControl>
+            </AccordionDetails>
+          </Accordion>
+          <Accordion>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography>Tìm kiếm tên khóa học</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <TextField
+                fullWidth
+                label="Nhập tên ..."
+                value={localSearchParam}
+                onChange={(e) => setLocalSearchParam(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleSearchSubmit(e);
+                  }
+                }}
+              />
+            </AccordionDetails>
+          </Accordion>
+        </Box>
+
+        <Box sx={{ flexGrow: 1 }}>
+          <Grid container spacing={1}>
+            {showEdit && (
+              <Grid item xs={12} sm={6} md={4}>
+                <Card
+                  sx={{
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    textAlign: "center",
+                    border: "1px dashed grey",
+                  }}
+                >
+                  <CardContent>
+                    <Typography variant="h6" color="textSecondary">
+                      Thêm khóa học mới
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      sx={{ mt: 1 }}
+                    >
+                      Nhấn vào nút bên dưới để bắt đầu tạo khóa học mới.
+                    </Typography>
+                  </CardContent>
+                  <CardActions>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handleAddCourse}
+                    >
+                      Thêm Khóa Học
+                    </Button>
+                  </CardActions>
+                </Card>
+              </Grid>
             )}
-            {errorCategories && (
-              <Typography variant="body2" color="error" sx={{ mt: 1 }}>
-                {errorCategories}
-              </Typography>
-            )}
-          </FormControl>
-        )}
+            {courses &&
+              courses.length > 0 &&
+              courses.map((course) =>
+                course ? (
+                  <Grid item key={course.id} xs={12} sm={6} md={4}>
+                    <CourseCard course={course} showEdit={showEdit} />
+                  </Grid>
+                ) : null
+              )}
+          </Grid>
 
-        {!showEdit && (
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel id="order-price-label">Sắp xếp giá</InputLabel>
-            <Select
-              labelId="order-price-label"
-              id="order-price-select"
-              value={localOrderByPrice}
-              label="Sắp xếp giá"
-              onChange={handleOrderChange}
-            >
-              <MenuItem value="asc">Tăng dần</MenuItem>
-              <MenuItem value="desc">Giảm dần</MenuItem>
-            </Select>
-          </FormControl>
-        )}
-
-        <Button
-          type="submit"
-          variant="contained"
-          color="primary"
-          sx={{ height: 40 }}
-        >
-          Tìm Kiếm
-        </Button>
-      </Box>
-
-      {/* Controls: Limit Selector */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: showEdit ? "space-between" : "flex-end",
-          alignItems: "center",
-          mb: 2,
-        }}
-      >
-        <FormControl size="small" sx={{ minWidth: 120 }}>
-          <InputLabel id="limit-select-label">Số lượng</InputLabel>
-          <Select
-            labelId="limit-select-label"
-            id="limit-select"
-            value={localLimit}
-            label="Số lượng"
-            onChange={handleLimitChange}
+          <Stack
+            direction="row"
+            spacing={2}
+            justifyContent="center"
+            sx={{ mt: 4 }}
           >
-            <MenuItem value={5}>5</MenuItem>
-            <MenuItem value={10}>10</MenuItem>
-            <MenuItem value={20}>20</MenuItem>
-            <MenuItem value={50}>50</MenuItem>
-          </Select>
-        </FormControl>
-      </Box>
-
-      {/* Grid of Course Cards */}
-      <Grid container spacing={3}>
-        {showEdit && (
-          <Grid item xs={12} sm={6} md={4}>
-            <Card
-              sx={{
-                height: "100%",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-                alignItems: "center",
-                textAlign: "center",
-                border: "1px dashed grey",
-              }}
-            >
-              <CardContent>
-                <Typography variant="h6" color="textSecondary">
-                  Thêm khóa học mới
-                </Typography>
-                <Typography
-                  variant="body2"
-                  color="textSecondary"
-                  sx={{ mt: 1 }}
-                >
-                  Nhấn vào nút bên dưới để bắt đầu tạo khóa học mới.
-                </Typography>
-              </CardContent>
-              <CardActions>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={handleAddCourse}
-                >
-                  Thêm Khóa Học
-                </Button>
-              </CardActions>
-            </Card>
-          </Grid>
-        )}
-
-        {courses.map((course) => (
-          <Grid item key={course.id} xs={12} sm={6} md={4}>
-            <CourseCard course={course} showEdit={showEdit} />
-          </Grid>
-        ))}
-      </Grid>
-
-      {/* Pagination and Item Count */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mt: 4,
-          flexWrap: "wrap",
-          gap: 2,
-        }}
-      >
-        <Typography variant="body2" color="textSecondary">
-          Hiển thị {courses.length} trong tổng số {itemCount} khóa học
-        </Typography>
-        <Pagination
-          count={pageCount}
-          page={page}
-          onChange={handlePageChange}
-          color="primary"
-          shape="rounded"
-        />
-      </Box>
+            <Pagination
+              count={pageCount}
+              page={page}
+              onChange={handlePageChange}
+              color="primary"
+            />
+          </Stack>
+        </Box>
+      </Box>{" "}
     </Box>
   );
 };
