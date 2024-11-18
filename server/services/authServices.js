@@ -90,7 +90,6 @@ class AuthService {
       if (error.code === "auth/email-already-exists") {
         throw new AppError(ErrorMessage.EmailAlreadyExist, 500);
       }
-      console.log(error);
       throw new AppError(error, 500);
     }
   }
@@ -221,6 +220,18 @@ class AuthService {
     } catch (error) {
       if (error.code === "auth/user-not-found") {
         throw new AppError("Không tìm thấy tài khoản này trên hệ thống!", 500);
+      }
+      throw new AppError(error, 500);
+    }
+  }
+
+  async newPassword(uid, oldPassword, newPassword) {
+    try {
+      const message = await userRepo.newPassword(uid, oldPassword, newPassword);
+      return message;
+    } catch (error) {
+      if (error.code === "auth/invalid-credential") {
+        throw new AppError("Mật khẩu cũ không chính xác!", 400);
       }
       throw new AppError(error, 500);
     }

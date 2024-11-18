@@ -9,7 +9,28 @@ class MessageMediator {
     this.db = firebaseAdmin.database();
   }
 
-  loadMessages(uid1, uid2) {}
+  async loadMessages() {
+    try {
+      const conversationId = this.getConversationKey();
+      const messages = await this.db
+        .ref(`conversations/${conversationId}/messages`)
+        .get();
+
+      const results = [];
+      messages.forEach((snapshot) => {
+        const message = snapshot.val().message;
+        const messageWithKey = {
+          key: snapshot.key,
+          message: message,
+        };
+        results.push(messageWithKey);
+      });
+
+      return results;
+    } catch (error) {
+      throw new AppError(`Lỗi khi tải tin nhắn: ${error}`);
+    }
+  }
 
   async sendMessage(sender, receiver, contentType, content) {
     try {
@@ -26,7 +47,6 @@ class MessageMediator {
       await this.db
         .ref(`conversations/${conversationId}/messages`)
         .push({ message });
-      this.notify(receiver, message);
     } catch (error) {
       if (error.code === "auth/user-not-found") {
         throw new AppError(`Không tìm thấy người nhận!`, 400);
@@ -43,10 +63,14 @@ class MessageMediator {
     return conversationId;
   }
 
-  notify(receiver, message) {
-    console.log(
-      `Thông báo: ${receiver.name} có tin nhắn mới từ ${message.sender}: ${message.content}`
-    );
+  listenToNewMessage(res) {
+    const conversationId = this.getConversationKey();
+    const messagesRef = this.db.ref(`conversations/${conversationId}/messages`);
+
+    messagesRef.on("child_added", (snapshot) => {
+      const message = snapshot.val();
+      res.write(`data: ${JSON.stringify(message)}\n\n`);
+    });
   }
 }
 

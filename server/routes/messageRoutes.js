@@ -4,10 +4,15 @@ import messageController from "../controllers/messageController.js";
 
 const messageRouter = e.Router();
 
-messageRouter.post(
-  "/:receiver",
+messageRouter
+  .route("/:receiver")
+  .post(authMiddleware.validateUser, messageController.sendMessage)
+  .get(authMiddleware.validateUser, messageController.loadMessages);
+
+messageRouter.get(
+  "/listen/:receiver",
   authMiddleware.validateUser,
-  messageController.sendMessage
+  messageController.listenToNewMessage
 );
 
 export default messageRouter;
