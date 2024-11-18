@@ -41,7 +41,9 @@ const getLevelLabel = (level: string) => {
       return "Chưa xác định";
   }
 };
-
+const getStatusLabel = (isPublished: boolean) => {
+  return isPublished ? "Đã Xuất Bản" : "Chưa Xuất Bản";
+};
 // Hàm để render rating sao
 const renderRating = (ratingScore: number) => {
   const fullStars = Math.floor(ratingScore);
@@ -188,6 +190,18 @@ const CourseCard: React.FC<CourseCardProps> = ({
               backgroundColor: "#f0f0f0",
             }}
           />
+          {showEdit && (
+            <Chip
+              label={`Tình trạng: ${getStatusLabel(course.isPublished)}`}
+              variant="outlined"
+              sx={{
+                mr: 1,
+                mb: 1,
+                fontSize: "0.8rem",
+                backgroundColor: "#f0f0f0",
+              }}
+            />
+          )}
         </Box>
 
         <Box sx={{ mt: 2, display: "flex", alignItems: "center" }}>
@@ -288,7 +302,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
           >
             Xem Chi Tiết
           </Button>
-          {!course.isMyLearning && (
+          {!course.isMyLearning && !showEdit && (
             <Button
               variant="outlined"
               color="secondary"

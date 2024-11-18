@@ -22,15 +22,14 @@ const CategorySelect: React.FC = () => {
       setLoading(true);
       try {
         const data = await categoriesApi.getCategories(token);
-        const categoryOptions = data.message.map(
+        const categoryOptions = data.message?.results.map(
           (category: { id: string; name: string }) => ({
             label: category.name,
-            value: category.id,
+            value: category.name,
           })
         );
         setCategories(categoryOptions);
       } catch (err) {
-        console.error("Lỗi khi lấy danh mục:", err);
         setError("Không thể tải danh mục. Vui lòng thử lại.");
       } finally {
         setLoading(false);

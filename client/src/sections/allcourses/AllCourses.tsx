@@ -48,14 +48,11 @@ const AllCourses = async ({ searchParams }: AllCoursesProps) => {
   let uid = "";
   if (token) {
     try {
-      // Giải mã token
       const decoded: any = jwtDecode(token);
       if (decoded && decoded.user_id) {
         uid = decoded.user_id;
       }
-    } catch (error) {
-      console.error("Error decoding token:", error);
-    }
+    } catch (error) {}
   }
   console.log(uid);
   const coursesResponse: GetAllCoursesResponse = await courseApi.getAllCourses(

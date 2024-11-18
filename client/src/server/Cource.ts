@@ -89,8 +89,8 @@ class CourseApi extends BaseApi {
     if (isPublished !== undefined) {
       queryParams.append("isPublished", isPublished.toString());
     }
-    if (category !== undefined) {
-      queryParams.append("category", category.toString());
+    if (category) {
+      queryParams.append("category", category);
     }
 
     const response = await this.get(
@@ -139,6 +139,15 @@ class CourseApi extends BaseApi {
     const response = await this.get(`/course?${queryParams.toString()}`, {
       headers: {
         "Content-Type": "application/json",
+      },
+    });
+    return response;
+  }
+  public async getCourseDetailIns(id: string, token: string): Promise<any> {
+    const response = await this.get(`/course/manage/${id}`, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
     });
     return response;

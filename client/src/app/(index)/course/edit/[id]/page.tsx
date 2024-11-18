@@ -8,19 +8,23 @@ import { CircularProgress, Box, Typography } from "@mui/material";
 import CreateCourseView, {
   CourseData,
 } from "@/layouts/dashboard/teacher/cource/CreateCourceView";
+import { getAuthToken } from "@/utils/auth";
 
 const EditCoursePage: React.FC = () => {
   const { id } = useParams(); // Lấy ID từ URL
   const [initialValues, setInitialValues] = useState<CourseData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
-
+  const token = getAuthToken();
   useEffect(() => {
     const fetchCourse = async () => {
       if (!id) return;
 
       try {
-        const response = await courseApi.getCourseDetail(id as string);
+        const response = await courseApi.getCourseDetailIns(
+          id as string,
+          token
+        );
         if (response.status === "Successfully" && response.message) {
           const courseDetail = response.message;
 
