@@ -174,7 +174,10 @@ const ratingSchema = yup.object({
 
 const messageSchema = yup.object({
   content: yup.string().required(),
-  contentType: yup.string().required().oneOf(["text", "image"]),
+  contentType: yup
+    .string()
+    .required()
+    .oneOf(["text", "image", "icon", "sticker"]),
 });
 
 const newPasswordSchema = yup.object({
