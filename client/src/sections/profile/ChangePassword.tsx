@@ -9,18 +9,18 @@ import {
     Button,
     Snackbar,
     Alert,
-    Card
+    Card,
 } from "@mui/material";
 import Sidebar from "@/components/sidebar-profile/Sidebar-Profile";
 import { useAppContext } from "@/context/AppContext";
 
 const ChangePassword = () => {
-    const [currentPassword, setCurrentPassword] = useState<string>("");
+    const [oldPassword, setOldPassword] = useState<string>("");
     const [newPassword, setNewPassword] = useState<string>("");
     const [confirmPassword, setConfirmPassword] = useState<string>("");
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
-    // Snackbar states
+
     const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
     const [snackbarMessage, setSnackbarMessage] = useState<string>("");
     const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success");
@@ -28,7 +28,7 @@ const ChangePassword = () => {
     const { sessionToken } = useAppContext();
 
     const handleChangePassword = async () => {
-        if (!currentPassword || !newPassword || !confirmPassword) {
+        if (!oldPassword || !newPassword || !confirmPassword) {
             setSnackbarMessage("Vui lòng nhập đầy đủ các trường.");
             setSnackbarSeverity("error");
             setSnackbarOpen(true);
@@ -46,7 +46,7 @@ const ChangePassword = () => {
 
         try {
             const response = await fetch(
-                `http://localhost:8080/api/v1/user/change-password`,
+                `http://localhost:8080/api/v1/auth/new-password`,
                 {
                     method: "POST",
                     headers: {
@@ -54,14 +54,15 @@ const ChangePassword = () => {
                         Authorization: `Bearer ${sessionToken}`,
                     },
                     body: JSON.stringify({
-                        currentPassword,
+                        oldPassword,
                         newPassword,
                     }),
                 }
             );
 
             if (!response.ok) {
-                throw new Error("Đổi mật khẩu thất bại.");
+                const error = await response.json();
+                throw new Error(error.message || "Đổi mật khẩu thất bại.");
             }
 
             const result = await response.json();
@@ -70,7 +71,7 @@ const ChangePassword = () => {
             setSnackbarSeverity("success");
             setSnackbarOpen(true);
 
-            setCurrentPassword("");
+            setOldPassword("");
             setNewPassword("");
             setConfirmPassword("");
         } catch (error: any) {
@@ -96,7 +97,6 @@ const ChangePassword = () => {
                     {/* Main Content */}
                     <Box sx={{ flex: 1, padding: 3 }}>
                         <Box sx={{ textAlign: "center", mb: 5 }}>
-                            {/* Tiêu đề */}
                             <Typography variant="h5" fontWeight="bold" sx={{ mb: 1 }}>
                                 Đổi mật khẩu
                             </Typography>
@@ -119,10 +119,10 @@ const ChangePassword = () => {
                                 maxWidth: 400,
                                 margin: "auto",
                                 padding: 3,
-                                border: "1px solid #ccc", // Viền xám nhạt
-                                borderRadius: "8px", // Bo góc
-                                boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)", // Đổ bóng nhẹ
-                                backgroundColor: "#fff", // Nền trắng
+                                border: "1px solid #ccc",
+                                borderRadius: "8px",
+                                boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+                                backgroundColor: "#fff",
                             }}
                         >
                             <TextField
@@ -130,8 +130,8 @@ const ChangePassword = () => {
                                 label="Mật khẩu hiện tại"
                                 type="password"
                                 variant="outlined"
-                                value={currentPassword}
-                                onChange={(e) => setCurrentPassword(e.target.value)}
+                                value={oldPassword}
+                                onChange={(e) => setOldPassword(e.target.value)}
                                 sx={{ mb: 3 }}
                             />
                             <TextField
@@ -162,7 +162,6 @@ const ChangePassword = () => {
                                 {isLoading ? "Đang xử lý..." : "Đổi mật khẩu"}
                             </Button>
                         </Box>
-
                     </Box>
                 </Box>
             </Card>
