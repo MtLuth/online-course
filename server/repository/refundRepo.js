@@ -34,13 +34,13 @@ class RefundRepo {
     }
     const snapshot = await query.get();
     const results = snapshot.docs
-      .map((doc) => ({ id: doc.id, ...doc.data() }))
+      .map((doc) => ({ ...doc.data(), id: doc.id }))
       .sort((a, b) => b.date - a.date);
 
     return results;
   }
 
-  async viewDetailRefund(uid, id) {}
+  async viewDetailRefund(id) {}
 }
 
 export default new RefundRepo();

@@ -45,9 +45,7 @@ class RefundService {
       if (currentDate - boughtAt > 1000 * 60 * 60 * 24) {
         throw new AppError(`Đơn hàng của bạn đã quá hạn hoàn tiền!`);
       }
-      const refundId = crypto.randomBytes(6).toString("hex");
       const refund = new Refund(
-        refundId,
         orderCode,
         refundCourses,
         amount,
