@@ -29,16 +29,19 @@ class MessageController {
     res.setHeader("Connection", "keep-alive");
     res.flushHeaders();
 
-    const sendEvent = (data) => {
-      res.write(`data: ${JSON.stringify(data)}\n\n`);
+    const onMessagesLoaded = (messages) => {
+      res.write(
+        `data: ${JSON.stringify({ status: "Successfully", messages })}\n\n`
+      );
     };
 
-    mediator.loadMessagesRealtime((messages) => {
-      sendEvent({
-        status: "Successfully",
-        message: messages,
-      });
-    });
+    const onNewMessage = (newMessage) => {
+      res.write(
+        `data: ${JSON.stringify({ status: "NewMessage", message: newMessage })}\n\n`
+      );
+    };
+
+    mediator.loadMessagesRealtime(onMessagesLoaded, onNewMessage);
 
     req.on("close", () => {
       mediator.stopListening();
