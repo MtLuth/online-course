@@ -10,9 +10,9 @@ messageRouter
   .get(authMiddleware.validateUser, messageController.loadMessages);
 
 messageRouter.get(
-  "/listen/:sender/:receiver",
+  "/:sender/:receiver",
   authMiddleware.validateUser,
-  messageController.listenToNewMessage
+  messageController.loadMessages
 );
 
 messageRouter.get(

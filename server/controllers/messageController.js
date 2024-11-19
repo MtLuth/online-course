@@ -19,7 +19,7 @@ class MessageController {
   });
 
   loadMessages = catchAsync(async (req, res, next) => {
-    const sender = req.uid;
+    const sender = req.params.sender;
     const receiver = req.params.receiver;
 
     const mediator = new MessageMediator(sender, receiver);
@@ -27,6 +27,7 @@ class MessageController {
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
+    res.flushHeaders();
 
     const sendEvent = (data) => {
       res.write(`data: ${JSON.stringify(data)}\n\n`);
@@ -53,6 +54,7 @@ class MessageController {
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
+    res.flushHeaders();
 
     mediator.listenToNewMessage(res);
 
