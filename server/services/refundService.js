@@ -1,3 +1,4 @@
+import ErrorMessage from "../messages/errorMessage.js";
 import Refund, { RefundStatus } from "../model/refundModel.js";
 import purchaseHistoryRepo from "../repository/purchaseHistoryRepo.js";
 import refundRepo from "../repository/refundRepo.js";
@@ -72,7 +73,14 @@ class RefundService {
     }
   }
 
-  async viewDetailRefund() {}
+  async viewDetailRefund(id) {
+    try {
+      const results = await refundRepo.viewDetailRefund(id);
+      return results;
+    } catch (error) {
+      throw new AppError(ErrorMessage.Internal, 500);
+    }
+  }
 }
 
 export default new RefundService();

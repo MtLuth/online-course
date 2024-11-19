@@ -15,4 +15,8 @@ refundRouter
     pagination
   );
 
+refundRouter
+  .route("/:id")
+  .get(authMiddleware.validateUser, refundController.viewDetailRefund);
+
 export default refundRouter;
