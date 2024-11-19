@@ -65,16 +65,6 @@ class MessageMediator {
         : `${this.uid2}_${this.uid1}`;
     return conversationId;
   }
-
-  listenToNewMessage(res) {
-    const conversationId = this.getConversationKey();
-    const messagesRef = this.db.ref(`conversations/${conversationId}/messages`);
-
-    messagesRef.on("child_added", (snapshot) => {
-      const message = snapshot.val();
-      res.write(`data: ${JSON.stringify(message)}\n\n`);
-    });
-  }
 }
 
 export default MessageMediator;

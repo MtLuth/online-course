@@ -10,9 +10,15 @@ messageRouter
   .get(authMiddleware.validateUser, messageController.loadMessages);
 
 messageRouter.get(
-  "/listen/:receiver",
+  "/:sender/:receiver",
   authMiddleware.validateUser,
-  messageController.listenToNewMessage
+  messageController.loadMessages
+);
+
+messageRouter.get(
+  "/conversations/all",
+  authMiddleware.validateUser,
+  messageController.getAllConversations
 );
 
 export default messageRouter;
