@@ -9,11 +9,11 @@ class MessageMediator {
     this.db = firebaseAdmin.database();
   }
 
-  loadMessagesRealtime(callback) {
+  loadMessagesRealtime(onMessagesLoaded, onNewMessage) {
     const conversationId = this.getConversationKey();
     const ref = this.db.ref(`conversations/${conversationId}/messages`);
 
-    this.listener = ref.on("value", (snapshot) => {
+    ref.once("value", (snapshot) => {
       const results = [];
       snapshot.forEach((childSnapshot) => {
         const message = childSnapshot.val();
@@ -23,7 +23,17 @@ class MessageMediator {
         };
         results.push(messageWithKey);
       });
-      callback(results);
+
+      onMessagesLoaded(results);
+    });
+
+    this.listener = ref.on("child_added", (childSnapshot) => {
+      const newMessage = {
+        key: childSnapshot.key,
+        ...childSnapshot.val(),
+      };
+
+      onNewMessage(newMessage);
     });
   }
 
