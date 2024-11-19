@@ -46,6 +46,17 @@ const Menuitems = [
     icon: IconCopy,
     href: "/dashboard/admin/categories/",
   },
+  {
+    navlabel: true,
+    subheader: "Quản Lý Hoàn Tiền",
+  },
+  {
+    id: uniqueId(),
+    title: "Xử Lý Yêu Cầu",
+    icon: IconCopy,
+    href: "/dashboard/admin/handle-refund/",
+  },
+
 ];
 
 export default Menuitems;
