@@ -202,6 +202,22 @@ const refundSchema = yup.object({
     .required(),
 });
 
+const withdrawRequestSchema = yup.object().shape({
+  amount: yup
+    .number()
+    .min(1000, "Số tiền phải lớn hơn 1000")
+    .required("Số tiền là bắt buộc")
+    .test("is-integer", "Số tiền phải là số nguyên", (value) =>
+      Number.isInteger(value)
+    ),
+  bankNumber: yup.string().required("Số tài khoản là bắt buộc"),
+  bankName: yup
+    .string()
+    .required("Tên ngân hàng là bắt buộc")
+    .min(3, "Tên ngân hàng phải có ít nhất 3 ký tự")
+    .max(100, "Tên ngân hàng không được quá 100 ký tự"),
+});
+
 export {
   loginParam,
   registerParam,
@@ -214,4 +230,5 @@ export {
   messageSchema,
   newPasswordSchema,
   refundSchema,
+  withdrawRequestSchema,
 };

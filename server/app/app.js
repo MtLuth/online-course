@@ -16,10 +16,11 @@ import purchaseRouter from "../routes/purchaseRoutes.js";
 import paymentRoutes from "../routes/paymentRoutes.js";
 import categoryRouter from "../routes/categoryRoutes.js";
 import myLearningsRouter from "../routes/myLearningsRoutes.js";
-import messageRouter from "../routes/messageRoutes.js";
+import messageRouter, { conversationRouter } from "../routes/messageRoutes.js";
 import incomeRouter from "../routes/incomeRoutes.js";
 import walletRouter from "../routes/walletRoutes.js";
 import refundRouter from "../routes/refundRoutes.js";
+import withdrawRouter from "../routes/withdrawRoutes.js";
 
 dotenv.config("./../config.env");
 
@@ -54,6 +55,8 @@ app.use(`${apiUrlGroup}/message`, messageRouter);
 app.use(`${apiUrlGroup}/income`, incomeRouter);
 app.use(`${apiUrlGroup}/wallet`, walletRouter);
 app.use(`${apiUrlGroup}/refund`, refundRouter);
+app.use(`${apiUrlGroup}/withdraw`, withdrawRouter);
+app.use(`${apiUrlGroup}/conversation`, conversationRouter);
 
 app.all("*", (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
