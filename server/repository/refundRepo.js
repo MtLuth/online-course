@@ -30,7 +30,8 @@ class RefundRepo {
   async getAllRefund(filterStatus) {
     let query = this.dbRef;
     if (filterStatus !== undefined && filterStatus !== "") {
-      query = query.where("status", "==", filterStatus);
+      console.log(filterStatus);
+      query = query.where("status", "==", RefundStatus[filterStatus]);
     }
     const snapshot = await query.get();
     const results = snapshot.docs
@@ -40,7 +41,14 @@ class RefundRepo {
     return results;
   }
 
-  async viewDetailRefund(id) {}
+  async viewDetailRefund(id) {
+    const doc = await this.dbRef.doc(id);
+    if (!doc.exist) {
+      return null;
+    }
+    const data = doc.data();
+    return { id: doc.id, ...data };
+  }
 }
 
 export default new RefundRepo();
