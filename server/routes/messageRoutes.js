@@ -3,6 +3,7 @@ import authMiddleware from "../middleware/authMiddleware.js";
 import messageController from "../controllers/messageController.js";
 
 const messageRouter = e.Router();
+const conversationRouter = e.Router();
 
 messageRouter
   .route("/:receiver")
@@ -11,10 +12,11 @@ messageRouter
 
 messageRouter.get("/:sender/:receiver", messageController.loadMessages);
 
-messageRouter.get(
-  "/conversations/all",
+conversationRouter.get(
+  "/",
   authMiddleware.validateUser,
   messageController.getAllConversations
 );
 
 export default messageRouter;
+export { conversationRouter };
