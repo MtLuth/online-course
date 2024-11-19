@@ -34,8 +34,6 @@ class AuthService {
         password
       );
 
-      console.log(authClient.currentUser);
-
       const user = userCredential.user;
       if (!user.emailVerified) {
         throw new AppError("Email chưa được xác minh", 400);

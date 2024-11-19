@@ -25,7 +25,7 @@ class CourseRepo {
   async getCourseOfInstructor(uid, status, searchParam, category) {
     const results = [];
     let query = this.dbRef.where("instructor.uid", "==", uid);
-    if (status && status !== "") {
+    if (status !== undefined && status !== "") {
       query = query.where("isPublished", "==", status);
     }
     const querySnapshot = await query.get();
@@ -70,6 +70,7 @@ class CourseRepo {
           reviews: data.reviews,
           enrollment: data.enrollment,
           ratingScore: ratingScore,
+          salePrice: Math.round((1 - data.sale) * data.price),
         });
       }
     });

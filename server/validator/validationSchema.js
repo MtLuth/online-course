@@ -174,12 +174,32 @@ const ratingSchema = yup.object({
 
 const messageSchema = yup.object({
   content: yup.string().required(),
-  contentType: yup.string().required().oneOf(["text", "image"]),
+  contentType: yup
+    .string()
+    .required()
+    .oneOf(["text", "image", "icon", "sticker"]),
 });
 
 const newPasswordSchema = yup.object({
   oldPassword: yup.string().password().required(),
   newPassword: yup.string().password().required(),
+});
+
+const refundSchema = yup.object({
+  orderCode: yup.string().required(),
+  courses: yup
+    .array()
+    .of(yup.string().label("Mã khóa học").required())
+    .min(1)
+    .required(),
+  reason: yup.string().required().label("Lý do"),
+  payeeAccount: yup
+    .object({
+      receiverName: yup.string().required(),
+      bankNumber: yup.string().required(),
+      bankName: yup.string().required(),
+    })
+    .required(),
 });
 
 export {
@@ -193,4 +213,5 @@ export {
   ratingSchema,
   messageSchema,
   newPasswordSchema,
+  refundSchema,
 };

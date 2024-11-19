@@ -37,7 +37,6 @@ class CustomMiddleware {
   validateRoleAdmin = catchAsync(async (req, res, next) => {
     const uid = req.uid;
     const role = await userRepo.getRoleById(uid);
-    console.log(role);
     if (role !== UserRole.Admin) {
       next(new AppError(ErrorMessage.InvalidRole, 401));
     }
