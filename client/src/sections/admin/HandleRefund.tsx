@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     Box,
     Table,
@@ -14,15 +14,15 @@ import {
     Select,
     MenuItem,
     SelectChangeEvent,
-    IconButton
+    IconButton,
 } from "@mui/material";
 import BaseCard from "@/components/shared/DashboardCard";
-import { Visibility, Search, Close } from "@mui/icons-material";
-import { getMaxListeners } from "events";
+import { Visibility } from "@mui/icons-material";
+import { useAppContext } from "@/context/AppContext";
 
 
 type RefundRequest = {
-    email: string,
+    email: string;
     orderCode: string;
     amount: number;
     status: string;
@@ -30,55 +30,59 @@ type RefundRequest = {
 };
 
 const RefundRequestTable = () => {
-    const dummyData: RefundRequest[] = [
-        {
-            email: "gk@gmail.com",
-            orderCode: "001234",
-            amount: 405000,
-            status: "InProgress",
-            date: "2024-11-15",
-        },
-        {
-            email: "gk@gmail.com",
-            orderCode: "001235",
-            amount: 299000,
-            status: "Complete",
-            date: "2024-11-14",
-        },
-        {
-            email: "gk@gmail.com",
-            orderCode: "001236",
-            amount: 159000,
-            status: "Reject",
-            date: "2024-11-13",
-        },
-        {
-            email: "gk@gmail.com",
-            orderCode: "001237",
-            amount: 509000,
-            status: "InProgress",
-            date: "2024-11-12",
-        },
-        {
-            email: "gk@gmail.com",
-            orderCode: "001238",
-            amount: 750000,
-            status: "Complete",
-            date: "2024-11-11",
-        },
-        {
-            email: "gk@gmail.com",
-            orderCode: "001239",
-            amount: 180000,
-            status: "Reject",
-            date: "2024-11-10",
-        },
-    ];
-
+    const [refundRequests, setRefundRequests] = useState<RefundRequest[]>([]);
     const [filterStatus, setFilterStatus] = useState("all");
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(5);
-    const total = dummyData.length;
+    const [total, setTotal] = useState(0);
+    const { sessionToken } = useAppContext();
+
+
+    const fetchRefundRequests = async () => {
+        try {
+            const token = localStorage.getItem("token"); // Lấy token từ localStorage
+            const queryParams = new URLSearchParams();
+            // queryParams.set("page", page.toString());
+            // queryParams.set("limit", limit.toString());
+
+            if (filterStatus !== "all") {
+                queryParams.set("status", filterStatus);
+            }
+
+            const url = `http://localhost:8080/api/v1/refund?${queryParams.toString()}`;
+            const response = await fetch(url, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${sessionToken}`,
+                },
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const { results, itemCount } = data.message;
+
+                const transformedResults = results.map((item: any) => ({
+                    email: item.email,
+                    orderCode: item.orderCode,
+                    amount: item.amount,
+                    status: item.status,
+                    date: new Date(item.date).toLocaleDateString("vi-VN"),
+                }));
+
+                setRefundRequests(transformedResults);
+                setTotal(itemCount);
+            } else {
+                console.error("Failed to fetch data:", response.statusText);
+            }
+        } catch (error) {
+            console.error("Error fetching refund requests:", error);
+        }
+    };
+
+    useEffect(() => {
+        fetchRefundRequests();
+    }, [page, limit, filterStatus]);
 
     const handleChangePage = (
         event: React.MouseEvent<HTMLButtonElement> | null,
@@ -98,17 +102,6 @@ const RefundRequestTable = () => {
         setFilterStatus(event.target.value);
         setPage(1);
     };
-
-    const filteredData =
-        filterStatus === "all"
-            ? dummyData
-            : dummyData.filter((request) => request.status === filterStatus);
-
-    const paginatedData = filteredData.slice(
-        (page - 1) * limit,
-        page * limit
-    );
-
 
     return (
         <BaseCard>
@@ -134,8 +127,8 @@ const RefundRequestTable = () => {
                                 <TableCell>Email</TableCell>
                                 <TableCell>Mã đơn hàng</TableCell>
                                 <TableCell>Số tiền</TableCell>
+                                <TableCell>Ngày</TableCell>
                                 <TableCell>
-                                    {/* Combobox Filter */}
                                     <Select
                                         value={filterStatus}
                                         onChange={handleFilterStatusChange}
@@ -149,16 +142,18 @@ const RefundRequestTable = () => {
                                         <MenuItem value="Reject">Hệ thống từ chối</MenuItem>
                                     </Select>
                                 </TableCell>
-                                <TableCell>Ngày</TableCell>
                                 <TableCell align="center">Hành động</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {paginatedData.map((request) => (
+                            {refundRequests.map((request) => (
                                 <TableRow key={request.orderCode}>
                                     <TableCell>{request.email}</TableCell>
                                     <TableCell>{request.orderCode}</TableCell>
-                                    <TableCell>{request.amount.toLocaleString()} VND</TableCell>
+                                    <TableCell>
+                                        {request.amount.toLocaleString()} VND
+                                    </TableCell>
+                                    <TableCell>{request.date}</TableCell>
                                     <TableCell>
                                         <Typography
                                             variant="body2"
@@ -175,7 +170,6 @@ const RefundRequestTable = () => {
                                             {request.status}
                                         </Typography>
                                     </TableCell>
-                                    <TableCell>{new Date(request.date).toLocaleDateString()}</TableCell>
                                     <TableCell align="center">
                                         <IconButton aria-label="Xem chi tiết">
                                             <Visibility />
@@ -188,7 +182,7 @@ const RefundRequestTable = () => {
                 </TableContainer>
                 <TablePagination
                     component="div"
-                    count={filteredData.length}
+                    count={total}
                     page={page - 1}
                     onPageChange={handleChangePage}
                     rowsPerPage={limit}
