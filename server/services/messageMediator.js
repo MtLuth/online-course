@@ -9,26 +9,29 @@ class MessageMediator {
     this.db = firebaseAdmin.database();
   }
 
-  async loadMessages() {
-    try {
-      const conversationId = this.getConversationKey();
-      const messages = await this.db
-        .ref(`conversations/${conversationId}/messages`)
-        .get();
+  loadMessagesRealtime(callback) {
+    const conversationId = this.getConversationKey();
+    const ref = this.db.ref(`conversations/${conversationId}/messages`);
 
+    this.listener = ref.on("value", (snapshot) => {
       const results = [];
-      messages.forEach((snapshot) => {
-        const message = snapshot.val().message;
+      snapshot.forEach((childSnapshot) => {
+        const message = childSnapshot.val();
         const messageWithKey = {
-          key: snapshot.key,
-          message: message,
+          key: childSnapshot.key,
+          ...message,
         };
         results.push(messageWithKey);
       });
+      callback(results);
+    });
+  }
 
-      return results;
-    } catch (error) {
-      throw new AppError(`Lỗi khi tải tin nhắn: ${error}`);
+  stopListening() {
+    if (this.listener) {
+      const conversationId = this.getConversationKey();
+      const ref = this.db.ref(`conversations/${conversationId}/messages`);
+      ref.off("value", this.listener);
     }
   }
 
