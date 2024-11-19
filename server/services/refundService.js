@@ -25,7 +25,7 @@ class RefundService {
       let courses = refundInformation.courses;
       const refundCourses = sku.reduce((newCourses, item) => {
         if (courses.includes(item.courseId)) {
-          if (item.RefundStatus !== undefined && item.refundStatus === true) {
+          if (item.refundStatus) {
             throw new AppError(
               `Bạn đã gửi yêu cầu hoàn tiền cho khóa học ${item.title} rồi!`,
               400
