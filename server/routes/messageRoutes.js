@@ -9,11 +9,7 @@ messageRouter
   .post(authMiddleware.validateUser, messageController.sendMessage)
   .get(authMiddleware.validateUser, messageController.loadMessages);
 
-messageRouter.get(
-  "/:sender/:receiver",
-  authMiddleware.validateUser,
-  messageController.loadMessages
-);
+messageRouter.get("/:sender/:receiver", messageController.loadMessages);
 
 messageRouter.get(
   "/conversations/all",
