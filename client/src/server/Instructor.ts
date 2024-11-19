@@ -28,6 +28,14 @@ class InstructorApi extends BaseApi {
     });
     return response;
   }
+  public async getOne(id: string): Promise<any> {
+    const response = await this.get(`/instructor/page/${id}`, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    return response;
+  }
 }
 
 export const instructorApi = new InstructorApi();
