@@ -8,8 +8,6 @@ class RefundRepo {
   }
 
   async createRefund(uid, refund) {
-    // const doc = await this.dbRef.doc(uid).get();
-    // const data = doc.exists ? doc.data() : {};
     let refunds = [];
     const user = await firebaseAdmin.auth().getUser(uid);
     let email;
@@ -42,13 +40,32 @@ class RefundRepo {
   }
 
   async viewDetailRefund(id) {
-    console.log(id);
     const doc = await this.dbRef.doc(id).get();
     if (!doc.exists) {
       return null;
     }
     const data = doc.data();
     return { id: doc.id, ...data };
+  }
+
+  async updateStatusRefund(id, status) {
+    await this.dbRef.doc(id).update({ status: RefundStatus[status] });
+    return "Cập nhật yêu cầu hoàn tiền thành công!";
+  }
+
+  async getAllRefundOfStudent(uid, status) {
+    let query = this.dbRef;
+    console.log(uid);
+    query = query.where("uid", "==", uid);
+    if (status !== undefined && status !== "") {
+      query = query.where("status", "==", RefundStatus[status]);
+    }
+    const snapshot = await query.get();
+    if (snapshot.empty) {
+      return [];
+    }
+    const results = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    return results;
   }
 }
 

@@ -24,7 +24,7 @@ class PaymentController {
       orderCode,
       items,
       total,
-      "http://localhost:3000/succeedpayment",
+      "http://localhost:3000/mylearning/",
       "http://localhost:3000/cancelpayment"
     );
     res.status(200).json({

@@ -1,4 +1,5 @@
 import { RefundStatus } from "../model/refundModel.js";
+import refundRepo from "../repository/refundRepo.js";
 import refundService from "../services/refundService.js";
 import catchAsync from "../utils/catchAsync.js";
 import { refundSchema } from "../validator/validationSchema.js";
@@ -20,8 +21,12 @@ class RefundController {
   getAllRefundsByAdmin = catchAsync(async (req, res, next) => {
     let statusKeys = Object.keys(RefundStatus);
     const statusValidate = yup.string().oneOf(statusKeys);
+    const searchParam = req.query.searchParam;
     const filterStatus = await statusValidate.validate(req.query.status);
-    const results = await refundService.getAllRefundsByAdmin(filterStatus);
+    const results = await refundService.getAllRefundsByAdmin(
+      filterStatus,
+      searchParam
+    );
     req.results = results;
     next();
   });
@@ -33,6 +38,32 @@ class RefundController {
       status: "Successfully",
       message: results,
     });
+  });
+
+  updateRefundStatus = catchAsync(async (req, res, next) => {
+    const id = req.params.id;
+    const statusKeys = Object.keys(RefundStatus);
+    const statusValidate = yup
+      .string()
+      .label("status")
+      .required()
+      .oneOf(statusKeys);
+    const status = await statusValidate.validate(req.body.status);
+    const message = await refundService.updateStatusRefund(id, status);
+    res.status(200).json({
+      status: "Successfully",
+      message: message,
+    });
+  });
+
+  getAllRefundsOfStudent = catchAsync(async (req, res, next) => {
+    const uid = req.uid;
+    const statusKeys = Object.keys(RefundStatus);
+    const statusValidate = yup.string().oneOf(statusKeys);
+    const filterStatus = await statusValidate.validate(req.query.status);
+    const results = await refundRepo.getAllRefundOfStudent(uid, filterStatus);
+    req.results = results;
+    next();
   });
 }
 

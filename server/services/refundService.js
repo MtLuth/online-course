@@ -61,9 +61,12 @@ class RefundService {
     }
   }
 
-  async getAllRefundsByAdmin(filterStatus) {
+  async getAllRefundsByAdmin(filterStatus, searchParam) {
     try {
       let results = await refundRepo.getAllRefund(filterStatus);
+      if (searchParam) {
+        results = results.filter((item) => item.email.includes(searchParam));
+      }
       return results;
     } catch (error) {
       throw new AppError(
@@ -79,6 +82,27 @@ class RefundService {
       return results;
     } catch (error) {
       throw new AppError(ErrorMessage.Internal, 500);
+    }
+  }
+
+  async updateStatusRefund(id, status) {
+    try {
+      const message = refundRepo.updateStatusRefund(id, status);
+      return message;
+    } catch (error) {
+      throw new AppError(
+        `Lỗi khi cập nhật trạng thái yêu cầu hoàn tiền: ${error}`,
+        500
+      );
+    }
+  }
+
+  async getAllRefundOfStudent(uid, status) {
+    try {
+      const results = await refundRepo.getAllRefundOfStudent(uid, status);
+      return results;
+    } catch (error) {
+      throw new AppError(`Lỗi khi lấy danh sách yêu cầu hoàn tiền!`, 500);
     }
   }
 }

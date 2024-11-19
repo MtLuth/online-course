@@ -17,7 +17,7 @@ const ErrorMessage = {
   SendEmailPasswordSuccessfully: "Đã gửi email đặt lại mật khẩu!",
   LinkExpired: "Đường link đã hết hạn hoặc không chính xác!",
   EmailNotFound: "Không tìm thấy email trên hệ thống!",
-  Unauthorizaton: "Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại!",
+  UnAuthorization: "Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại!",
   ClockedUser:
     "Tài khoản này không có quyền đăng nhập vào hệ thống. Vui lòng liên hệ admin để được hỗ trợ!",
   InvalidRole: "Bạn không có quyền thực hiện chức năng này!",
