@@ -19,13 +19,22 @@ class RefundService {
           400
         );
       }
-      const courseId = refundInformation.courseId
-      const sku = purchaseHistory.sku
-      let courses = []
-      sku.forEach((course) => { 
-        
-       });
-      const boughtAt = purchaseHistory.boughtAt._seconds;
+
+      const sku = purchaseHistory.sku;
+
+      let courses = refundInformation.courses;
+      const refundCourses = sku.reduce((newCourses, item) => {
+        if (courses.includes(item.courseId)) {
+          newCourses.push({
+            courseId: item.courseId,
+            price: item.salePrice,
+            title: item.title,
+          });
+        }
+        return newCourses;
+      }, []);
+      const amount = refundCourses.reduce((sum, item) => sum + item.price, 0);
+      const boughtAt = purchaseHistory.boughtAt._seconds * 1000;
       const currentDate = Date.now();
       if (currentDate - boughtAt > 1000 * 60 * 60 * 24) {
         throw new AppError(`Đơn hàng của bạn đã quá hạn hoàn tiền!`);
@@ -34,8 +43,8 @@ class RefundService {
       const refund = new Refund(
         refundId,
         orderCode,
-        refundInformation.courseId,
-        refundInformation.amount,
+        refundCourses,
+        amount,
         RefundStatus.InProgress,
         refundInformation.reason,
         refundInformation.payeeAccount
@@ -46,6 +55,18 @@ class RefundService {
       throw new AppError(error, 500);
     }
   }
+
+  async getAllRefundsByAdmin(filterStatus) {
+    try {
+      let results = await refundRepo.getAllRefund(filterStatus);
+      return results;
+    } catch (error) {
+      throw new AppError(
+        `Lỗi khi lấy danh sách yêu cầu hoàn tiền ${error}`,
+        500
+      );
+    }
+  }
 }
 
-return new RefundService();
+export default new RefundService();

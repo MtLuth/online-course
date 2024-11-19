@@ -6,10 +6,10 @@ const RefundStatus = {
 };
 
 class Refund {
-  constructor(id, orderCode, courseId, amount, status, reason, payeeAccount) {
+  constructor(id, orderCode, courses, amount, status, reason, payeeAccount) {
     this.id = id;
     this.orderCode = orderCode;
-    this.courseId = courseId;
+    this.courses = courses;
     this.amount = amount;
     this.status = status;
     this.reason = reason;
