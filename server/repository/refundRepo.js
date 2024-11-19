@@ -28,7 +28,6 @@ class RefundRepo {
   async getAllRefund(filterStatus) {
     let query = this.dbRef;
     if (filterStatus !== undefined && filterStatus !== "") {
-      console.log(filterStatus);
       query = query.where("status", "==", RefundStatus[filterStatus]);
     }
     const snapshot = await query.get();

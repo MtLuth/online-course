@@ -1,3 +1,4 @@
+import conversationServices from "../services/conversationServices.js";
 import MessageMediator from "../services/messageMediator.js";
 import catchAsync from "../utils/catchAsync.js";
 import { messageSchema } from "../validator/validationSchema.js";
@@ -45,7 +46,7 @@ class MessageController {
   });
 
   listenToNewMessage = catchAsync(async (req, res, next) => {
-    const sender = req.uid;
+    const sender = req.params.sender;
     const receiver = req.params.receiver;
     const mediator = new MessageMediator(sender, receiver);
 
@@ -57,6 +58,15 @@ class MessageController {
 
     req.on("close", () => {
       console.log("Client disconnected");
+    });
+  });
+
+  getAllConversations = catchAsync(async (req, res, next) => {
+    const uid = req.uid;
+    const results = await conversationServices.getAllConversationKey(uid);
+    res.status(200).json({
+      status: "Successfully",
+      message: results,
     });
   });
 }
