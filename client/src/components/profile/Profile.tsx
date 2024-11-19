@@ -25,7 +25,7 @@ import { useToastNotification } from "@/hook/useToastNotification";
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState(null);
   const router = useRouter();
-  const { setSessionToken } = useAppContext();
+  const { setSessionToken, role } = useAppContext();
   const { notifySuccess } = useToastNotification();
 
   const handleClick2 = (event: React.MouseEvent<HTMLElement>) => {

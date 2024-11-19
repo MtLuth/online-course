@@ -1,5 +1,3 @@
-// File: src/components/MyLearning.tsx
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -54,7 +52,7 @@ const MyLearning: React.FC = () => {
   const { sessionToken } = useAppContext();
   const [courses, setCourses] = useState<Course[]>([]);
   const [searchParam, setSearchParam] = useState<string>("");
-  const [searchInput, setSearchInput] = useState<string>(""); // New state for input
+  const [searchInput, setSearchInput] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const { notifySuccess, notifyError } = useToastNotification();
@@ -157,8 +155,9 @@ const MyLearning: React.FC = () => {
           fontWeight: "bold",
           mb: 4,
           padding: 2,
-          backgroundColor: "#c5c5c573",
+          backgroundColor: "#f4f4f4",
           borderRadius: 2,
+          boxShadow: 3,
         }}
       >
         Các Khóa Học Của Tôi
@@ -168,7 +167,12 @@ const MyLearning: React.FC = () => {
       <Box
         component="form"
         onSubmit={handleSearchSubmit}
-        sx={{ display: "flex", mb: 4, gap: 2 }}
+        sx={{
+          display: "flex",
+          mb: 4,
+          gap: 2,
+          justifyContent: "center",
+        }}
       >
         <TextField
           label="Tìm kiếm khóa học"
@@ -181,15 +185,43 @@ const MyLearning: React.FC = () => {
               handleSearchSubmit(e);
             }
           }}
+          sx={{
+            maxWidth: "500px",
+            boxShadow: 3,
+            borderRadius: 2,
+            transition: "all 0.3s ease",
+            "&:hover": {
+              boxShadow: 6,
+            },
+          }}
         />
-        <Button type="submit" variant="contained" color="primary">
+        <Button
+          type="submit"
+          variant="contained"
+          color="primary"
+          sx={{
+            height: "100%",
+            borderRadius: 2,
+            boxShadow: 3,
+            fontSize: "1rem",
+            padding: 1,
+            margin: 1,
+            "&:hover": {
+              boxShadow: 6,
+            },
+          }}
+        >
           Tìm kiếm
         </Button>
       </Box>
 
       {/* Display Error Message */}
       {error && (
-        <Typography variant="body1" color="error" sx={{ mb: 2 }}>
+        <Typography
+          variant="body1"
+          color="error"
+          sx={{ mb: 2, textAlign: "center" }}
+        >
           {error}
         </Typography>
       )}
@@ -200,7 +232,11 @@ const MyLearning: React.FC = () => {
           <CircularProgress />
         </Box>
       ) : courses.length === 0 ? (
-        <Typography variant="body1" color="textSecondary">
+        <Typography
+          variant="body1"
+          color="textSecondary"
+          sx={{ textAlign: "center" }}
+        >
           Không tìm thấy khóa học nào phù hợp.
         </Typography>
       ) : (
@@ -242,7 +278,7 @@ const MyLearning: React.FC = () => {
           </Box>
 
           {/* Courses Grid */}
-          <Grid container spacing={2}>
+          <Grid container spacing={3}>
             {currentCourses.map((course) => (
               <Grid item xs={12} sm={6} md={4} key={course.courseId}>
                 <Card
@@ -251,9 +287,12 @@ const MyLearning: React.FC = () => {
                     flexDirection: "column",
                     justifyContent: "space-between",
                     height: "100%",
-                    boxShadow: 3,
+                    boxShadow: 6,
+                    borderRadius: 2,
+                    transition: "all 0.3s ease",
                     "&:hover": {
-                      boxShadow: 6,
+                      boxShadow: 12,
+                      transform: "translateY(-5px)",
                     },
                   }}
                 >
@@ -262,10 +301,14 @@ const MyLearning: React.FC = () => {
                     height="200"
                     image={course.thumbnail}
                     alt={course.title}
-                    sx={{ objectFit: "cover" }}
+                    sx={{
+                      objectFit: "cover",
+                      borderTopLeftRadius: 2,
+                      borderTopRightRadius: 2,
+                    }}
                   />
                   <CardContent>
-                    <Typography variant="h6" gutterBottom fontWeight="bold">
+                    <Typography variant="h6" fontWeight="bold" sx={{ mb: 1 }}>
                       {course.title}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" noWrap>
@@ -279,9 +322,7 @@ const MyLearning: React.FC = () => {
                         label={`Cấp độ: ${getLevelLabel(course.level)}`}
                         variant="outlined"
                         sx={{
-                          mr: 1,
-                          mb: 1,
-                          fontSize: "0.8rem",
+                          fontSize: "0.85rem",
                           backgroundColor: "#f0f0f0",
                         }}
                       />
@@ -294,6 +335,13 @@ const MyLearning: React.FC = () => {
                       fullWidth
                       variant="contained"
                       color="primary"
+                      sx={{
+                        fontSize: "1rem",
+                        boxShadow: 3,
+                        "&:hover": {
+                          boxShadow: 6,
+                        },
+                      }}
                       onClick={() => handleStartCourse(course.courseId)}
                     >
                       Bắt đầu khóa học

@@ -58,7 +58,7 @@ const CoursesList: React.FC<CoursesListProps> = ({
   const token = getAuthToken();
 
   // Extract uid from token
-  const [uid, setUid] = useState<string | undefined>(undefined);
+  const [uid, setUid] = useState<string | undefined>("");
 
   // Sử dụng useRef để tạo cờ
   const hasFetchedRef = useRef<boolean>(false);
@@ -131,14 +131,8 @@ const CoursesList: React.FC<CoursesListProps> = ({
 
   // Fetch khóa học
   useEffect(() => {
-    // Nếu đã gọi fetchCourses rồi, không gọi lại
-    if (hasFetchedRef.current) return;
-
-    // Điều kiện để gọi fetchCourses:
-    // 1. Nếu showEdit là true, cần có token và uid đã được trích xuất
-    // 2. Nếu showEdit là false, nếu uid có, gọi với uid; nếu không, gọi mà không có uid
     const shouldFetch =
-      (showEdit && token && uid) || (!showEdit && (uid !== undefined || !uid));
+      (showEdit && token && uid) || (!showEdit && (uid !== "" || !uid));
 
     if (!shouldFetch) {
       // Nếu không đáp ứng điều kiện để fetch, không làm gì cả hoặc có thể set error

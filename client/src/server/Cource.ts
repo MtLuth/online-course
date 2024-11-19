@@ -5,7 +5,10 @@ interface Resource {
   title: string;
   fileUrl: string;
 }
-
+interface CourseRating {
+  score: number;
+  content: string;
+}
 interface Lecture {
   title: string;
   duration: string;
@@ -183,6 +186,20 @@ class CourseApi extends BaseApi {
     token: string
   ): Promise<any> {
     const response = await this.put(`/course/manage/${id}`, data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return response;
+  }
+
+  public async ratingCourse(
+    id: string,
+    data: CourseRating,
+    token: string
+  ): Promise<any> {
+    const response = await this.post(`/course/rating/${id}`, data, {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",

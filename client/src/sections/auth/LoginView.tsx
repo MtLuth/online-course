@@ -26,7 +26,7 @@ import { useAppContext } from "@/context/AppContext";
 export default function LoginView() {
   const passwordShow = useBoolean();
   const router = useRouter();
-  const { setSessionToken } = useAppContext();
+  const { setSessionToken, setUserRole } = useAppContext();
   const { notifySuccess, notifyError } = useToastNotification();
 
   const LoginSchema = Yup.object().shape({
@@ -59,10 +59,15 @@ export default function LoginView() {
           return;
         }
         if (response.status === "success") {
+          const { tokenPairs, role } = response.message;
+
+          // Lưu session token và role vào AppContext
+          setSessionToken(tokenPairs.accessToken);
+          setUserRole(role);
+
           notifySuccess("Đăng nhập thành công!");
-          setSessionToken(response.message.tokenPairs.accessToken);
           reset();
-          router.push("/");
+          router.push("/"); // Điều hướng về trang chính
         }
       })
       .catch((error) => {

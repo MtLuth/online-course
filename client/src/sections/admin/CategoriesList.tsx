@@ -40,7 +40,7 @@ const CategoriesList = ({ token }) => {
   const fetchCategories = async () => {
     try {
       const data = await categoriesApi.getCategories(token);
-      setCategories(data.message);
+      setCategories(data.message?.results);
     } catch (error) {
       notifyError("Lỗi khi tải danh mục");
     }

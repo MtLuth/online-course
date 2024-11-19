@@ -34,6 +34,7 @@ import { useToastNotification } from "@/hook/useToastNotification";
 import { getAuthToken } from "@/utils/auth";
 import { useCart } from "@/context/CartContext";
 import { cartApi } from "@/server/Cart";
+import { courseApi } from "@/server/Cource";
 
 interface CourseDetailProps {
   courses: {
@@ -144,14 +145,47 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courses }) => {
     router.push(`/course/${course.id}/lecture/${lectureId}`);
   };
 
-  const handleSubmitComment = () => {
-    if (newRating > 0 && newComment.trim() !== "") {
-      // Thực hiện gửi comment và rating đến API (chưa được triển khai)
-      alert(`Đã gửi đánh giá: ${newRating} sao và nhận xét: ${newComment}`);
-      setNewRating(0);
-      setNewComment("");
-    } else {
-      alert("Vui lòng đánh giá và nhập nhận xét.");
+  const handleSubmitComment = async () => {
+    // Kiểm tra nếu đánh giá hoặc nhận xét không hợp lệ
+    if (newRating <= 0 || newComment.trim() === "") {
+      notifyInfo("Vui lòng đánh giá và nhập nhận xét.");
+      return;
+    }
+
+    const data = {
+      score: newRating,
+      content: newComment.trim(),
+    };
+
+    try {
+      const response = await courseApi.ratingCourse(
+        course.id,
+        data,
+        token || ""
+      );
+
+      if (response?.status === "Successfully" && response?.message) {
+        notifySuccess(
+          response.message || "Cảm ơn bạn đã đánh giá khóa học này!"
+        );
+
+        // Reset form
+        setNewRating(0);
+        setNewComment("");
+
+        // Kiểm tra router.asPath có hợp lệ hay không trước khi gọi router.replace
+        if (router.asPath) {
+          router.replace(router.asPath); // Điều hướng lại trang hiện tại
+        } else {
+          router.push("/all-courses/");
+        }
+      } else {
+        throw new Error(response?.message || "Gửi đánh giá không thành công.");
+      }
+    } catch (error: any) {
+      notifyError(
+        error?.message || "Có lỗi xảy ra khi gửi đánh giá. Vui lòng thử lại!"
+      );
     }
   };
 
