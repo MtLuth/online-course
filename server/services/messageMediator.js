@@ -9,11 +9,11 @@ class MessageMediator {
     this.db = firebaseAdmin.database();
   }
 
-  loadMessagesRealtime(callback) {
+  loadMessagesRealtime(onMessagesLoaded, onNewMessage) {
     const conversationId = this.getConversationKey();
     const ref = this.db.ref(`conversations/${conversationId}/messages`);
 
-    this.listener = ref.on("value", (snapshot) => {
+    ref.once("value", (snapshot) => {
       const results = [];
       snapshot.forEach((childSnapshot) => {
         const message = childSnapshot.val();
@@ -23,7 +23,17 @@ class MessageMediator {
         };
         results.push(messageWithKey);
       });
-      callback(results);
+
+      onMessagesLoaded(results);
+    });
+
+    this.listener = ref.on("child_added", (childSnapshot) => {
+      const newMessage = {
+        key: childSnapshot.key,
+        ...childSnapshot.val(),
+      };
+
+      onNewMessage(newMessage);
     });
   }
 
@@ -46,6 +56,7 @@ class MessageMediator {
         receiver: validUser.uid,
         content: content,
         contentType: contentType,
+        date: Date.now(),
       };
       await this.db
         .ref(`conversations/${conversationId}/messages`)
@@ -64,16 +75,6 @@ class MessageMediator {
         ? `${this.uid1}_${this.uid2}`
         : `${this.uid2}_${this.uid1}`;
     return conversationId;
-  }
-
-  listenToNewMessage(res) {
-    const conversationId = this.getConversationKey();
-    const messagesRef = this.db.ref(`conversations/${conversationId}/messages`);
-
-    messagesRef.on("child_added", (snapshot) => {
-      const message = snapshot.val();
-      res.write(`data: ${JSON.stringify(message)}\n\n`);
-    });
   }
 }
 

@@ -26,7 +26,9 @@ class Instructor {
     this.fullName = fullName || null;
     this.email = email || null;
     this.status = status || InstructorStatus.Pending;
-    this.avt = avt || null;
+    this.avt =
+      avt ||
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Breezeicons-actions-22-im-user.svg/1200px-Breezeicons-actions-22-im-user.svg.png";
     this.bio = bio || null;
     this.expertise = expertise || null;
     this.experience = experience || 0;

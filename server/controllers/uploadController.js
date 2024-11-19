@@ -36,6 +36,20 @@ class UploadController {
       message: result,
     });
   });
+
+  uploadResources = catchAsync(async (req, res, next) => {
+    const files = req.files;
+    const uid = req.uid;
+    if (!files) {
+      return next(new AppError("Files không được để trống", 400));
+    }
+
+    const result = await uploadServices.uploadResources(uid, files);
+    res.status(200).json({
+      status: "Successfully",
+      message: result,
+    });
+  });
 }
 
 export default new UploadController();
