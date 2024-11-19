@@ -56,6 +56,7 @@ class MessageMediator {
         receiver: validUser.uid,
         content: content,
         contentType: contentType,
+        date: Date.now(),
       };
       await this.db
         .ref(`conversations/${conversationId}/messages`)
