@@ -25,6 +25,12 @@ class RefundService {
       let courses = refundInformation.courses;
       const refundCourses = sku.reduce((newCourses, item) => {
         if (courses.includes(item.courseId)) {
+          if (item.refundStatus) {
+            throw new AppError(
+              `Bạn đã gửi yêu cầu hoàn tiền cho khóa học ${item.title} rồi!`,
+              400
+            );
+          }
           newCourses.push({
             courseId: item.courseId,
             price: item.salePrice,
@@ -39,9 +45,7 @@ class RefundService {
       if (currentDate - boughtAt > 1000 * 60 * 60 * 24) {
         throw new AppError(`Đơn hàng của bạn đã quá hạn hoàn tiền!`);
       }
-      const refundId = crypto.randomBytes(6).toString("hex");
       const refund = new Refund(
-        refundId,
         orderCode,
         refundCourses,
         amount,
@@ -67,6 +71,8 @@ class RefundService {
       );
     }
   }
+
+  async viewDetailRefund() {}
 }
 
 export default new RefundService();

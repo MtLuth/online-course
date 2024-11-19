@@ -54,6 +54,26 @@ class PurchaseHistory {
     }
     return null;
   }
+
+  async updateRefundStatus(orderCode, coursesRefund, status) {
+    const doc = await this.dbRef.doc(orderCode).get();
+    if (!doc.exists) {
+      return null;
+    }
+    const data = doc.data();
+    const sku = data.sku;
+    coursesRefund = coursesRefund.map((item) => item.courseId);
+
+    console.log(coursesRefund);
+    const newSku = sku.reduce((results, item) => {
+      if (coursesRefund.includes(item.courseId)) {
+        results.push({ ...item, refundStatus: status });
+      }
+      return results;
+    }, []);
+    console.log(newSku);
+    await this.dbRef.doc(orderCode).update({ sku: newSku });
+  }
 }
 
 export default new PurchaseHistory();
