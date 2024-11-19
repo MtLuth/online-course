@@ -1,16 +1,25 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Box, TextField, Button, Typography, Avatar } from "@mui/material";
+import {
+  Box,
+  TextField,
+  Button,
+  Typography,
+  Avatar,
+  IconButton,
+} from "@mui/material";
 import { useToastNotification } from "@/hook/useToastNotification";
 import { getAuthToken } from "@/utils/auth";
 import { useParams } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
+import { uploadApi } from "@/server/Upload";
 
 const ChatPage = () => {
   const { id } = useParams();
   const [uid, setUid] = useState<string | undefined>(""); // User ID extracted from JWT
   const [messages, setMessages] = useState<any[]>([]); // Messages between the user and the expert
   const [newMessage, setNewMessage] = useState<string>(""); // New message
+  const [imageFile, setImageFile] = useState<File | null>(null); // Image file to upload
   const { notifyError } = useToastNotification();
   const token = getAuthToken();
 
@@ -46,8 +55,12 @@ const ChatPage = () => {
       );
       const data = await response.json();
       if (response.ok) {
-        // Handle the response based on the structure you provided
-        setMessages(data.message || []);
+        // Check if the response contains an array of messages or a single message
+        if (Array.isArray(data.messages)) {
+          setMessages(data.messages);
+        } else {
+          notifyError("Không thể tải tin nhắn.");
+        }
       } else {
         notifyError("Không thể tải tin nhắn.");
       }
@@ -56,7 +69,7 @@ const ChatPage = () => {
       notifyError("Đã xảy ra lỗi khi tải tin nhắn.");
     }
   };
-  console.log(`${id}/${uid}`);
+
   // UseEffect to initialize EventSource for real-time updates
   useEffect(() => {
     if (!id || !uid) return;
@@ -67,8 +80,15 @@ const ChatPage = () => {
 
     eventSource.addEventListener("message", (event) => {
       const data = JSON.parse(event.data);
-      if (data.message) {
-        setMessages((prevMessages) => [...prevMessages, ...data.message]);
+
+      if (data.status === "Successfully" && Array.isArray(data.messages)) {
+        // Handle bulk message updates (e.g., on initial load)
+        setMessages((prevMessages) => [...prevMessages, ...data.messages]);
+      } else if (data.status === "NewMessage" && data.message) {
+        // Handle new single message updates
+        setMessages((prevMessages) => [...prevMessages, data.message]);
+      } else {
+        console.error("Received unexpected data format:", data);
       }
     });
 
@@ -89,7 +109,25 @@ const ChatPage = () => {
 
   // Function to send a new message
   const handleSendMessage = async () => {
-    if (!newMessage) return;
+    if (!newMessage && !imageFile) return;
+
+    let messageContent = newMessage;
+    if (imageFile) {
+      try {
+        // Upload the image and get URL
+        const response = await uploadApi.uploadImages([imageFile], token);
+        if (response.status === "Successfully") {
+          messageContent = response.message; // URL of uploaded image
+        } else {
+          notifyError("Không thể tải lên ảnh.");
+          return;
+        }
+      } catch (error) {
+        console.error("Error uploading image:", error);
+        notifyError("Đã xảy ra lỗi khi tải ảnh.");
+        return;
+      }
+    }
 
     try {
       const response = await fetch(
@@ -101,8 +139,8 @@ const ChatPage = () => {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            content: newMessage,
-            contentType: "text", // You can change this based on message type
+            content: messageContent,
+            contentType: imageFile ? "image" : "text", // Set content type based on message
           }),
         }
       );
@@ -110,12 +148,20 @@ const ChatPage = () => {
 
       if (response.ok) {
         setNewMessage(""); // Clear input after successful send
+        setImageFile(null); // Clear the selected image
       } else {
         notifyError(data.message || "Không thể gửi tin nhắn.");
       }
     } catch (error) {
       console.error("Error sending message:", error);
       notifyError("Đã xảy ra lỗi khi gửi tin nhắn.");
+    }
+  };
+
+  // Function to handle file input (for image upload)
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      setImageFile(event.target.files[0]);
     }
   };
 
@@ -161,7 +207,7 @@ const ChatPage = () => {
       >
         {messages.length > 0 ? (
           messages.map((msgItem, index) => {
-            const msg = msgItem.message; // Extract message from the response
+            const msg = msgItem.message || msgItem; // Handle both single message and bulk response
             return (
               <Box
                 key={index}
@@ -209,6 +255,24 @@ const ChatPage = () => {
         >
           Gửi
         </Button>
+
+        {/* Image upload button */}
+        <Button variant="outlined" component="label" sx={{ marginLeft: 2 }}>
+          Tải Ảnh
+          <input
+            type="file"
+            hidden
+            accept="image/*"
+            onChange={handleImageUpload}
+          />
+        </Button>
+
+        {/* Sticker buttons */}
+        <Box sx={{ marginLeft: 2 }}>
+          {/* Example sticker buttons */}
+          <IconButton onClick={() => setNewMessage("🙂")}>🙂</IconButton>
+          <IconButton onClick={() => setNewMessage("😂")}>😂</IconButton>
+        </Box>
       </Box>
     </Box>
   );
