@@ -13,6 +13,7 @@ class WalletRepo {
           inProgress: 0,
           withdrawable: 0,
           withdrawnAmount: 0,
+          refundRequest: 0,
         };
     let keys = Object.keys(newWallet);
     keys.forEach((key) => {
@@ -31,6 +32,7 @@ class WalletRepo {
           inProgress: 0,
           withdrawable: 0,
           withdrawnAmount: 0,
+          refundRequest: 0,
         };
     return {
       uid: doc.id,

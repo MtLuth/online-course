@@ -19,6 +19,7 @@ class CourseService {
 
   async getAllCourseOfInstructor(uid, status, searchParam, category) {
     try {
+      console.log(uid);
       const results = await courseRepo.getCourseOfInstructor(
         uid,
         status,

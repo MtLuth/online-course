@@ -11,9 +11,8 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const mailOptions = (receipter, subject, html) => {
-  console.log("Receip", receipter);
-  return { from: "Online Course", to: receipter, subject: subject, html: html };
+const mailOptions = (receiptor, subject, html) => {
+  return { from: "Online Course", to: receiptor, subject: subject, html: html };
 };
 
 const sendEmail = async (mailOptions) => {
@@ -91,10 +90,79 @@ const getTemplateAdminCheckInstructor = (state) => {
   }
 };
 
+const getTemplateAcceptRefund = (orderCode, courses, amount) => {
+  const courseList =
+    courses.length > 0
+      ? courses
+          .map(
+            (course) =>
+              `<li><strong>Khóa học:</strong> ${course.title} (${Number(
+                course.price
+              ).toLocaleString("vi-VN", {
+                style: "currency",
+                currency: "VND",
+              })})</li>`
+          )
+          .join("")
+      : "<li>Không có khóa học nào trong đơn hàng.</li>";
+  return `
+  <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <h2 style="color: #4CAF50;">Yêu cầu hoàn tiền đã được chấp nhận!</h2>
+    <p>Chào bạn,</p>
+    <p>Chúng tôi rất vui thông báo rằng yêu cầu hoàn tiền của bạn cho đơn hàng <strong>${orderCode}</strong> đã được xử lý thành công.</p>
+    <h3>Thông tin chi tiết:</h3>
+    <ul>
+      ${courseList}
+    </ul>
+    <p><strong>Số tiền hoàn lại:</strong> ${Number(amount).toLocaleString(
+      "vi-VN",
+      {
+        style: "currency",
+        currency: "VND",
+      }
+    )}</p>
+    <p>Số tiền này sẽ được hoàn lại thông qua phương thức thanh toán bạn đã sử dụng. Thời gian nhận tiền dự kiến là 3-5 ngày làm việc.</p>
+    <p>Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua email hoặc số hotline.</p>
+    <p>Trân trọng,<br/>Đội ngũ Online Course</p>
+  </div>`;
+};
+
+const getTemplateRejectRefund = (orderCode, courses, reason) => {
+  const courseList =
+    courses.length > 0
+      ? courses
+          .map(
+            (course) =>
+              `<li><strong>Khóa học:</strong> ${course.title} (${Number(
+                course.price
+              ).toLocaleString("vi-VN", {
+                style: "currency",
+                currency: "VND",
+              })})</li>`
+          )
+          .join("")
+      : "<li>Không có khóa học nào trong đơn hàng.</li>";
+  return `
+  <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <h2 style="color: #FF6347;">Yêu cầu hoàn tiền đã bị từ chối</h2>
+    <p>Chào bạn,</p>
+    <p>Chúng tôi rất tiếc thông báo rằng yêu cầu hoàn tiền của bạn cho đơn hàng <strong>${orderCode}</strong> đã bị từ chối.</p>
+    <h3>Thông tin chi tiết:</h3>
+    <ul>
+      ${courseList}
+    </ul>
+    <p><strong>Lý do từ chối:</strong> ${reason}</p>
+    <p>Nếu bạn có bất kỳ thắc mắc nào hoặc cần hỗ trợ thêm, vui lòng liên hệ với chúng tôi qua email hoặc số hotline.</p>
+    <p>Trân trọng,<br/>Đội ngũ Online Course</p>
+  </div>`;
+};
+
 export {
   mailOptions,
   sendEmail,
   getEmailTemplateActive,
   getEmailTemplateResetPassword,
   getTemplateAdminCheckInstructor,
+  getTemplateAcceptRefund,
+  getTemplateRejectRefund,
 };

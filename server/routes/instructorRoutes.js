@@ -8,4 +8,9 @@ instructorRouter
   .route("/")
   .get(instructorController.getAllInstructor, pagination);
 
+instructorRouter.get(
+  "/page/:uid",
+  instructorController.studentViewInstructorPage
+);
+
 export default instructorRouter;
