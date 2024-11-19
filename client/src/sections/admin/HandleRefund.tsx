@@ -40,7 +40,6 @@ const RefundRequestTable = () => {
 
     const fetchRefundRequests = async () => {
         try {
-            const token = localStorage.getItem("token"); // Lấy token từ localStorage
             const queryParams = new URLSearchParams();
             // queryParams.set("page", page.toString());
             // queryParams.set("limit", limit.toString());
