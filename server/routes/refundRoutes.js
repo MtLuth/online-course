@@ -16,7 +16,16 @@ refundRouter
   );
 
 refundRouter
+  .route("/student")
+  .get(
+    authMiddleware.validateUser,
+    refundController.getAllRefundsOfStudent,
+    pagination
+  );
+
+refundRouter
   .route("/:id")
-  .get(authMiddleware.validateUser, refundController.viewDetailRefund);
+  .get(authMiddleware.validateUser, refundController.viewDetailRefund)
+  .put(authMiddleware.validateUser, refundController.updateRefundStatus);
 
 export default refundRouter;
