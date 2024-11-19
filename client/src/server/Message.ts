@@ -55,6 +55,16 @@ class MessageApi extends BaseApi {
 
     return eventSource;
   }
+
+  public async conversationMsg(token: string): Promise<any> {
+    const response = await this.get(`/conversation`, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response;
+  }
 }
 
 export const messageApi = new MessageApi();

@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from "react";
 import Link from "next/link";
 import {
@@ -14,19 +16,22 @@ import {
   School as IconCourses,
   Dashboard as IconDashboard,
   Person as IconProfile,
-  Assignment as IconTasks,
+  MenuBook as IconLearning,
+  History as IconHistory,
+  ShoppingCart as IconShoppingCart,
+  Chat as IconChat,
+  Logout as IconLogout,
 } from "@mui/icons-material";
-import { IconListCheck, IconMail, IconUser } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { authApi } from "@/server/Auth";
 import { useAppContext } from "@/context/AppContext";
 import { useToastNotification } from "@/hook/useToastNotification";
 
 const Profile = () => {
-  const [anchorEl2, setAnchorEl2] = useState(null);
+  const [anchorEl2, setAnchorEl2] = useState<null | HTMLElement>(null);
   const router = useRouter();
   const { setSessionToken, role } = useAppContext();
-  const { notifySuccess } = useToastNotification();
+  const { notifySuccess, notifyError } = useToastNotification();
 
   const handleClick2 = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl2(event.currentTarget);
@@ -36,11 +41,16 @@ const Profile = () => {
     setAnchorEl2(null);
   };
 
-  const handleLogout = () => {
-    authApi.logout();
-    setSessionToken(null);
-    notifySuccess("Đã đăng xuất thành công!");
-    router.push("/login");
+  const handleLogout = async () => {
+    try {
+      await authApi.logout();
+      setSessionToken(null);
+      notifySuccess("Đã đăng xuất thành công!");
+      router.push("/login");
+    } catch (error) {
+      console.error("Error during logout:", error);
+      notifyError("Đã xảy ra lỗi khi đăng xuất.");
+    }
   };
 
   return (
@@ -49,17 +59,17 @@ const Profile = () => {
         size="large"
         aria-label="show profile options"
         color="inherit"
-        aria-controls="msgs-menu"
+        aria-controls="profile-menu"
         aria-haspopup="true"
         sx={{
-          ...(typeof anchorEl2 === "object" && {
+          ...(anchorEl2 && {
             color: "primary.main",
           }),
         }}
         onClick={handleClick2}
       >
         <Avatar
-          src=""
+          src="" // Bạn có thể thêm src avatar người dùng nếu có
           alt="E"
           sx={{
             width: 35,
@@ -68,7 +78,7 @@ const Profile = () => {
         />
       </IconButton>
       <Menu
-        id="msgs-menu"
+        id="profile-menu"
         anchorEl={anchorEl2}
         keepMounted
         open={Boolean(anchorEl2)}
@@ -81,44 +91,52 @@ const Profile = () => {
           },
         }}
       >
-        <Link href="/my-courses" passHref>
-          <MenuItem component="a">
+        <Link href="/my-courses" passHref legacyBehavior>
+          <MenuItem component="a" onClick={handleClose2}>
             <ListItemIcon>
               <IconCourses fontSize="small" />
             </ListItemIcon>
             <ListItemText>Khóa học của tôi</ListItemText>
           </MenuItem>
         </Link>
-        <Link href="/dashboard/admin/teacher" passHref>
-          <MenuItem component="a">
+        <Link href="/dashboard/admin/teacher" passHref legacyBehavior>
+          <MenuItem component="a" onClick={handleClose2}>
             <ListItemIcon>
               <IconDashboard fontSize="small" />
             </ListItemIcon>
             <ListItemText>Bảng điều khiển</ListItemText>
           </MenuItem>
         </Link>
-        <Link href="/mylearning" passHref>
-          <MenuItem component="a">
+        <Link href="/mylearning" passHref legacyBehavior>
+          <MenuItem component="a" onClick={handleClose2}>
             <ListItemIcon>
-              <IconDashboard fontSize="small" />
+              <IconLearning fontSize="small" />
             </ListItemIcon>
             <ListItemText>Học tập</ListItemText>
           </MenuItem>
         </Link>
-        <Link href="/profile" passHref>
-          <MenuItem component="a">
+        <Link href="/profile" passHref legacyBehavior>
+          <MenuItem component="a" onClick={handleClose2}>
             <ListItemIcon>
               <IconProfile fontSize="small" />
             </ListItemIcon>
             <ListItemText>Hồ sơ cá nhân</ListItemText>
           </MenuItem>
         </Link>
-        <Link href="/history" passHref>
-          <MenuItem component="a">
+        <Link href="/history" passHref legacyBehavior>
+          <MenuItem component="a" onClick={handleClose2}>
             <ListItemIcon>
-              <IconTasks fontSize="small" />
+              <IconHistory fontSize="small" />
             </ListItemIcon>
             <ListItemText>Lịch sử mua hàng</ListItemText>
+          </MenuItem>
+        </Link>
+        <Link href="/chat" passHref legacyBehavior>
+          <MenuItem component="a" onClick={handleClose2}>
+            <ListItemIcon>
+              <IconChat fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Trò Chuyện</ListItemText>
           </MenuItem>
         </Link>
         <Box mt={1} py={1} px={2}>
@@ -127,8 +145,9 @@ const Profile = () => {
             variant="outlined"
             color="primary"
             fullWidth
+            startIcon={<IconLogout fontSize="small" />}
           >
-            Logout
+            Đăng xuất
           </Button>
         </Box>
       </Menu>
