@@ -15,13 +15,18 @@ import {
     MenuItem,
     SelectChangeEvent,
     IconButton,
+    FormControl,
+    InputLabel,
+    TextField
 } from "@mui/material";
 import BaseCard from "@/components/shared/DashboardCard";
-import { Visibility } from "@mui/icons-material";
+import { Visibility, Search, Close } from "@mui/icons-material";
 import { useAppContext } from "@/context/AppContext";
+import DetailRequest from "@/sections/admin/DetailRequest";
 
 
 type RefundRequest = {
+    id: string;
     email: string;
     orderCode: string;
     amount: number;
@@ -36,6 +41,10 @@ const RefundRequestTable = () => {
     const [limit, setLimit] = useState(5);
     const [total, setTotal] = useState(0);
     const { sessionToken } = useAppContext();
+    const [searchTerm, setSearchTerm] = useState("");
+    const [showSearch, setShowSearch] = useState(false);
+    const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
+    const [openDetailDialog, setOpenDetailDialog] = useState(false);
 
 
     const fetchRefundRequests = async () => {
@@ -62,6 +71,7 @@ const RefundRequestTable = () => {
                 const { results, itemCount } = data.message;
 
                 const transformedResults = results.map((item: any) => ({
+                    id: item.id,
                     email: item.email,
                     orderCode: item.orderCode,
                     amount: item.amount,
@@ -101,6 +111,19 @@ const RefundRequestTable = () => {
         setFilterStatus(event.target.value);
         setPage(1);
     };
+    const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchTerm(event.target.value);
+    };
+
+    const handleOpenDetailDialog = (id: string) => {
+        setSelectedRequestId(id);
+        setOpenDetailDialog(true);
+    };
+
+    const handleCloseDetailDialog = () => {
+        setOpenDetailDialog(false);
+        setSelectedRequestId(null);
+    };
 
     return (
         <BaseCard>
@@ -119,6 +142,31 @@ const RefundRequestTable = () => {
                         Danh sách Yêu cầu hoàn tiền
                     </Typography>
                 </Box>
+                <Box mb={2} display="flex" justifyContent="space-between" alignItems="center">
+                    {showSearch ? (
+                        <TextField
+                            label="Tìm kiếm"
+                            variant="outlined"
+                            value={searchTerm}
+                            onChange={handleSearchChange}
+                            placeholder="Tìm theo email hoặc mã đơn hàng"
+                            sx={{ width: "60%" }}
+                            InputProps={{
+                                endAdornment: (
+                                    <IconButton
+                                        onClick={() => { setShowSearch(false); setSearchTerm(""); setPage(1); }}
+                                    >
+                                        <Close />
+                                    </IconButton>
+                                ),
+                            }}
+                        />
+                    ) : (
+                        <IconButton onClick={() => setShowSearch(true)}>
+                            <Search />
+                        </IconButton>
+                    )}
+                </Box>
                 <TableContainer component={Paper}>
                     <Table>
                         <TableHead>
@@ -127,19 +175,22 @@ const RefundRequestTable = () => {
                                 <TableCell>Mã đơn hàng</TableCell>
                                 <TableCell>Số tiền</TableCell>
                                 <TableCell>Ngày</TableCell>
-                                <TableCell>
-                                    <Select
-                                        value={filterStatus}
-                                        onChange={handleFilterStatusChange}
-                                        displayEmpty
-                                        size="small"
-                                        sx={{ width: "150px" }}
-                                    >
-                                        <MenuItem value="all">Tất cả</MenuItem>
-                                        <MenuItem value="InProgress">Đang xử lý</MenuItem>
-                                        <MenuItem value="Complete">Đã hoàn tiền</MenuItem>
-                                        <MenuItem value="Reject">Hệ thống từ chối</MenuItem>
-                                    </Select>
+                                <TableCell align="right">
+                                    <FormControl variant="outlined" size="small">
+                                        <InputLabel>Trạng thái</InputLabel>
+                                        <Select
+                                            value={filterStatus}
+                                            onChange={handleFilterStatusChange}
+                                            label="Trạng thái"
+                                            autoWidth
+                                        >
+                                            <MenuItem value="all">Tất cả</MenuItem>
+                                            <MenuItem value="InProgress">Đã chấp nhận</MenuItem>
+                                            <MenuItem value="InProgress">Đang xử lý</MenuItem>
+                                            <MenuItem value="Complete">Đã hoàn tiền</MenuItem>
+                                            <MenuItem value="Reject">Từ chối</MenuItem>
+                                        </Select>
+                                    </FormControl>
                                 </TableCell>
                                 <TableCell align="center">Hành động</TableCell>
                             </TableRow>
@@ -149,20 +200,21 @@ const RefundRequestTable = () => {
                                 <TableRow key={request.orderCode}>
                                     <TableCell>{request.email}</TableCell>
                                     <TableCell>{request.orderCode}</TableCell>
-                                    <TableCell>
-                                        {request.amount.toLocaleString()} VND
-                                    </TableCell>
+                                    <TableCell>{request.amount.toLocaleString()} VND</TableCell>
                                     <TableCell>{request.date}</TableCell>
                                     <TableCell>
                                         <Typography
                                             variant="body2"
                                             sx={{
                                                 color:
-                                                    request.status === "InProgress"
-                                                        ? "#ff9800"
-                                                        : request.status === "Complete"
-                                                            ? "#6fbf73"
-                                                            : "#e57373",
+                                                    request.status === "Đã hoàn tiền"
+                                                        ? "#28a745" // Xanh lá cây
+                                                        : request.status === "Đang xử lý"
+                                                            ? "#ff9800" // Cam
+                                                            : request.status === "Hệ thống từ chối"
+                                                                ? "#dc3545" // Đỏ
+                                                                : "#757ce8",
+
                                                 fontWeight: "bold",
                                             }}
                                         >
@@ -170,7 +222,10 @@ const RefundRequestTable = () => {
                                         </Typography>
                                     </TableCell>
                                     <TableCell align="center">
-                                        <IconButton aria-label="Xem chi tiết">
+                                        <IconButton
+                                            onClick={() => handleOpenDetailDialog(request.id)}
+                                            aria-label="Xem chi tiết"
+                                        >
                                             <Visibility />
                                         </IconButton>
                                     </TableCell>
@@ -189,6 +244,11 @@ const RefundRequestTable = () => {
                     rowsPerPageOptions={[5, 10, 15, 20]}
                     showFirstButton
                     showLastButton
+                />
+                <DetailRequest
+                    open={openDetailDialog}
+                    requestId={selectedRequestId}
+                    onClose={handleCloseDetailDialog}
                 />
             </>
         </BaseCard>

@@ -203,16 +203,22 @@ const InstructorInfoTable = () => {
                 <TableCell>Chuyên môn</TableCell>
                 <TableCell>Học vấn</TableCell>
                 <TableCell align="right">
-                  <FormControl variant="outlined" size="small" sx={{ minWidth: 120 }}>
-                    <InputLabel>Status</InputLabel>
-                    <Select value={filterStatus} onChange={handleFilterChange} label="Status">
-                      <MenuItem value="all">All</MenuItem>
+                  <FormControl variant="outlined" size="small">
+                    <InputLabel>Trạng thái</InputLabel>
+                    <Select
+                      value={filterStatus}
+                      onChange={handleFilterChange}
+                      label="Trạng thái"
+                      autoWidth
+                    >
+                      <MenuItem value="all">Tất cả</MenuItem>
                       <MenuItem value="active">Hoạt động</MenuItem>
                       <MenuItem value="pending">Chờ duyệt</MenuItem>
                       <MenuItem value="inactive">Chưa kích hoạt</MenuItem>
                     </Select>
                   </FormControl>
                 </TableCell>
+
                 <TableCell align="center">Hành động</TableCell>
               </TableRow>
             </TableHead>
