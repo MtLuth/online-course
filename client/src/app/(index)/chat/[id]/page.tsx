@@ -8,57 +8,100 @@ import {
   CircularProgress,
   Avatar,
 } from "@mui/material";
-import { messageApi } from "@/server/Message";
 import { useToastNotification } from "@/hook/useToastNotification";
 import { getAuthToken } from "@/utils/auth";
 import { useParams } from "next/navigation";
 
 const ChatPage = () => {
   const { id } = useParams();
-  const [messages, setMessages] = useState<any[]>([]); // Tin nhắn giữa người dùng và chuyên gia
-  const [loading, setLoading] = useState<boolean>(false);
-  const [newMessage, setNewMessage] = useState<string>(""); // Tin nhắn mới
+  const [messages, setMessages] = useState<any[]>([]); // Messages between the user and the expert
+  const [newMessage, setNewMessage] = useState<string>(""); // New message
   const { notifyError } = useToastNotification();
   const token = getAuthToken();
 
+  // Function to fetch messages
   const fetchMessages = async () => {
     if (!id) return;
-    setLoading(true);
+
     try {
-      const response = await messageApi.listenMessage(id as string, token);
-      if (response.status === "Successfully") {
-        setMessages(response.message || []);
+      const response = await fetch(
+        `http://localhost:8080/api/v1/message/${id}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const data = await response.json();
+      if (response.ok) {
+        setMessages(data.message || []);
       } else {
         notifyError("Không thể tải tin nhắn.");
       }
     } catch (error) {
       console.error("Error fetching messages:", error);
       notifyError("Đã xảy ra lỗi khi tải tin nhắn.");
-    } finally {
-      setLoading(false);
     }
   };
 
+  // UseEffect to initialize EventSource for real-time updates
   useEffect(() => {
-    if (id) {
-      fetchMessages();
-    }
-  }, [id]);
+    if (!id) return;
 
+    const eventSource = new EventSource(
+      `http://localhost:8080/api/v1/message/listen/${id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    // Using addEventListener for 'message' event
+    eventSource.addEventListener("message", (event) => {
+      const message = JSON.parse(event.data);
+      setMessages((prevMessages) => [...prevMessages, message]);
+    });
+
+    // Optionally, listen to other events like 'error'
+    eventSource.addEventListener("error", (error) => {
+      console.error("EventSource error:", error);
+      eventSource.close();
+    });
+
+    // Clean up when the component is unmounted or id/token changes
+    return () => {
+      eventSource.close();
+    };
+  }, [id, token]);
+
+  // Function to send a new message
   const handleSendMessage = async () => {
     if (!newMessage) return;
+
     try {
-      const response = await messageApi.messageSend(
-        id as string,
-        newMessage,
-        "text",
-        token
+      const response = await fetch(
+        `http://localhost:8080/api/v1/message/${id}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            content: newMessage,
+            contentType: "text", // You can change this based on message type
+          }),
+        }
       );
-      if (response.status === "Successfully") {
-        setNewMessage("");
-        fetchMessages();
-      } else if (response.status === "fail") {
-        notifyError(response.message || " Không thể gửi tin nhắn.");
+      const data = await response.json();
+
+      if (response.ok) {
+        setNewMessage(""); // Clear input after successful send
+      } else {
+        notifyError(data.message || "Không thể gửi tin nhắn.");
       }
     } catch (error) {
       console.error("Error sending message:", error);
@@ -66,17 +109,16 @@ const ChatPage = () => {
     }
   };
 
+  // Render message content based on the message type
   const renderMessageContent = (message: any) => {
-    switch (message.message.contentType) {
+    switch (message.contentType) {
       case "text":
-        return (
-          <Typography variant="body2">{message.message.content}</Typography>
-        );
+        return <Typography variant="body2">{message.content}</Typography>;
       case "image":
         return (
           <Box
             component="img"
-            src={message.message.content}
+            src={message.content}
             alt="Sent Image"
             sx={{ maxWidth: "200px", marginTop: 1, borderRadius: 1 }}
           />
@@ -99,59 +141,45 @@ const ChatPage = () => {
         Trò Chuyện Với Chuyên Gia
       </Typography>
 
-      {loading ? (
-        <Box
-          sx={{
-            flex: 1, // Chiếm hết không gian còn lại
-            overflowY: "auto", // Cho phép cuộn dọc nếu nội dung vượt quá chiều cao
-            marginBottom: 3,
-            maxHeight: "60vh", // Giới hạn chiều cao của khu vực tin nhắn
-          }}
-        >
-          <CircularProgress />
-        </Box>
-      ) : (
-        <Box
-          sx={{
-            flex: 1, // Chiếm hết không gian còn lại
-            overflowY: "auto", // Cho phép cuộn dọc nếu nội dung vượt quá chiều cao
-            marginBottom: 3,
-            maxHeight: "60vh", // Giới hạn chiều cao của khu vực tin nhắn
-          }}
-        >
-          {messages.length > 0 ? (
-            messages.map((msg) => (
+      <Box
+        sx={{
+          flex: 1, // Takes up remaining space
+          overflowY: "auto", // Allows scrolling if content overflows
+          marginBottom: 3,
+          maxHeight: "60vh", // Limits the height of the message area
+        }}
+      >
+        {messages.length > 0 ? (
+          messages.map((msg, index) => (
+            <Box
+              key={index}
+              sx={{
+                marginBottom: 2,
+                display: "flex",
+                flexDirection: msg.sender === "user-id" ? "row-reverse" : "row",
+              }}
+            >
+              <Avatar
+                src="/avatar-placeholder.png" // Replace with actual user/instructor avatar
+                sx={{ width: 40, height: 40, margin: "0 8px" }}
+              />
               <Box
-                key={msg.key}
                 sx={{
-                  marginBottom: 2,
-                  display: "flex",
-                  flexDirection:
-                    msg.message.sender === "user-id" ? "row-reverse" : "row",
+                  padding: 2,
+                  backgroundColor:
+                    msg.sender === "user-id" ? "#f0f0f0" : "#e1f5fe",
+                  borderRadius: 2,
+                  maxWidth: "80%",
                 }}
               >
-                <Avatar
-                  src="/avatar-placeholder.png" // Replace with user/instructor avatar
-                  sx={{ width: 40, height: 40, margin: "0 8px" }}
-                />
-                <Box
-                  sx={{
-                    padding: 2,
-                    backgroundColor:
-                      msg.message.sender === "user-id" ? "#f0f0f0" : "#e1f5fe",
-                    borderRadius: 2,
-                    maxWidth: "80%",
-                  }}
-                >
-                  {renderMessageContent(msg)}
-                </Box>
+                {renderMessageContent(msg)}
               </Box>
-            ))
-          ) : (
-            <Typography variant="body2">Chưa có tin nhắn nào.</Typography>
-          )}
-        </Box>
-      )}
+            </Box>
+          ))
+        ) : (
+          <Typography variant="body2">Chưa có tin nhắn nào.</Typography>
+        )}
+      </Box>
 
       <Box display="flex" alignItems="center" sx={{ marginTop: 3 }}>
         <TextField

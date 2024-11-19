@@ -2,10 +2,9 @@ import BaseApi from "./BaseApi";
 
 class MessageApi extends BaseApi {
   constructor() {
-    super("/wallet");
+    super("/message");
   }
 
-  // API gửi tin nhắn
   public async messageSend(
     id: string,
     content: string,
@@ -17,33 +16,44 @@ class MessageApi extends BaseApi {
       contentType,
     };
 
-    const response = await this.post(`/message/${id}`, data, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await this.post(
+      `http://localhost:8080/api/v1/message/${id}`,
+      data,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
     return response;
   }
 
-  // API lắng nghe tin nhắn của người dùng
-  public async listenMessage(id: string, token: string): Promise<any> {
-    const response = await this.get(`/message/${id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return response;
-  }
+  public listenNewMessage(
+    id: string,
+    token: string,
+    onMessage: (data: any) => void
+  ): EventSource {
+    const eventSource = new EventSource(
+      `http://localhost:8080/api/v1/message/listen/${id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
-  // API lắng nghe tin nhắn mới
-  public async listenNewMessage(id: string, token: string): Promise<any> {
-    const response = await this.get(`/message/listen/${id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return response;
+    eventSource.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      onMessage(message);
+    };
+
+    eventSource.onerror = (error) => {
+      console.error("EventSource error:", error);
+      eventSource.close();
+    };
+
+    return eventSource;
   }
 }
 
