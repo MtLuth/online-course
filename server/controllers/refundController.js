@@ -25,6 +25,15 @@ class RefundController {
     req.results = results;
     next();
   });
+
+  viewDetailRefund = catchAsync(async (req, res, next) => {
+    const id = req.params.id;
+    const results = await refundService.viewDetailRefund(id);
+    res.status(200).json({
+      status: "Successfully",
+      message: results,
+    });
+  });
 }
 
 export default new RefundController();

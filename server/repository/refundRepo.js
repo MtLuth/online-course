@@ -42,8 +42,9 @@ class RefundRepo {
   }
 
   async viewDetailRefund(id) {
-    const doc = await this.dbRef.doc(id);
-    if (!doc.exist) {
+    console.log(id);
+    const doc = await this.dbRef.doc(id).get();
+    if (!doc.exists) {
       return null;
     }
     const data = doc.data();
