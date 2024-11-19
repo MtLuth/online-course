@@ -20,11 +20,27 @@ class MessageController {
   loadMessages = catchAsync(async (req, res, next) => {
     const sender = req.uid;
     const receiver = req.params.receiver;
+
     const mediator = new MessageMediator(sender, receiver);
-    const messages = await mediator.loadMessages();
-    res.status(200).json({
-      status: "Successfully",
-      message: messages,
+
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+
+    const sendEvent = (data) => {
+      res.write(`data: ${JSON.stringify(data)}\n\n`);
+    };
+
+    mediator.loadMessagesRealtime((messages) => {
+      sendEvent({
+        status: "Successfully",
+        message: messages,
+      });
+    });
+
+    req.on("close", () => {
+      mediator.stopListening();
+      res.end();
     });
   });
 

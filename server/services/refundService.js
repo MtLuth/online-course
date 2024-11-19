@@ -4,6 +4,12 @@ import purchaseHistoryRepo from "../repository/purchaseHistoryRepo.js";
 import refundRepo from "../repository/refundRepo.js";
 import AppError from "../utils/appError.js";
 import crypto from "crypto";
+import {
+  getTemplateAcceptRefund,
+  getTemplateRejectRefund,
+  mailOptions,
+  sendEmail,
+} from "./emailService.js";
 
 class RefundService {
   async createRefund(uid, refundInformation) {
@@ -85,9 +91,33 @@ class RefundService {
     }
   }
 
-  async updateStatusRefund(id, status) {
+  async updateStatusRefund(id, status, reason) {
     try {
-      const message = refundRepo.updateStatusRefund(id, status);
+      const refund = await refundRepo.viewDetailRefund(id);
+      let templateEmail = null;
+      if (status === "Accepted") {
+        templateEmail = getTemplateAcceptRefund(
+          refund.orderCode,
+          refund.courses,
+          refund.amount
+        );
+      }
+      if (status === "Reject") {
+        templateEmail = getTemplateRejectRefund(
+          refund.orderCode,
+          refund.courses,
+          reason
+        );
+      }
+      if (templateEmail !== null) {
+        const mailDialUp = mailOptions(
+          refund.email,
+          "Yêu cầu hoàn tiền",
+          templateEmail
+        );
+        await sendEmail(mailDialUp);
+      }
+      const message = await refundRepo.updateStatusRefund(id, status);
       return message;
     } catch (error) {
       throw new AppError(

@@ -3,6 +3,7 @@ const RefundStatus = {
   Cancel: "Đã hủy",
   Complete: "Đã hoàn tiền",
   Reject: "Hệ thống từ chối",
+  Accepted: "Đã chấp nhận",
 };
 
 class Refund {

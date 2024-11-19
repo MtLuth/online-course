@@ -49,7 +49,12 @@ class RefundController {
       .required()
       .oneOf(statusKeys);
     const status = await statusValidate.validate(req.body.status);
-    const message = await refundService.updateStatusRefund(id, status);
+    let reason;
+    if (status === "Reject") {
+      const reasonValidate = yup.string().label("reason").required();
+      reason = await reasonValidate.validate(req.body.reason);
+    }
+    const message = await refundService.updateStatusRefund(id, status, reason);
     res.status(200).json({
       status: "Successfully",
       message: message,
