@@ -25,6 +25,12 @@ class RefundService {
       let courses = refundInformation.courses;
       const refundCourses = sku.reduce((newCourses, item) => {
         if (courses.includes(item.courseId)) {
+          if (item.RefundStatus !== undefined && item.refundStatus === true) {
+            throw new AppError(
+              `Bạn đã gửi yêu cầu hoàn tiền cho khóa học ${item.title} rồi!`,
+              400
+            );
+          }
           newCourses.push({
             courseId: item.courseId,
             price: item.salePrice,
@@ -67,6 +73,8 @@ class RefundService {
       );
     }
   }
+
+  async viewDetailRefund() {}
 }
 
 export default new RefundService();

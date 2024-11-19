@@ -10,12 +10,16 @@ class RefundRepo {
     const doc = await this.dbRef.doc(uid).get();
     const data = doc.exists ? doc.data() : {};
     let refunds = data.refunds ? data.refunds : [];
-    refunds.push({ ...refund, uid: uid });
-    await this.dbRef.doc(uid).set({ refunds: refunds, date: Date.now() });
+    const user = await firebaseAdmin.auth().getUser(uid);
+    let email;
+    if (user) {
+      email = user.email;
+    }
+    refunds.push({ ...refund, uid: uid, email: email, date: Date.now() });
+    await this.dbRef.doc(uid).set({ refunds: refunds });
   }
 
   async getAllRefund(filterStatus) {
-    let query = this.dbRef;
     const snapshot = await this.dbRef.get();
     let results = [];
     const docs = snapshot.docs;
@@ -27,8 +31,11 @@ class RefundRepo {
         (item) => item.status === RefundStatus[filterStatus]
       );
     }
+    results = results.sort((a, b) => b.date - a.date);
     return results;
   }
+
+  async viewDetailRefund(uid, id) {}
 }
 
 export default new RefundRepo();
