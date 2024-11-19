@@ -219,7 +219,7 @@ const RefundRequestTable = () => {
                                                             ? "#ff9800" // Cam
                                                             : request.status === "Đã chấp nhận"
                                                                 ? "#007bff" // Xanh dương
-                                                                : request.status === "Từ chối"
+                                                                : request.status === "Hệ thống từ chối"
                                                                     ? "#dc3545" // Đỏ
                                                                     : "#000", // Màu mặc định
                                                 fontWeight: "bold",
