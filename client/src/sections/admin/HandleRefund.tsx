@@ -19,13 +19,14 @@ import {
     TextField,
     Menu,
     MenuItem as MuiMenuItem,
-    SelectChangeEvent
+    SelectChangeEvent,
 } from "@mui/material";
 import BaseCard from "@/components/shared/DashboardCard";
 import { MoreVert, Search, Close } from "@mui/icons-material";
 import { useAppContext } from "@/context/AppContext";
 import DetailRequest from "@/sections/admin/DetailRequest";
 import UpdateRequestDialog from "@/sections/admin/UpdateRequest";
+import { request } from "http";
 
 type RefundRequest = {
     id: string;
@@ -45,14 +46,10 @@ const RefundRequestTable = () => {
     const { sessionToken } = useAppContext();
     const [searchTerm, setSearchTerm] = useState("");
     const [showSearch, setShowSearch] = useState(false);
-    const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
-    const [openDetailDialog, setOpenDetailDialog] = useState(false);
     const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
-    const [selectedMenuRequest, setSelectedMenuRequest] = useState<RefundRequest | null>(null);
-
+    const [selectedRequest, setSelectedRequest] = useState<RefundRequest | null>(null);
+    const [openDetailDialog, setOpenDetailDialog] = useState(false);
     const [openEditStatusDialog, setOpenEditStatusDialog] = useState(false);
-    const [updatedStatus, setUpdatedStatus] = useState("");
-
 
     const fetchRefundRequests = async () => {
         try {
@@ -60,12 +57,8 @@ const RefundRequestTable = () => {
             queryParams.set("page", page.toString());
             queryParams.set("limit", limit.toString());
 
-            if (filterStatus !== "all") {
-                queryParams.set("status", filterStatus);
-            }
-            if (searchTerm.trim()) {
-                queryParams.set("searchParam", searchTerm.trim());
-            }
+            if (filterStatus !== "all") queryParams.set("status", filterStatus);
+            if (searchTerm.trim()) queryParams.set("searchParam", searchTerm.trim());
 
             const url = `http://localhost:8080/api/v1/refund?${queryParams.toString()}`;
             const response = await fetch(url, {
@@ -103,96 +96,36 @@ const RefundRequestTable = () => {
         fetchRefundRequests();
     }, [page, limit, filterStatus, searchTerm]);
 
-    const handleChangePage = (
-        event: React.MouseEvent<HTMLButtonElement> | null,
-        newPage: number
-    ) => {
-        setPage(newPage + 1);
-    };
-
-    const handleChangeRowsPerPage = (
-        event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-    ) => {
-        setLimit(parseInt(event.target.value, 10));
-        setPage(1);
-    };
-
-    const handleFilterStatusChange = (event: SelectChangeEvent<string>) => {
-        setFilterStatus(event.target.value);
-        setPage(1);
-    };
-
     const handleOpenMenu = (event: React.MouseEvent<HTMLElement>, request: RefundRequest) => {
         setMenuAnchorEl(event.currentTarget);
-        setSelectedMenuRequest(request);
+        setSelectedRequest(request);
     };
 
     const handleCloseMenu = () => {
         setMenuAnchorEl(null);
-        setSelectedMenuRequest(null);
     };
 
     const handleOpenDetailDialog = () => {
-        if (selectedMenuRequest) {
-            setSelectedRequestId(selectedMenuRequest.id);
-            setOpenDetailDialog(true);
-        }
+        if (selectedRequest) setOpenDetailDialog(true);
         handleCloseMenu();
     };
 
-    const handleEditStatus = () => {
-        if (selectedMenuRequest) {
-            console.log("Chỉnh sửa trạng thái cho yêu cầu:", selectedMenuRequest);
-            // Logic chỉnh sửa trạng thái ở đây
-        }
+    const handleOpenEditStatusDialog = () => {
+        if (selectedRequest) setOpenEditStatusDialog(true);
         handleCloseMenu();
     };
 
     const handleCloseDetailDialog = () => {
         setOpenDetailDialog(false);
-        setSelectedRequestId(null);
-    };
-
-    const handleOpenEditStatusDialog = () => {
-        if (selectedMenuRequest) {
-            setUpdatedStatus(selectedMenuRequest.status);
-            setOpenEditStatusDialog(true);
-        }
-        handleCloseMenu();
     };
 
     const handleCloseEditStatusDialog = () => {
         setOpenEditStatusDialog(false);
     };
-
-    const handleSaveStatus = async () => {
-        if (selectedMenuRequest) {
-            try {
-                const response = await fetch(
-                    `http://localhost:8080/api/v1/refund/${selectedMenuRequest.id}`,
-                    {
-                        method: "PUT",
-                        headers: {
-                            "Content-Type": "application/json",
-                            Authorization: `Bearer ${sessionToken}`,
-                        },
-                        body: JSON.stringify({ status: updatedStatus }),
-                    }
-                );
-
-                if (response.ok) {
-                    console.log("Status updated successfully");
-                    fetchRefundRequests();
-                } else {
-                    console.error("Failed to update status");
-                }
-            } catch (error) {
-                console.error("Error updating status:", error);
-            }
-        }
-        handleCloseEditStatusDialog();
+    const handleFilterStatusChange = (event: SelectChangeEvent<string>) => {
+        setFilterStatus(event.target.value);
+        setPage(1);
     };
-
 
     return (
         <BaseCard>
@@ -281,16 +214,21 @@ const RefundRequestTable = () => {
                                             sx={{
                                                 color:
                                                     request.status === "Đã hoàn tiền"
-                                                        ? "#28a745"
+                                                        ? "#28a745" // Xanh lá cây
                                                         : request.status === "Đang xử lý"
-                                                            ? "#ff9800"
-                                                            : "#dc3545",
+                                                            ? "#ff9800" // Cam
+                                                            : request.status === "Đã chấp nhận"
+                                                                ? "#007bff" // Xanh dương
+                                                                : request.status === "Từ chối"
+                                                                    ? "#dc3545" // Đỏ
+                                                                    : "#000", // Màu mặc định
                                                 fontWeight: "bold",
                                             }}
                                         >
                                             {request.status}
                                         </Typography>
                                     </TableCell>
+
                                     <TableCell align="center">
                                         <IconButton
                                             onClick={(e) => handleOpenMenu(e, request)}
@@ -308,37 +246,32 @@ const RefundRequestTable = () => {
                     component="div"
                     count={total}
                     page={page - 1}
-                    onPageChange={handleChangePage}
+                    onPageChange={(e, newPage) => setPage(newPage + 1)}
                     rowsPerPage={limit}
-                    onRowsPerPageChange={handleChangeRowsPerPage}
-                    rowsPerPageOptions={[5, 10, 15, 20]}
-                    showFirstButton
-                    showLastButton
+                    onRowsPerPageChange={(e) => setLimit(parseInt(e.target.value, 10))}
                 />
                 <Menu
                     anchorEl={menuAnchorEl}
                     open={Boolean(menuAnchorEl)}
                     onClose={handleCloseMenu}
-                    anchorOrigin={{
-                        vertical: "bottom",
-                        horizontal: "center",
-                    }}
-                    transformOrigin={{
-                        vertical: "top",
-                        horizontal: "center",
-                    }}
+                    anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+                    transformOrigin={{ vertical: "top", horizontal: "center" }}
                 >
                     <MuiMenuItem onClick={handleOpenDetailDialog}>Xem chi tiết</MuiMenuItem>
-                    <MuiMenuItem onClick={handleOpenEditStatusDialog}>Cập nhật</MuiMenuItem>
+                    {(selectedRequest?.status !== "Từ chối" && selectedRequest?.status !== "Đã hoàn tiền") && (
+                        <MuiMenuItem onClick={handleOpenEditStatusDialog}>Cập nhật</MuiMenuItem>
+                    )}
                 </Menu>
+
                 <DetailRequest
                     open={openDetailDialog}
-                    requestId={selectedRequestId}
+                    requestId={selectedRequest?.id || null}
                     onClose={handleCloseDetailDialog}
                 />
                 <UpdateRequestDialog
                     open={openEditStatusDialog}
-                    requestId={selectedMenuRequest?.id || null}
+                    requestId={selectedRequest?.id || null}
+                    requestStatus={selectedRequest?.status || null}
                     onClose={handleCloseEditStatusDialog}
                     onStatusUpdate={fetchRefundRequests}
                 />

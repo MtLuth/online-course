@@ -39,7 +39,7 @@ const DetailRequest: React.FC<DetailRequestProps> = ({ open, requestId, onClose 
 
             if (response.ok) {
                 const data = await response.json();
-                setRequest(data.message); // Lưu dữ liệu vào state
+                setRequest(data.message);
             } else {
                 console.error("Failed to fetch request detail:", response.statusText);
             }
@@ -56,7 +56,7 @@ const DetailRequest: React.FC<DetailRequestProps> = ({ open, requestId, onClose 
         }
     }, [open, requestId]);
 
-    if (!requestId) return null; // Nếu không có ID, không render dialog
+    if (!requestId) return null;
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -119,10 +119,14 @@ const DetailRequest: React.FC<DetailRequestProps> = ({ open, requestId, onClose 
                                         style: {
                                             color:
                                                 request.status === "Đã hoàn tiền"
-                                                    ? "#28a745"
+                                                    ? "#28a745" // Xanh lá cây
                                                     : request.status === "Đang xử lý"
-                                                        ? "#ff9800"
-                                                        : "#dc3545",
+                                                        ? "#ff9800" // Cam
+                                                        : request.status === "Đã chấp nhận"
+                                                            ? "#007bff" // Xanh dương
+                                                            : request.status === "Từ chối"
+                                                                ? "#dc3545" // Đỏ
+                                                                : "#000", // Mặc định
                                         },
                                     }}
                                 />

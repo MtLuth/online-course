@@ -7,71 +7,76 @@ import {
     Button,
     Typography,
     Grid,
-    TextField,
     Divider,
     Box,
-    CircularProgress,
     FormControl,
     InputLabel,
     Select,
     MenuItem,
     SelectChangeEvent,
+    TextField,
 } from "@mui/material";
 import { useAppContext } from "@/context/AppContext";
 
 type UpdateRequestProps = {
     open: boolean;
-    requestId: string | null; // ID của request được chọn
-    onClose: () => void; // Hàm đóng dialog
-    onStatusUpdate: () => void; // Hàm gọi lại sau khi cập nhật trạng thái
+    requestId: string | null;
+    requestStatus: string | null;
+    onClose: () => void;
+    onStatusUpdate: () => void;
 };
 
 const UpdateRequestDialog: React.FC<UpdateRequestProps> = ({
     open,
     requestId,
+    requestStatus,
     onClose,
     onStatusUpdate,
 }) => {
-    const [loading, setLoading] = useState(false);
-    const [request, setRequest] = useState<any>(null); // Dữ liệu của request
-    const [updatedStatus, setUpdatedStatus] = useState(""); // Trạng thái cập nhật
+    const [updatedStatus, setUpdatedStatus] = useState("");
+    const [reason, setReason] = useState(""); // Lý do từ chối
+    const [error, setError] = useState("");
     const { sessionToken } = useAppContext();
+    const [action, setActionUpdate] = useState<{ key: string; value: string }[]>([]);
 
-    const fetchRequestDetails = async (id: string) => {
-        setLoading(true);
-        try {
-            const response = await fetch(`http://localhost:8080/api/v1/refund/${id}`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${sessionToken}`,
-                },
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                setRequest(data.message); // Lưu dữ liệu vào state
-                setUpdatedStatus(data.message.status); // Cập nhật trạng thái ban đầu
-            } else {
-                console.error("Failed to fetch request details:", response.statusText);
-            }
-        } catch (error) {
-            console.error("Error fetching request details:", error);
-        } finally {
-            setLoading(false);
+    useEffect(() => {
+        if (requestStatus === "Đang xử lý") {
+            setActionUpdate([
+                { key: "Accepted", value: "Đã chấp nhận" },
+                { key: "Reject", value: "Từ chối" },
+            ]);
+        } else if (requestStatus === "Đã chấp nhận") {
+            setActionUpdate([{ key: "Complete", value: "Đã hoàn tiền" }]);
         }
-    };
+    }, [requestStatus]);
 
     const handleSaveStatus = async () => {
+        if (!updatedStatus) {
+            setError("Vui lòng chọn trạng thái trước khi lưu.");
+            return;
+        }
+
+        if (updatedStatus === "Reject" && !reason.trim()) {
+            setError("Vui lòng nhập lý do từ chối.");
+            return;
+        }
+
+        setError("");
+
         if (requestId) {
             try {
+                const payload: any = { status: updatedStatus };
+                if (updatedStatus === "Reject") {
+                    payload.reason = reason;
+                }
+
                 const response = await fetch(`http://localhost:8080/api/v1/refund/${requestId}`, {
                     method: "PUT",
                     headers: {
                         "Content-Type": "application/json",
                         Authorization: `Bearer ${sessionToken}`,
                     },
-                    body: JSON.stringify({ status: updatedStatus }),
+                    body: JSON.stringify(payload),
                 });
 
                 if (response.ok) {
@@ -87,57 +92,65 @@ const UpdateRequestDialog: React.FC<UpdateRequestProps> = ({
         }
     };
 
-    useEffect(() => {
-        if (open && requestId) {
-            fetchRequestDetails(requestId);
-        }
-    }, [open, requestId]);
-
-    if (!requestId) return null; // Nếu không có ID, không render dialog
+    if (!requestId) return null;
 
     return (
-        <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+        <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
             <DialogTitle sx={{ fontWeight: "bold", textAlign: "center" }}>
                 Cập nhật trạng thái yêu cầu hoàn tiền
             </DialogTitle>
             <DialogContent>
-                {loading ? (
-                    <Grid
-                        container
-                        alignItems="center"
-                        justifyContent="center"
-                        style={{ height: "200px" }}
-                    >
-                        <CircularProgress />
-                    </Grid>
-                ) : request ? (
-                    <Box sx={{ padding: 3 }}>
-                        <Divider sx={{ my: 2 }} />
-                        <Grid container spacing={2}>
-
-                            <Grid item xs={12} md={6}>
-                                <FormControl fullWidth>
-                                    <InputLabel>Trạng thái</InputLabel>
-                                    <Select
-                                        value={updatedStatus}
-                                        onChange={(e: SelectChangeEvent<string>) =>
-                                            setUpdatedStatus(e.target.value)
-                                        }
-                                    >
-                                        <MenuItem value="Accepted">Đã chấp nhận</MenuItem>
-                                        <MenuItem value="InProgress">Đang xử lý</MenuItem>
-                                        <MenuItem value="Complete">Đã hoàn tiền</MenuItem>
-                                        <MenuItem value="Reject">Từ chối</MenuItem>
-                                    </Select>
-                                </FormControl>
-                            </Grid>
+                <Box sx={{ padding: 2 }}>
+                    <Divider sx={{ my: 2 }} />
+                    <Grid container spacing={2}>
+                        <Grid item xs={12}>
+                            <FormControl fullWidth>
+                                <InputLabel>Trạng thái</InputLabel>
+                                <Select
+                                    value={updatedStatus}
+                                    onChange={(e: SelectChangeEvent<string>) =>
+                                        setUpdatedStatus(e.target.value)
+                                    }
+                                    sx={{
+                                        color:
+                                            updatedStatus === "Complete"
+                                                ? "#28a745"
+                                                : updatedStatus === "Reject"
+                                                    ? "#dc3545"
+                                                    : "#000",
+                                    }}
+                                >
+                                    {action.map((item) => (
+                                        <MenuItem key={item.key} value={item.key}>
+                                            {item.value}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
                         </Grid>
-                    </Box>
-                ) : (
-                    <Typography variant="body2" color="error">
-                        Không tìm thấy chi tiết yêu cầu hoàn tiền.
-                    </Typography>
-                )}
+
+                        {/* Hiển thị ô nhập lý do nếu trạng thái là "Reject" */}
+                        {updatedStatus === "Reject" && (
+                            <Grid item xs={12}>
+                                <TextField
+                                    label="Lý do từ chối"
+                                    variant="outlined"
+                                    fullWidth
+                                    value={reason}
+                                    onChange={(e) => setReason(e.target.value)}
+                                    multiline
+                                    rows={3}
+                                    placeholder="Vui lòng nhập lý do từ chối"
+                                />
+                            </Grid>
+                        )}
+                        {error && (
+                            <Grid item xs={12}>
+                                <Typography color="error">{error}</Typography>
+                            </Grid>
+                        )}
+                    </Grid>
+                </Box>
             </DialogContent>
             <DialogActions>
                 <Button onClick={handleSaveStatus} color="success">
@@ -146,7 +159,6 @@ const UpdateRequestDialog: React.FC<UpdateRequestProps> = ({
                 <Button onClick={onClose} color="primary">
                     Hủy
                 </Button>
-
             </DialogActions>
         </Dialog>
     );
