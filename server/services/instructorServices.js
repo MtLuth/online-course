@@ -1,3 +1,4 @@
+import Instructor from "../model/instructorModel.js";
 import instructorRepo from "../repository/instructorRepo.js";
 import AppError from "../utils/appError.js";
 class InstructorService {
@@ -24,6 +25,15 @@ class InstructorService {
       return instructors;
     } catch (error) {
       throw new AppError(error, 500);
+    }
+  }
+
+  async studentViewInstructor(uid) {
+    try {
+      const instructor = await instructorRepo.getInstructorByUid(uid);
+      return instructor;
+    } catch (error) {
+      throw new AppError(`Lỗi khi tìm kiếm thông tin chuyên gia ${error}`, 500);
     }
   }
 }

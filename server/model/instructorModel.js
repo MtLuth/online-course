@@ -79,6 +79,7 @@ class Instructor {
   async getById(id) {
     const snapshot = await dbRef.doc(id).get();
     const data = snapshot.data();
+    console.log(data);
     return new Instructor(
       snapshot.id,
       data.email,

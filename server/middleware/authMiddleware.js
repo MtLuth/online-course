@@ -17,11 +17,11 @@ class CustomMiddleware {
         req.uid = valid.sub;
         next();
       } else {
-        return next(new AppError(ErrorMessage.Unauthorizaton, 401));
+        return next(new AppError(ErrorMessage.UnAuthorization, 401));
       }
     } catch (error) {
       console.log(error);
-      throw new AppError(ErrorMessage.Unauthorizaton, 401);
+      throw new AppError(ErrorMessage.UnAuthorization, 401);
     }
   });
 

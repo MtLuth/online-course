@@ -3,13 +3,13 @@ const RefundStatus = {
   Cancel: "Đã hủy",
   Complete: "Đã hoàn tiền",
   Reject: "Hệ thống từ chối",
+  Accepted: "Đã chấp nhận",
 };
 
 class Refund {
-  constructor(id, orderCode, courseId, amount, status, reason, payeeAccount) {
-    this.id = id;
+  constructor(orderCode, courses, amount, status, reason, payeeAccount) {
     this.orderCode = orderCode;
-    this.courseId = courseId;
+    this.courses = courses;
     this.amount = amount;
     this.status = status;
     this.reason = reason;

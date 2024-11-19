@@ -187,8 +187,20 @@ const newPasswordSchema = yup.object({
 
 const refundSchema = yup.object({
   orderCode: yup.string().required(),
-  
-})
+  courses: yup
+    .array()
+    .of(yup.string().label("Mã khóa học").required())
+    .min(1)
+    .required(),
+  reason: yup.string().required().label("Lý do"),
+  payeeAccount: yup
+    .object({
+      receiverName: yup.string().required(),
+      bankNumber: yup.string().required(),
+      bankName: yup.string().required(),
+    })
+    .required(),
+});
 
 export {
   loginParam,
@@ -201,4 +213,5 @@ export {
   ratingSchema,
   messageSchema,
   newPasswordSchema,
+  refundSchema,
 };
