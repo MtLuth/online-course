@@ -1,5 +1,9 @@
 import e from "express";
-import { uploadImage, uploadVideo } from "../middleware/multerMiddleware.js";
+import {
+  uploadImage,
+  uploadResource,
+  uploadVideo,
+} from "../middleware/multerMiddleware.js";
 import uploadController from "../controllers/uploadController.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 
@@ -16,6 +20,13 @@ uploadRouter.post(
   authMiddleware.validateUser,
   uploadVideo.any("files"),
   uploadController.uploadVideos
+);
+
+uploadRouter.post(
+  "/resources",
+  authMiddleware.validateUser,
+  uploadResource.any("files"),
+  uploadController.uploadResources
 );
 
 export default uploadRouter;

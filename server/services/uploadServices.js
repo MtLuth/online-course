@@ -37,6 +37,30 @@ class UploadService {
     });
     return filesUrl;
   }
+
+  async uploadResources(uid, files) {
+    const storage = firebaseAdmin.storage().bucket();
+    const filesUrl = [];
+
+    for (const file of files) {
+      try {
+        const ref = storage.file(`resources/${uid}/${file.originalname}`);
+
+        await ref.save(file.buffer, {
+          public: true,
+          metadata: {
+            contentType: file.mimetype,
+          },
+        });
+
+        filesUrl.push(ref.publicUrl());
+      } catch (error) {
+        throw new AppError(error.message || "Failed to upload file.", 500);
+      }
+    }
+
+    return filesUrl;
+  }
 }
 
 export default new UploadService();
