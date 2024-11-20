@@ -10,7 +10,13 @@ import {
   CardMedia,
   CircularProgress,
 } from "@mui/material";
-import { ShoppingCart as ShoppingCartIcon } from "@mui/icons-material";
+import {
+  ShoppingCart as ShoppingCartIcon,
+  Edit as EditIcon,
+  Star as StarIcon,
+  StarHalf as StarHalfIcon,
+  StarBorder as StarBorderIcon,
+} from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { getAuthToken } from "@/utils/auth";
 import { CourseDetail } from "@/model/CourseDetail.model";
@@ -35,6 +41,34 @@ const getLevelLabel = (level: string) => {
       return "Chưa xác định";
   }
 };
+const getStatusLabel = (isPublished: boolean) => {
+  return isPublished ? "Đã Xuất Bản" : "Chưa Xuất Bản";
+};
+// Hàm để render rating sao
+const renderRating = (ratingScore: number) => {
+  const fullStars = Math.floor(ratingScore);
+  const halfStars = ratingScore % 1 !== 0 ? 1 : 0; // Kiểm tra xem có sao nửa nào không
+  const emptyStars = 5 - fullStars - halfStars; // Số sao rỗng còn lại
+
+  const stars = [];
+
+  // Thêm các sao đầy đủ
+  for (let i = 0; i < fullStars; i++) {
+    stars.push(<StarIcon key={`full-${i}`} sx={{ color: "#FFD700" }} />);
+  }
+
+  // Thêm sao nửa
+  if (halfStars === 1) {
+    stars.push(<StarHalfIcon key="half" sx={{ color: "#FFD700" }} />);
+  }
+
+  // Thêm các sao rỗng
+  for (let i = 0; i < emptyStars; i++) {
+    stars.push(<StarBorderIcon key={`empty-${i}`} sx={{ color: "#FFD700" }} />);
+  }
+
+  return stars;
+};
 
 const CourseCard: React.FC<CourseCardProps> = ({
   course,
@@ -46,6 +80,11 @@ const CourseCard: React.FC<CourseCardProps> = ({
   const { cartCount, setCartCount } = useCart();
   const { notifySuccess, notifyError } = useToastNotification();
 
+  const handleEditCourse = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    router.push(`/course/edit/${course.id}`);
+  };
+
   useEffect(() => {
     const fetchedToken = getAuthToken();
     setToken(fetchedToken);
@@ -53,26 +92,24 @@ const CourseCard: React.FC<CourseCardProps> = ({
 
   const handleAddToCart = useCallback(
     async (event: React.MouseEvent) => {
-      event.stopPropagation(); // Ngăn chặn sự kiện click tiếp tục gây ra điều hướng
+      event.stopPropagation();
       if (!token) {
-        notifySuccess("Vui lòng đăng nhập trước khi thêm vào giỏ!");
+        notifyError("Vui lòng đăng nhập trước khi thêm vào giỏ!");
         return;
       }
 
       setIsAddingToCart(true);
       try {
-        await cartApi.addToCart(course.id, token);
-        notifySuccess("Đã thêm vào giỏ hàng Thành Công!");
-
-        // Sau khi thêm vào giỏ hàng thành công, cập nhật lại số lượng giỏ hàng
-        setCartCount((prevCount) => prevCount + 1); // Giả sử thêm 1 khóa học vào giỏ
+        const res = await cartApi.addToCart(course.id, token);
+        notifySuccess("Đã thêm vào giỏ hàng thành công!");
+        setCartCount(res.message.total);
       } catch (error) {
         notifyError("Có lỗi xảy ra khi thêm khóa học vào giỏ!");
       } finally {
         setIsAddingToCart(false);
       }
     },
-    [token, course.id, notifySuccess, notifyError, setCartCount] // Thêm setCartCount vào dependency array
+    [token, course.id, notifySuccess, notifyError, setCartCount]
   );
 
   return (
@@ -84,6 +121,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
         flexDirection: "column",
         justifyContent: "space-between",
         position: "relative",
+        cursor: "pointer",
         borderRadius: 2,
         overflow: "hidden",
         boxShadow: 3,
@@ -103,17 +141,35 @@ const CourseCard: React.FC<CourseCardProps> = ({
         />
       )}
 
+      {showEdit && (
+        <IconButton
+          size="small"
+          sx={{
+            position: "absolute",
+            top: 8,
+            right: 8,
+            zIndex: 1,
+            backgroundColor: "rgba(255, 255, 255, 0.8)",
+            ":hover": { backgroundColor: "rgba(255, 255, 255, 1)" },
+          }}
+          onClick={handleEditCourse}
+        >
+          <EditIcon />
+        </IconButton>
+      )}
+
       <CardContent>
         <Typography gutterBottom variant="h6" component="div" fontWeight="bold">
           {course.title}
         </Typography>
+
         <Typography variant="body2" color="text.secondary" noWrap>
           {course.description.length > 100
             ? `${course.description.substring(0, 100)}...`
             : course.description}
         </Typography>
 
-        <Box sx={{ mt: 2 }}>
+        <Box sx={{ mt: 2, display: "flex", flexWrap: "wrap" }}>
           <Chip
             label={`Danh mục: ${course.category}`}
             variant="outlined"
@@ -134,30 +190,104 @@ const CourseCard: React.FC<CourseCardProps> = ({
               backgroundColor: "#f0f0f0",
             }}
           />
+          {showEdit && (
+            <Chip
+              label={`Tình trạng: ${getStatusLabel(course.isPublished)}`}
+              variant="outlined"
+              sx={{
+                mr: 1,
+                mb: 1,
+                fontSize: "0.8rem",
+                backgroundColor: "#f0f0f0",
+              }}
+            />
+          )}
         </Box>
+
+        <Box sx={{ mt: 2, display: "flex", alignItems: "center" }}>
+          Đánh giá: {renderRating(course.ratingScore)}
+        </Box>
+
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          {course.enrollment} người đã tham gia
+        </Typography>
       </CardContent>
 
       <Box sx={{ p: 2, pt: 0 }}>
-        <Typography variant="h6" color="text.primary" fontWeight="bold">
-          {new Intl.NumberFormat("vi-VN", {
-            style: "currency",
-            currency: "VND",
-          }).format(course.price)}
-        </Typography>
+        {course.sale > 0 ? (
+          <>
+            <Box display="flex" alignItems="center" sx={{ mb: 1 }}>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{
+                  textDecoration: "line-through",
+                  fontSize: "0.9rem",
+                }}
+              >
+                {new Intl.NumberFormat("vi-VN", {
+                  style: "currency",
+                  currency: "VND",
+                }).format(course.price)}
+              </Typography>
+              <Box
+                sx={{
+                  ml: 1,
+                  backgroundColor: "error.main",
+                  color: "white",
+                  borderRadius: 1,
+                  px: 1,
+                  py: 0.25,
+                  fontSize: "0.8rem",
+                  fontWeight: "bold",
+                }}
+              >
+                -{Math.round((1 - course.salePrice / course.price) * 100)}%
+              </Box>
+            </Box>
+
+            <Typography
+              variant="h5"
+              color="primary"
+              fontWeight="bold"
+              sx={{
+                fontSize: "1.5rem",
+              }}
+            >
+              {new Intl.NumberFormat("vi-VN", {
+                style: "currency",
+                currency: "VND",
+              }).format(course.salePrice)}
+            </Typography>
+          </>
+        ) : (
+          <Typography
+            variant="h6"
+            color="text.primary"
+            fontWeight="bold"
+            sx={{
+              fontSize: "1.25rem",
+            }}
+          >
+            {new Intl.NumberFormat("vi-VN", {
+              style: "currency",
+              currency: "VND",
+            }).format(course.price)}
+          </Typography>
+        )}
 
         <Box
           sx={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            mt: 1,
           }}
         >
           <Button
             variant="contained"
             color="primary"
-            fullWidth
             sx={{
-              mt: 1,
               borderRadius: 2,
               boxShadow: 3,
               fontWeight: "bold",
@@ -166,19 +296,17 @@ const CourseCard: React.FC<CourseCardProps> = ({
                 transform: "scale(1.05)",
                 backgroundColor: "#1976d2",
               },
+              flex: 1,
             }}
             onClick={() => router.push(`/course/${course.id}`)}
           >
             Xem Chi Tiết
           </Button>
-
-          {token && !showEdit && (
+          {!course.isMyLearning && !showEdit && (
             <Button
               variant="outlined"
               color="secondary"
-              fullWidth
               sx={{
-                mt: 1,
                 borderRadius: 2,
                 boxShadow: 3,
                 fontWeight: "bold",
@@ -189,6 +317,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
                   transform: "scale(1.05)",
                   backgroundColor: "#1976d2",
                 },
+                flex: 1,
               }}
               onClick={handleAddToCart}
               startIcon={
@@ -199,7 +328,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
                 )
               }
             >
-              {isAddingToCart ? "Đang thêm..." : "Thêm vào giỏ"}
+              Thêm vào giỏ
             </Button>
           )}
         </Box>

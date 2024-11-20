@@ -35,4 +35,9 @@ export interface CourseDetail {
   category: string;
   description: string;
   title: string;
+  ratingScore: number;
+  enrollment: number;
+  salePrice: number;
+  sale: number;
+  isMyLearning: boolean;
 }

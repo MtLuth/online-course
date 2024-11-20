@@ -5,7 +5,10 @@ interface Resource {
   title: string;
   fileUrl: string;
 }
-
+interface CourseRating {
+  score: number;
+  content: string;
+}
 interface Lecture {
   title: string;
   duration: string;
@@ -72,7 +75,8 @@ class CourseApi extends BaseApi {
   public async getAllMyCourses(
     token: string,
     page: number = 1,
-    limit: number = 5,
+    limit: number = 10,
+    category?: string,
     searchParam?: string,
     isPublished?: boolean
   ): Promise<GetAllMyCoursesResponse> {
@@ -87,6 +91,9 @@ class CourseApi extends BaseApi {
 
     if (isPublished !== undefined) {
       queryParams.append("isPublished", isPublished.toString());
+    }
+    if (category) {
+      queryParams.append("category", category);
     }
 
     const response = await this.get(
@@ -105,8 +112,10 @@ class CourseApi extends BaseApi {
     page: number = 1,
     limit: number = 10,
     searchParam: string = "",
+    category?: string,
     isPublished?: boolean,
-    orderByPrice: string = "asc"
+    orderByPrice: string = "asc",
+    uid?: string
   ): Promise<GetAllCoursesResponse> {
     const queryParams = new URLSearchParams({
       page: page.toString(),
@@ -118,13 +127,30 @@ class CourseApi extends BaseApi {
       queryParams.append("searchParam", searchParam.trim());
     }
 
+    if (category) {
+      queryParams.append("category", category);
+    }
+
     if (isPublished !== undefined) {
       queryParams.append("isPublished", isPublished.toString());
+    }
+
+    if (uid) {
+      queryParams.append("uid", uid);
     }
 
     const response = await this.get(`/course?${queryParams.toString()}`, {
       headers: {
         "Content-Type": "application/json",
+      },
+    });
+    return response;
+  }
+  public async getCourseDetailIns(id: string, token: string): Promise<any> {
+    const response = await this.get(`/course/manage/${id}`, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
     });
     return response;
@@ -163,6 +189,35 @@ class CourseApi extends BaseApi {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
+      },
+    });
+    return response;
+  }
+
+  public async ratingCourse(
+    id: string,
+    data: CourseRating,
+    token: string
+  ): Promise<any> {
+    const response = await this.post(`/course/rating/${id}`, data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return response;
+  }
+  public async ratingEditCourse(
+    id: string,
+    uid: string,
+    data: CourseRating,
+    token: string
+  ): Promise<any> {
+    const response = await this.put(`/course/rating/${id}`, data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        uid: `${uid}`,
       },
     });
     return response;

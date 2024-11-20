@@ -89,7 +89,7 @@ const MyCourses: React.FC<MyCoursesProps> = ({ searchParams }) => {
       searchParam={searchParam}
       isPublished={isPublished}
       orderByPrice={orderByPrice}
-      showEdit={true} // Show edit button in My Courses
+      showEdit={true}
     />
   );
 };

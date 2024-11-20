@@ -1,13 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
   Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
   Dialog,
   DialogActions,
   DialogContent,
@@ -15,12 +8,27 @@ import {
   TextField,
   IconButton,
   Box,
+  Paper,
+  Typography,
+  Tooltip,
 } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import { categoriesApi } from "@/server/Categories";
 import BaseCard from "@/components/shared/DashboardCard";
 import { useToastNotification } from "@/hook/useToastNotification";
+import { styled } from "@mui/system";
+
+// Styled Header Box
+const HeaderBox = styled(Box)(({ theme }) => ({
+  textAlign: "center",
+  padding: theme.spacing(4, 2),
+  backgroundColor: theme.palette.primary.main,
+  color: theme.palette.primary.contrastText,
+  borderRadius: theme.spacing(2, 2, 0, 0),
+}));
 
 const CategoriesList = ({ token }) => {
   const [categories, setCategories] = useState([]);
@@ -40,7 +48,7 @@ const CategoriesList = ({ token }) => {
   const fetchCategories = async () => {
     try {
       const data = await categoriesApi.getCategories(token);
-      setCategories(data.message);
+      setCategories(data.message?.results);
     } catch (error) {
       notifyError("Lỗi khi tải danh mục");
     }
@@ -76,7 +84,7 @@ const CategoriesList = ({ token }) => {
         notifySuccess("Thêm danh mục thành công");
       }
       setOpenDialog(false);
-      fetchCategories(); // Reload danh mục
+      fetchCategories();
     } catch (error) {
       console.error("Error saving category:", error);
       notifyError("Lỗi khi lưu danh mục");
@@ -98,7 +106,7 @@ const CategoriesList = ({ token }) => {
       try {
         await categoriesApi.deleteCategories(categoryToDelete.id, token);
         notifySuccess("Xóa danh mục thành công");
-        fetchCategories(); // Reload danh mục
+        fetchCategories();
       } catch (error) {
         console.error("Error deleting category:", error);
         notifyError("Lỗi khi xóa danh mục");
@@ -108,51 +116,72 @@ const CategoriesList = ({ token }) => {
     setCategoryToDelete(null);
   };
 
+  const columns: GridColDef[] = [
+    {
+      field: "name",
+      headerName: "Tên",
+      flex: 1,
+      minWidth: 600,
+    },
+    {
+      field: "url",
+      headerName: "URL",
+      flex: 1,
+      minWidth: 500,
+    },
+    {
+      field: "actions",
+      headerName: "Hành động",
+      width: 150,
+      sortable: false,
+      filterable: false,
+      renderCell: (params) => (
+        <>
+          <Tooltip title="Chỉnh sửa">
+            <IconButton
+              onClick={() => handleOpenDialog(params.row)}
+              sx={{ marginRight: "10px" }}
+            >
+              <EditIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Xóa">
+            <IconButton onClick={() => handleOpenConfirmDialog(params.row)}>
+              <DeleteIcon />
+            </IconButton>
+          </Tooltip>
+        </>
+      ),
+    },
+  ];
+
   return (
-    <BaseCard title="Danh Sách Danh Mục">
-      <Box mb={2}>
+    <BaseCard>
+      <HeaderBox>
+        <Typography variant="h4" component="h1" fontWeight="bold">
+          Danh sách Danh Mục
+        </Typography>
+      </HeaderBox>
+      <Box display="flex" justifyContent="flex-end" mt={2} mb={2}>
         <Button
           variant="contained"
           color="primary"
+          startIcon={<AddIcon />}
           onClick={() => handleOpenDialog(null)}
         >
           Thêm danh mục
         </Button>
       </Box>
 
-      <TableContainer
-        component={Paper}
-        sx={{ minWidth: "1200px", margin: "0 auto" }}
-      >
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ fontWeight: "bold" }}>Tên</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>URL</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Hành động</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {categories.map((category) => (
-              <TableRow key={category.id}>
-                <TableCell>{category.name}</TableCell>
-                <TableCell>{category.url}</TableCell>
-                <TableCell>
-                  <IconButton
-                    onClick={() => handleOpenDialog(category)}
-                    sx={{ marginRight: "10px" }}
-                  >
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton onClick={() => handleOpenConfirmDialog(category)}>
-                    <DeleteIcon />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <Paper sx={{ height: 500, width: "100%" }}>
+        <DataGrid
+          rows={categories}
+          columns={columns}
+          pageSize={10}
+          rowsPerPageOptions={[5, 10, 20]}
+          getRowId={(row) => row.id}
+        />
+      </Paper>
 
       {/* Dialog để thêm/sửa danh mục */}
       <Dialog open={openDialog} onClose={handleCloseDialog}>

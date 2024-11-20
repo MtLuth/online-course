@@ -90,12 +90,12 @@ const BecomeInstructor = () => {
               gutterBottom
               sx={{ fontWeight: "bold", color: "#1976d2" }}
             >
-              Chia sẻ từ các giảng viên
+              Chia sẻ từ các Chuyên gia
             </Typography>
             <Grid container spacing={2}>
               <Grid item xs={4}>
                 <Avatar
-                  alt="Giảng viên 1"
+                  alt="Chuyên gia 1"
                   src="/images/teacher1.jpg"
                   sx={{ width: 56, height: 56 }}
                 />
@@ -106,14 +106,14 @@ const BecomeInstructor = () => {
                   Đây là cơ hội tuyệt vời để phát triển bản thân và sự nghiệp!"
                 </Typography>
                 <Typography variant="body2" sx={{ fontStyle: "italic" }}>
-                  – Nguyễn Văn A, Giảng viên
+                  – Nguyễn Văn A, Chuyên gia
                 </Typography>
               </Grid>
             </Grid>
             <Grid container spacing={2} sx={{ mt: 2 }}>
               <Grid item xs={4}>
                 <Avatar
-                  alt="Giảng viên 2"
+                  alt="Chuyên gia 2"
                   src="/images/teacher2.jpg"
                   sx={{ width: 56, height: 56 }}
                 />
@@ -125,7 +125,7 @@ const BecomeInstructor = () => {
                   này."
                 </Typography>
                 <Typography variant="body2" sx={{ fontStyle: "italic" }}>
-                  – Trần Thị B, Giảng viên
+                  – Trần Thị B, Chuyên gia
                 </Typography>
               </Grid>
             </Grid>

@@ -45,6 +45,16 @@ export default function ThemeProvider({
       shadows: shadows(themeMode),
       shape: { borderRadius: 8 },
       typography,
+      breakpoints: {
+        values: {
+          xs: 0,
+          sm: 600,
+          md: 960,
+          lg: 1366,
+          xl: 1600,
+          xxl: 1920,
+        },
+      },
     }),
     [themeMode, themeDirection, presets.palette, presets.customShadows]
   );

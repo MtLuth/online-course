@@ -1,6 +1,6 @@
-// app/history/page.tsx
 "use client";
-
+import InfoIcon from "@mui/icons-material/Info";
+import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -21,7 +21,9 @@ import dayjs from "dayjs";
 import PurchaseDetailsModal from "@/components/PurchaseDetailsModal";
 import { useToastNotification } from "@/hook/useToastNotification";
 import { historyApi } from "@/server/History";
-
+import HistoryIcon from "@mui/icons-material/History";
+import { useRouter } from "next/navigation";
+import RefundRequestDialog from "@/components/RefundRequestDialog";
 interface Course {
   courseId: string;
   title: string;
@@ -57,7 +59,20 @@ const HistoryPage: React.FC = () => {
     null
   );
   const [modalOpen, setModalOpen] = useState<boolean>(false);
+  const router = useRouter();
+  const [selectedPurchaseForRefund, setSelectedPurchaseForRefund] =
+    useState<Purchase | null>(null);
+  const [refundDialogOpen, setRefundDialogOpen] = useState<boolean>(false);
 
+  const handleOpenRefundDialog = (purchase: Purchase) => {
+    setSelectedPurchaseForRefund(purchase);
+    setRefundDialogOpen(true);
+  };
+
+  const handleCloseRefundDialog = () => {
+    setSelectedPurchaseForRefund(null);
+    setRefundDialogOpen(false);
+  };
   const handleOpenModal = (purchase: Purchase) => {
     setSelectedPurchase(purchase);
     setModalOpen(true);
@@ -128,9 +143,24 @@ const HistoryPage: React.FC = () => {
 
   return (
     <Box sx={{ padding: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Lịch Sử Mua Hàng
-      </Typography>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 4,
+        }}
+      >
+        <Typography variant="h4">Lịch Sử Mua Hàng</Typography>
+        <Button
+          variant="outlined"
+          color="secondary"
+          startIcon={<HistoryIcon />}
+          onClick={() => router.push("/refund")}
+        >
+          Lịch sử hoàn tiền
+        </Button>
+      </Box>
       <TableContainer component={Paper} elevation={3}>
         <Table>
           <TableHead>
@@ -142,41 +172,75 @@ const HistoryPage: React.FC = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {history.map((purchase) => (
-              <TableRow key={purchase.code}>
-                <TableCell>{purchase.code}</TableCell>
-                <TableCell>
-                  {dayjs(
-                    purchase.boughtAt._seconds * 1000 +
-                      purchase.boughtAt._nanoseconds / 1e6
-                  ).format("DD/MM/YYYY HH:mm:ss")}
-                </TableCell>
-                <TableCell>
-                  {purchase.total.toLocaleString("vi-VN", {
-                    style: "currency",
-                    currency: "VND",
-                  })}
-                </TableCell>
-                <TableCell align="right">
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={() => handleOpenModal(purchase)}
-                  >
-                    Chi Tiết
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
+            {history.map((purchase) => {
+              const purchaseDate = dayjs(
+                purchase.boughtAt._seconds * 1000 +
+                  purchase.boughtAt._nanoseconds / 1e6
+              );
+
+              // So sánh thời gian hiện tại và ngày mua, tính theo giờ
+              const isRefundable = dayjs().diff(purchaseDate, "hour") <= 24;
+
+              console.log(
+                "Ngày mua hàng:",
+                purchaseDate.format("DD/MM/YYYY HH:mm:ss")
+              );
+              console.log("Có đủ điều kiện hoàn tiền:", isRefundable);
+
+              return (
+                <TableRow key={purchase.code}>
+                  <TableCell>{purchase.code}</TableCell>
+                  <TableCell>
+                    {purchaseDate.format("DD/MM/YYYY HH:mm:ss")}
+                  </TableCell>
+                  <TableCell>
+                    {purchase.total.toLocaleString("vi-VN", {
+                      style: "currency",
+                      currency: "VND",
+                    })}
+                  </TableCell>
+                  <TableCell align="right">
+                    {isRefundable && (
+                      <Button
+                        variant="outlined"
+                        color="secondary"
+                        onClick={() => handleOpenRefundDialog(purchase)}
+                        startIcon={<AttachMoneyIcon />}
+                        sx={{
+                          marginRight: 1,
+                          textTransform: "none",
+                          padding: "6px 16px",
+                        }}
+                      >
+                        Hoàn Tiền
+                      </Button>
+                    )}
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={() => handleOpenModal(purchase)}
+                      startIcon={<InfoIcon />}
+                      sx={{ textTransform: "none", padding: "6px 16px" }}
+                    >
+                      Chi Tiết
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </TableContainer>
 
-      {/* Modal Chi Tiết Đơn Hàng */}
       <PurchaseDetailsModal
         open={modalOpen}
         handleClose={handleCloseModal}
         purchase={selectedPurchase}
+      />
+      <RefundRequestDialog
+        open={refundDialogOpen}
+        handleClose={handleCloseRefundDialog}
+        purchase={selectedPurchaseForRefund}
       />
     </Box>
   );

@@ -41,6 +41,7 @@
     "react-async-hook": "^4.0.0",
     "react-countup": "^6.5.3",
     "react-dom": "^18.3.1",
+    "react-dropzone": "^14.3.5",
     "react-hook-form": "^7.53.1",
     "react-hot-toast": "^2.4.1",
     "react-lazy-load-image-component": "^1.6.2",
