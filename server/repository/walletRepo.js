@@ -9,7 +9,6 @@ class WalletRepo {
   async updateWallet(uid, newWallet) {
     try {
       const doc = await this.dbRef.doc(uid).get();
-      console.log("aaaaa", uid);
       const wallet = doc.exists
         ? doc.data()
         : {
@@ -39,7 +38,7 @@ class WalletRepo {
           inProgress: 0,
           withdrawable: 0,
           withdrawnAmount: 0,
-          refundRequest: 0,
+          withdrawPending: 0,
         };
     console.log(data);
     return {

@@ -26,10 +26,8 @@ class InstructorRepo {
   }
 
   async getInstructorByUid(uid) {
-    console.log(uid);
     const doc = await this.dbRef.doc(uid).get();
     const data = doc.data();
-    console.log(data);
     return {
       id: doc.id,
       ...data,

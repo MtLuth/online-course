@@ -48,7 +48,8 @@ courseRouter.get(
 courseRouter
   .route("/rating/:courseId")
   .post(authMiddleware.validateUser, courseController.studentRatingCourse)
-  .put(authMiddleware.validateUser, courseController.studentEditRatingCourse);
+  .put(authMiddleware.validateUser, courseController.studentEditRatingCourse)
+  .delete(authMiddleware.validateUser, courseController.studentDeleteRating);
 
 courseRouter.get("/", courseController.getAllCourse, pagination);
 

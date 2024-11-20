@@ -261,5 +261,29 @@ class CourseRepo {
 
     return "Cập nhật thành công!";
   }
+
+  async studentDeleteRating(courseId, uid) {
+    const doc = await this.dbRef.doc(courseId).get();
+    if (!doc.exists) {
+      throw new Error("Course not found");
+    }
+
+    const data = doc.data();
+    let rating = data.rating ? data.rating : [];
+
+    const userRatingIndex = rating.findIndex((item) => item.user.uid === uid);
+
+    if (userRatingIndex === -1) {
+      throw new Error("Không tìm thấy rating");
+    }
+
+    rating.splice(userRatingIndex, 1);
+
+    await this.dbRef.doc(courseId).update({
+      rating: rating,
+    });
+
+    return "Đã xóa!";
+  }
 }
 export default new CourseRepo();

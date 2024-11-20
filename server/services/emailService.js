@@ -157,6 +157,25 @@ const getTemplateRejectRefund = (orderCode, courses, reason) => {
   </div>`;
 };
 
+const getTemplateCancelWithdraw = (withdrawCode, amount, reason) => {
+  return `
+  <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <h2 style="color: #FF6347;">Yêu cầu rút tiền đã bị hủy</h2>
+    <p>Chào bạn,</p>
+    <p>Chúng tôi rất tiếc thông báo rằng yêu cầu rút tiền của bạn với mã giao dịch <strong>${withdrawCode}</strong> đã bị hủy.</p>
+    <h3>Thông tin chi tiết:</h3>
+    <ul>
+      <li><strong>Số tiền:</strong> ${Number(amount).toLocaleString("vi-VN", {
+        style: "currency",
+        currency: "VND",
+      })}</li>
+    </ul>
+    <p><strong>Lý do hủy:</strong> ${reason}</p>
+    <p>Nếu bạn có bất kỳ thắc mắc nào hoặc cần hỗ trợ thêm, vui lòng liên hệ với chúng tôi qua email hoặc số hotline.</p>
+    <p>Trân trọng,<br/>Đội ngũ Online Course</p>
+  </div>`;
+};
+
 export {
   mailOptions,
   sendEmail,
@@ -165,4 +184,5 @@ export {
   getTemplateAdminCheckInstructor,
   getTemplateAcceptRefund,
   getTemplateRejectRefund,
+  getTemplateCancelWithdraw,
 };
