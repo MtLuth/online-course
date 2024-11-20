@@ -1,5 +1,5 @@
 import { IconCopy, IconLayoutDashboard } from "@tabler/icons-react";
-
+import WalletIcon from "@mui/icons-material/Wallet";
 import { uniqueId } from "lodash";
 
 const Menuitems = [
@@ -23,18 +23,23 @@ const Menuitems = [
     id: uniqueId(),
     title: "Tạo khóa học",
     icon: IconCopy,
-    href: "/dashboard/teacher/create-cource/",
+    href: "/dashboard/teacher/create-course/",
   },
   {
     navlabel: true,
     subheader: "Quản Lý",
   },
-
   {
     id: uniqueId(),
     title: "Xét Duyệt Chuyên Gia",
     icon: IconCopy,
     href: "/dashboard/admin/teacher/",
+  },
+  {
+    id: uniqueId(),
+    title: "Quản Lý Ví",
+    icon: WalletIcon,
+    href: "/dashboard/wallet/",
   },
   {
     navlabel: true,
@@ -66,7 +71,6 @@ const Menuitems = [
     icon: IconCopy,
     href: "/dashboard/admin/handle-refund/",
   },
-
 ];
 
 export default Menuitems;

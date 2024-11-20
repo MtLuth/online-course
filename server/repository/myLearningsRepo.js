@@ -35,6 +35,19 @@ class MyLearning {
     return "Thêm khóa học thành công";
   }
 
+  async removeCourses(uid, rmCourses) {
+    const doc = await this.dbRef.doc(uid).get();
+    const data = doc.exists ? doc.data() : {};
+    let courses = data.courses ? data.courses : [];
+    const rmCoursesId = rmCourses.map((item) => item.courseId);
+    courses = courses.filter(
+      (item) => !rmCoursesId.some((id) => id === item.courseId)
+    );
+    await this.dbRef
+      .doc(uid)
+      .update({ courses: courses, total: courses.length });
+  }
+
   async checkIsValidStudent(uid, courseId) {
     const snapshot = await this.dbRef.doc(uid).get();
     if (!snapshot.exists) {

@@ -30,7 +30,11 @@ class Auth extends BaseApi {
   }
 
   public async becomeInstructor(data: InstructorData) {
-    const response = await this.post(`/auth/become-instructor`, data);
+    const response = await authApi.post(`/auth/become-instructor`, data, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
     return response?.data;
   }
 

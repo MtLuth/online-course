@@ -56,6 +56,12 @@ class WithdrawRequestRepo {
     }
     return { id: doc.id, ...doc.data() };
   }
+
+  async countNumberWithdrawByStatus(status) {
+    const snapshot = await this.dbRef.where("status", "==", status).get();
+    const number = snapshot.docs.length;
+    return number;
+  }
 }
 
 export default new WithdrawRequestRepo();

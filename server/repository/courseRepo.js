@@ -285,5 +285,29 @@ class CourseRepo {
 
     return "Đã xóa!";
   }
+
+  async numberOfPublishedCourses() {
+    const snapshot = await this.dbRef.where("isPublished", "==", true).get();
+    const docs = snapshot.docs;
+    return { numberOfCourses: docs.length };
+  }
+
+  async numberCoursesOfInstructor(uid) {
+    let results = {
+      published: 0,
+      unPublished: 0,
+    };
+    let numberStudents = 0;
+    const snapshot = await this.dbRef.where("instructor.uid", "==", uid).get();
+    snapshot.docs.forEach((item) => {
+      if (item.data().isPublished) {
+        results.published += 1;
+      } else {
+        results.unPublished += 1;
+      }
+      numberStudents += item.data().enrollment;
+    });
+    return { ...results, numberStudents: numberStudents };
+  }
 }
 export default new CourseRepo();

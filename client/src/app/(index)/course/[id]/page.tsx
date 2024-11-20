@@ -19,7 +19,7 @@ const CourseDetailPage: React.FC = () => {
       try {
         const response = await courseApi.getCourseDetail(id as string);
         if (response.status === "Successfully") {
-          setCourse(response.message.course);
+          setCourse(response.message);
         } else {
           setError(response.message || "Không thể tải chi tiết khóa học.");
         }
@@ -51,7 +51,7 @@ const CourseDetailPage: React.FC = () => {
     );
   }
 
-  return course ? <CourseDetail course={course} /> : null;
+  return course ? <CourseDetail courses={course} /> : null;
 };
 
 export default CourseDetailPage;

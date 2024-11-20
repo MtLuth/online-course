@@ -26,6 +26,21 @@ class PaymentService {
       returnUrl: returnUrl,
       cancelUrl: cancelUrl,
     };
+    setTimeout(
+      async () => {
+        try {
+          const purchaseHistory =
+            await purchaseHistoryRepo.getPurchaseByCode(orderCode);
+          if (purchaseHistory.status === PurchaseStatus.pending) {
+            await purchaseHistoryRepo.deletePurchase(orderCode);
+          }
+          return;
+        } catch (error) {
+          throw new AppError(`Lỗi khi loại bỏ đơn hàng không thanh toán`);
+        }
+      },
+      1000 * 60 * 3
+    );
     try {
       const paymentLinkResponse = await this.payOs.createPaymentLink(body);
       return paymentLinkResponse;
@@ -99,22 +114,39 @@ class PaymentService {
       setTimeout(
         async () => {
           try {
-            if (income.refundStatus === false) {
-              await Promise.all([
-                incomeRepo.updateStatusIncome(newId, IncomeStatus.Complete),
-                walletRepo.updateWallet(uid, {
-                  inProgress: -income.amount,
-                  withdrawable: income.amount,
-                }),
-              ]);
-            }
-            await incomeRepo.updateStatusIncome(newId, IncomeStatus.Refund);
+            await this.updateStatusIncome(newId);
           } catch (error) {
             console.error("Error updating wallet or income status:", error);
           }
         },
         1000 * 60 * 3
       );
+    } catch (error) {
+      throw new AppError(error, 500);
+    }
+  }
+
+  async updateStatusIncome(id) {
+    try {
+      const income = await incomeRepo.getIncomeById(id);
+      const amount = income.amount;
+      const uid = income.uid;
+      if (income.refundStatus === false) {
+        await Promise.all([
+          incomeRepo.updateStatusIncome(id, IncomeStatus.Complete),
+          walletRepo.updateWallet(uid, {
+            withdrawable: amount,
+            inProgress: -amount,
+          }),
+        ]);
+      } else {
+        await Promise.all([
+          incomeRepo.updateStatusIncome(id, IncomeStatus.Refund),
+          walletRepo.updateWallet(uid, {
+            inProgress: -amount,
+          }),
+        ]);
+      }
     } catch (error) {
       throw new AppError(error, 500);
     }

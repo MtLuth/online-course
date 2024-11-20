@@ -66,6 +66,12 @@ class RefundRepo {
     const results = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     return results;
   }
+
+  async countRefundByStatus(status) {
+    const snapshot = await this.dbRef.where("status", "==", status).get();
+    const number = snapshot.docs.length;
+    return number;
+  }
 }
 
 export default new RefundRepo();

@@ -1,6 +1,8 @@
+// File: src/components/CreateCourseView.tsx
+
 "use client";
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import {
   Box,
   Tabs,
@@ -19,6 +21,7 @@ import {
   Paper,
   CircularProgress,
   Tooltip,
+  Slider, // Imported Slider for Sale Percentage
 } from "@mui/material";
 import {
   Add,
@@ -42,7 +45,9 @@ import Cookies from "js-cookie";
 import { courseApi } from "@/server/Cource";
 import { useRouter } from "next/navigation";
 import { useToastNotification } from "@/hook/useToastNotification";
+import CategorySelect from "./CategorySelect";
 
+// Interface Definitions
 interface LectureResource {
   title: string;
   fileUrl: string;
@@ -50,7 +55,7 @@ interface LectureResource {
 
 interface Lecture {
   title: string;
-  duration: string;
+  duration: string; // Changed to hh:mm:ss format
   type: "video" | "article";
   videoUrl: string;
   videoFile?: File | null;
@@ -68,6 +73,8 @@ interface CourseData {
   description: string;
   category: string;
   price: number;
+  sale: number; // New field for sale percentage
+  salePrice: string; // New field for sale price (formatted string)
   language: string;
   level: string;
   thumbnail: string | File | null;
@@ -82,6 +89,8 @@ interface CreateCourseData {
   description: string;
   category: string;
   price: number;
+  sale: number; // New field
+  salePrice: string; // New field for sale price
   language: string;
   level: string;
   thumbnail: string;
@@ -91,7 +100,7 @@ interface CreateCourseData {
     sectionTitle: string;
     lectures: {
       title: string;
-      duration: string;
+      duration: string; // Changed to hh:mm:ss format
       type: "video" | "article";
       videoUrl: string;
       resources?: {
@@ -110,6 +119,7 @@ interface CreateCourseViewProps {
   courseId?: string;
 }
 
+// Validation Schema with Sale Percentage and Duration Validation
 const getValidationSchema = (isEditMode: boolean) =>
   Yup.object().shape({
     title: Yup.string().required("Tiêu đề khóa học là bắt buộc."),
@@ -118,7 +128,14 @@ const getValidationSchema = (isEditMode: boolean) =>
     price: Yup.number()
       .required("Giá là bắt buộc.")
       .min(1, "Giá phải lớn hơn 0."),
-    language: Yup.string().required("Ngôn ngữ là bắt buộc."),
+    sale: Yup.number()
+      .min(0, "Sale Percentage phải từ 0% đến 100%.")
+      .max(100, "Sale Percentage phải từ 0% đến 100%.")
+      .required("Sale Percentage là bắt buộc."),
+    salePrice: Yup.string().required("Giá sau giảm là bắt buộc."), // Ensuring salePrice is present
+    language: Yup.string()
+      .oneOf(["Vietnamese"])
+      .required("Ngôn ngữ là bắt buộc."),
     level: Yup.string().required("Cấp độ là bắt buộc."),
     thumbnail: isEditMode
       ? Yup.mixed()
@@ -137,7 +154,12 @@ const getValidationSchema = (isEditMode: boolean) =>
             .of(
               Yup.object().shape({
                 title: Yup.string().required("Tiêu đề bài giảng là bắt buộc."),
-                duration: Yup.string().required("Thời lượng là bắt buộc."),
+                duration: Yup.string()
+                  .matches(
+                    /^([0-1]?\d|2[0-3]):([0-5]?\d):([0-5]?\d)$/,
+                    "Thời lượng phải ở định dạng hh:mm:ss."
+                  )
+                  .required("Thời lượng là bắt buộc."),
                 type: Yup.string()
                   .oneOf(
                     ["video", "article"],
@@ -152,13 +174,37 @@ const getValidationSchema = (isEditMode: boolean) =>
       .min(1, "Ít nhất một phần."),
   });
 
-// Component for Course Configuration
+// Course Configuration Component
 const CourseConfig: React.FC = React.memo(() => {
-  const { values, errors, touched, handleChange } =
+  const { values, errors, touched, handleChange, setFieldValue } =
     useFormikContext<CourseData>();
+
+  // Handle Sale Percentage Change
+  const handleSaleChange = useCallback(
+    (event: Event, newValue: number | number[]) => {
+      setFieldValue("sale", newValue as number);
+    },
+    [setFieldValue]
+  );
+
+  // Calculate Sale Price
+  const calculatedSalePrice = useMemo(() => {
+    const discountedPrice = values.price * (1 - values.sale / 100);
+    return discountedPrice.toLocaleString("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    });
+  }, [values.price, values.sale]);
+
+  // Update salePrice whenever price or sale changes
+  useEffect(() => {
+    setFieldValue("salePrice", calculatedSalePrice);
+  }, [calculatedSalePrice, setFieldValue]);
+
   return (
     <Box>
       <Grid container spacing={2}>
+        {/* Course Title */}
         <Grid item xs={12} sm={6}>
           <TextField
             label="Tiêu đề khóa học"
@@ -171,33 +217,13 @@ const CourseConfig: React.FC = React.memo(() => {
             helperText={touched.title && errors.title}
           />
         </Grid>
+
+        {/* Category Select */}
         <Grid item xs={12} sm={6}>
-          <FormControl
-            fullWidth
-            required
-            error={touched.category && Boolean(errors.category)}
-          >
-            <InputLabel id="category-label">Danh mục</InputLabel>
-            <Select
-              labelId="category-label"
-              label="Danh mục"
-              name="category"
-              value={values.category}
-              onChange={handleChange}
-            >
-              <MenuItem value="Lập trình">Lập trình</MenuItem>
-              <MenuItem value="Thiết kế">Thiết kế</MenuItem>
-              <MenuItem value="Marketing">Marketing</MenuItem>
-              {/* Add more categories as needed */}
-            </Select>
-            {touched.category && errors.category && (
-              <Typography variant="caption" color="error">
-                {errors.category}
-              </Typography>
-            )}
-          </FormControl>
+          <CategorySelect />
         </Grid>
 
+        {/* Course Description */}
         <Grid item xs={12}>
           <TextField
             label="Mô tả khóa học"
@@ -213,7 +239,8 @@ const CourseConfig: React.FC = React.memo(() => {
           />
         </Grid>
 
-        <Grid item xs={12} sm={4}>
+        {/* Price and Sale Percentage */}
+        <Grid item xs={12} sm={6}>
           <TextField
             label="Giá (VNĐ)"
             name="price"
@@ -227,6 +254,42 @@ const CourseConfig: React.FC = React.memo(() => {
             helperText={touched.price && errors.price}
           />
         </Grid>
+        <Grid item xs={12} sm={6}>
+          <Typography gutterBottom>Giảm giá (%)</Typography>
+          <Slider
+            value={values.sale}
+            onChange={handleSaleChange}
+            aria-labelledby="sale-percentage-slider"
+            valueLabelDisplay="auto"
+            step={1}
+            marks
+            min={0}
+            max={100}
+          />
+          {touched.sale && errors.sale && (
+            <Typography variant="caption" color="error">
+              {errors.sale}
+            </Typography>
+          )}
+
+          {/* Sale Price Display */}
+          <Box sx={{ mt: 2 }}>
+            <TextField
+              label="Giá sau giảm (VNĐ)"
+              name="salePrice"
+              value={values.salePrice}
+              fullWidth
+              InputProps={{
+                readOnly: true,
+              }}
+              variant="outlined"
+              error={touched.salePrice && Boolean(errors.salePrice)}
+              helperText={touched.salePrice && errors.salePrice}
+            />
+          </Box>
+        </Grid>
+
+        {/* Language - Fixed to Vietnamese */}
         <Grid item xs={12} sm={4}>
           <FormControl
             fullWidth
@@ -238,12 +301,11 @@ const CourseConfig: React.FC = React.memo(() => {
               labelId="language-label"
               label="Ngôn ngữ"
               name="language"
-              value={values.language}
+              value={values.language || "Vietnamese"} // Default to Vietnamese
               onChange={handleChange}
+              disabled // Make it read-only
             >
               <MenuItem value="Vietnamese">Tiếng Việt</MenuItem>
-              <MenuItem value="English">English</MenuItem>
-              {/* Add more languages as needed */}
             </Select>
             {touched.language && errors.language && (
               <Typography variant="caption" color="error">
@@ -252,6 +314,8 @@ const CourseConfig: React.FC = React.memo(() => {
             )}
           </FormControl>
         </Grid>
+
+        {/* Level */}
         <Grid item xs={12} sm={4}>
           <FormControl
             fullWidth
@@ -282,7 +346,7 @@ const CourseConfig: React.FC = React.memo(() => {
   );
 });
 
-// Component for Course Image and Requirements
+// Course Image and Requirements Component
 interface CourseImageRequirementsProps {
   existingThumbnailUrl?: string;
 }
@@ -433,6 +497,7 @@ const CourseImageRequirements: React.FC<CourseImageRequirementsProps> =
                         onClick={() => remove(index)}
                         disabled={values.requirements.length === 1}
                         sx={{ ml: 1 }}
+                        type="button" // Ensures button does not submit the form
                       >
                         <Remove />
                       </IconButton>
@@ -442,6 +507,7 @@ const CourseImageRequirements: React.FC<CourseImageRequirementsProps> =
                     variant="outlined"
                     startIcon={<Add />}
                     onClick={() => push("")}
+                    type="button" // Ensures button does not submit the form
                   >
                     Thêm Yêu Cầu
                   </Button>
@@ -494,6 +560,7 @@ const CourseImageRequirements: React.FC<CourseImageRequirementsProps> =
                         onClick={() => remove(index)}
                         disabled={values.whatYouWillLearn.length === 1}
                         sx={{ ml: 1 }}
+                        type="button" // Ensures button does not submit the form
                       >
                         <Remove />
                       </IconButton>
@@ -503,6 +570,7 @@ const CourseImageRequirements: React.FC<CourseImageRequirementsProps> =
                     variant="outlined"
                     startIcon={<Add />}
                     onClick={() => push("")}
+                    type="button" // Ensures button does not submit the form
                   >
                     Thêm Điều Bạn Sẽ Học
                   </Button>
@@ -515,6 +583,7 @@ const CourseImageRequirements: React.FC<CourseImageRequirementsProps> =
     );
   });
 
+// Lecture Item Component with Duration Picker
 interface LectureProps {
   sectionIndex: number;
   lectureIndex: number;
@@ -540,6 +609,7 @@ const LectureItem: React.FC<LectureProps> = React.memo(
         touched.content[sectionIndex].lectures[lectureIndex]) ||
       {};
 
+    // Handle Video File Change
     const handleVideoChange = useCallback(
       (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.currentTarget.files?.[0];
@@ -558,6 +628,7 @@ const LectureItem: React.FC<LectureProps> = React.memo(
       [setFieldValue, sectionIndex, lectureIndex]
     );
 
+    // Handle Remove Video
     const handleRemoveVideo = useCallback(() => {
       setFieldValue(
         `content[${sectionIndex}].lectures[${lectureIndex}].videoFile`,
@@ -595,17 +666,21 @@ const LectureItem: React.FC<LectureProps> = React.memo(
             />
           </Grid>
 
-          {/* Duration */}
-          <Grid item xs={12} sm={3}>
+          {/* Duration Picker */}
+          <Grid item xs={12} sm={6}>
             <TextField
-              label="Thời lượng"
+              label="Thời lượng (hh:mm:ss)"
               name={`content[${sectionIndex}].lectures[${lectureIndex}].duration`}
               value={lecture.duration}
               onChange={handleChange}
               fullWidth
               required
+              placeholder="00:00:00"
               error={lectureTouched.duration && Boolean(lectureErrors.duration)}
               helperText={lectureTouched.duration && lectureErrors.duration}
+              inputProps={{
+                pattern: "^([0-1]?\\d|2[0-3]):([0-5]?\\d):([0-5]?\\d)$",
+              }}
             />
           </Grid>
 
@@ -691,7 +766,7 @@ const LectureItem: React.FC<LectureProps> = React.memo(
                     component="label"
                     startIcon={<VideoLibrary />}
                     sx={{ mr: 2 }}
-                    type="button" // Thêm type="button"
+                    type="button" // Ensures button does not submit the form
                   >
                     {lecture.videoUrl ? "Thay đổi Video" : "Tải Video"}
                     <input
@@ -806,6 +881,7 @@ const LectureItem: React.FC<LectureProps> = React.memo(
                           onClick={() => remove(resourceIndex)}
                           disabled={lecture.resources.length === 0}
                           sx={{ ml: 1 }}
+                          type="button" // Ensures button does not submit the form
                         >
                           <Remove />
                         </IconButton>
@@ -816,6 +892,7 @@ const LectureItem: React.FC<LectureProps> = React.memo(
                     variant="outlined"
                     startIcon={<Add />}
                     onClick={() => push({ title: "", fileUrl: "" })}
+                    type="button" // Ensures button does not submit the form
                   >
                     Thêm Tài nguyên
                   </Button>
@@ -832,7 +909,7 @@ const LectureItem: React.FC<LectureProps> = React.memo(
             startIcon={<Remove />}
             onClick={() => removeLecture(lectureIndex)}
             disabled={values.content[sectionIndex].lectures.length === 1}
-            type="button" // Thêm type="button"
+            type="button" // Ensures button does not submit the form
           >
             Xóa Bài giảng
           </Button>
@@ -842,6 +919,7 @@ const LectureItem: React.FC<LectureProps> = React.memo(
   }
 );
 
+// Content Section Component
 interface SectionProps {
   sectionIndex: number;
   removeSection: (index: number) => void;
@@ -892,7 +970,7 @@ const ContentSectionComponent: React.FC<SectionProps> = React.memo(
             aria-label="remove section"
             onClick={() => removeSection(sectionIndex)}
             disabled={values.content.length === 1}
-            type="button" // Thêm type="button"
+            type="button" // Ensures button does not submit the form
           >
             <Remove />
           </IconButton>
@@ -915,7 +993,7 @@ const ContentSectionComponent: React.FC<SectionProps> = React.memo(
                 onClick={() =>
                   push({
                     title: "",
-                    duration: "",
+                    duration: "00:00:00",
                     type: "video",
                     videoUrl: "",
                     videoFile: null,
@@ -923,7 +1001,7 @@ const ContentSectionComponent: React.FC<SectionProps> = React.memo(
                     resources: [],
                   })
                 }
-                type="button" // Thêm type="button"
+                type="button" // Ensures button does not submit the form
               >
                 Thêm Bài giảng
               </Button>
@@ -935,6 +1013,7 @@ const ContentSectionComponent: React.FC<SectionProps> = React.memo(
   }
 );
 
+// Course Content Component
 const CourseContent: React.FC = React.memo(() => {
   const { values } = useFormikContext<CourseData>();
 
@@ -959,7 +1038,7 @@ const CourseContent: React.FC = React.memo(() => {
                   lectures: [
                     {
                       title: "",
-                      duration: "",
+                      duration: "00:00:00",
                       type: "video",
                       videoUrl: "",
                       videoFile: null,
@@ -969,7 +1048,7 @@ const CourseContent: React.FC = React.memo(() => {
                   ],
                 })
               }
-              type="button" // Thêm type="button"
+              type="button" // Ensures button does not submit the form
             >
               Thêm Phần
             </Button>
@@ -980,6 +1059,7 @@ const CourseContent: React.FC = React.memo(() => {
   );
 });
 
+// Main CreateCourseView Component
 const CreateCourseView: React.FC<CreateCourseViewProps> = ({
   initialValues,
   isEditMode = false,
@@ -995,6 +1075,7 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
       : undefined
   );
 
+  // Handle Form Submission
   const handleSubmit = useCallback(
     async (values: CourseData, actions: FormikHelpers<CourseData>) => {
       try {
@@ -1003,6 +1084,7 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
           throw new Error("Không tìm thấy token xác thực. Vui lòng đăng nhập.");
         }
 
+        // Upload Thumbnail if it's a file
         let thumbnailUrl = "";
         if (values.thumbnail instanceof File) {
           const uploadImageResponse = await uploadApi.uploadImages(
@@ -1026,6 +1108,7 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
           throw new Error("Thumbnail is required.");
         }
 
+        // Upload Videos
         const videoFiles: File[] = [];
 
         values.content.forEach((section) => {
@@ -1078,9 +1161,18 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
           return { ...section, lectures: updatedLectures };
         });
 
+        // Prepare data for submission
         const completeCourseData: CreateCourseData = {
           ...values,
           thumbnail: thumbnailUrl,
+          sale: values.sale / 100, // Convert to 0-1 scale
+          salePrice: (values.price * (1 - values.sale / 100)).toLocaleString(
+            "vi-VN",
+            {
+              style: "currency",
+              currency: "VND",
+            }
+          ), // Ensure salePrice is correctly formatted
           content: updatedContent,
         };
 
@@ -1105,7 +1197,7 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
           );
           actions.resetForm();
           if (isEditMode && courseId) {
-            router.push(`/my-courses`); // Điều hướng về My Courses
+            router.push(`/my-courses`); // Navigate to My Courses
           }
         } else {
           throw new Error(
@@ -1135,6 +1227,7 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
     ]
   );
 
+  // Initial Form Values with Sale Percentage and Sale Price
   const initialFormValues: CourseData = useMemo(
     () =>
       initialValues || {
@@ -1142,7 +1235,9 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
         description: "",
         category: "",
         price: 0,
-        language: "",
+        sale: 0,
+        salePrice: "₫0",
+        language: "Vietnamese",
         level: "",
         thumbnail: null,
         requirements: [""],
@@ -1153,7 +1248,7 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
             lectures: [
               {
                 title: "",
-                duration: "",
+                duration: "00:00:00", // Default duration
                 type: "video",
                 videoUrl: "",
                 videoFile: null,
@@ -1174,7 +1269,7 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
         initialValues={initialFormValues}
         validationSchema={getValidationSchema(isEditMode)}
         onSubmit={handleSubmit}
-        enableReinitialize // To allow Formik to update initialValues when props change
+        enableReinitialize // Allows Formik to update initialValues when props change
         context={{ isEditMode }}
       >
         {({
@@ -1189,6 +1284,7 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
         }) => {
           const [activeTab, setActiveTab] = useState<number>(0);
 
+          // Handle Tab Change
           const handleTabChange = useCallback(
             (event: React.SyntheticEvent, newValue: number) => {
               setActiveTab(newValue);
@@ -1196,6 +1292,7 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
             []
           );
 
+          // Handle Next Button Click
           const handleNext = useCallback(async () => {
             const tabs = [
               [
@@ -1203,6 +1300,7 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
                 "description",
                 "category",
                 "price",
+                "sale",
                 "language",
                 "level",
               ],
@@ -1235,9 +1333,11 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
             }
           }, [activeTab, setTouched, validateForm]);
 
+          // Handle Previous Button Click
           const handlePrevious = useCallback(() => {
             setActiveTab((prev) => prev - 1);
           }, []);
+
           return (
             <Form>
               {/* Tabs and Publish Switch */}
@@ -1269,6 +1369,8 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
               </Box>
 
               <Divider sx={{ mb: 2 }} />
+
+              {/* Tab Content */}
               <Box>
                 {activeTab === 0 && <CourseConfig />}
                 {activeTab === 1 && (
@@ -1282,6 +1384,8 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
                 )}
                 {activeTab === 2 && <CourseContent />}
               </Box>
+
+              {/* Navigation Buttons */}
               <Box
                 sx={{
                   display: "flex",
@@ -1293,7 +1397,7 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
                   variant="contained"
                   onClick={handlePrevious}
                   disabled={activeTab === 0}
-                  type="button"
+                  type="button" // Ensures button does not submit the form
                 >
                   Trước
                 </Button>
@@ -1301,7 +1405,7 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
                   <Button
                     variant="contained"
                     onClick={handleNext}
-                    type="button"
+                    type="button" // Ensures button does not submit the form
                   >
                     Tiếp theo
                   </Button>
@@ -1309,7 +1413,7 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
                   <Button
                     variant="contained"
                     color="primary"
-                    type="submit"
+                    type="submit" // Only the submit button submits the form
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? (
@@ -1329,13 +1433,15 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
                   </Button>
                 )}
               </Box>
+
+              {/* Back to My Courses Button in Edit Mode */}
               {isEditMode && (
                 <Box sx={{ mt: 2, textAlign: "right" }}>
                   <Button
                     variant="text"
                     color="secondary"
                     onClick={() => router.push("/my-courses")}
-                    type="button"
+                    type="button" // Ensures button does not submit the form
                   >
                     Quay lại My Courses
                   </Button>
