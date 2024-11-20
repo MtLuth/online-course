@@ -83,7 +83,7 @@ const MyLearning: React.FC = () => {
           throw new Error(response.message || "Lỗi khi lấy dữ liệu.");
         }
 
-        setCourses(response.message);
+        setCourses(response.message || []);
         setCurrentPage(1); // Reset to first page on new fetch
       } catch (err: any) {
         console.error("Error fetching my learnings:", err);

@@ -19,13 +19,22 @@ import {
   AccordionDetails,
   CircularProgress,
   TextField,
+  Tooltip,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
-import { ShoppingCart as ShoppingCartIcon } from "@mui/icons-material";
-import CheckIcon from "@mui/icons-material/Check";
-import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
-import DescriptionIcon from "@mui/icons-material/Description";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import {
+  Edit as EditIcon,
+  ShoppingCart as ShoppingCartIcon,
+  Check as CheckIcon,
+  PlayCircleOutline as PlayCircleOutlineIcon,
+  Description as DescriptionIcon,
+  ExpandMore as ExpandMoreIcon,
+  PlayArrow as PlayArrowIcon,
+} from "@mui/icons-material";
 import Pagination from "@mui/material/Pagination";
 import { useRouter } from "next/navigation";
 import { CourseDetail as CourseDetailType } from "@/interfaces/CourseDetail";
@@ -35,6 +44,22 @@ import { getAuthToken } from "@/utils/auth";
 import { useCart } from "@/context/CartContext";
 import { cartApi } from "@/server/Cart";
 import { courseApi } from "@/server/Cource";
+import { jwtDecode } from "jwt-decode";
+
+interface DecodedToken {
+  uid: string;
+  // Thêm các trường khác nếu cần
+}
+
+interface CourseRating {
+  score: number;
+  content: string;
+  user: {
+    uid: string;
+    fullName: string;
+    avt: string;
+  };
+}
 
 interface CourseDetailProps {
   courses: {
@@ -56,27 +81,15 @@ const getLevelLabel = (level: string) => {
   }
 };
 
-// Hàm để render rating sao
-const renderRating = (ratingScore: number) => {
-  const fullStars = Math.floor(ratingScore);
-  const halfStars = ratingScore % 1 !== 0 ? 1 : 0;
-  const emptyStars = 5 - fullStars - halfStars;
-
-  const stars = [];
-
-  for (let i = 0; i < fullStars; i++) {
-    stars.push(<CheckIcon key={`full-${i}`} sx={{ color: "#FFD700" }} />);
+// Hàm để giải mã token và lấy uid
+const getUserIdFromToken = (token: string): string | null => {
+  try {
+    const decoded: DecodedToken = jwtDecode(token);
+    return decoded.user_id;
+  } catch (error) {
+    console.error("Lỗi khi giải mã token:", error);
+    return null;
   }
-
-  if (halfStars === 1) {
-    stars.push(<CheckIcon key="half" sx={{ color: "#FFD700" }} />);
-  }
-
-  for (let i = 0; i < emptyStars; i++) {
-    stars.push(<CheckIcon key={`empty-${i}`} sx={{ color: "#C0C0C0" }} />);
-  }
-
-  return stars;
 };
 
 const CourseDetail: React.FC<CourseDetailProps> = ({ courses }) => {
@@ -87,10 +100,12 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courses }) => {
   const [token, setToken] = useState<string | null>(null);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const { cartCount, setCartCount } = useCart();
-  const { notifySuccess, notifyError } = useToastNotification();
+  const { notifySuccess, notifyError, notifyInfo } = useToastNotification();
 
   const [currentPage, setCurrentPage] = useState<number>(1);
   const commentsPerPage = 5;
+  const [userRating, setUserRating] = useState<CourseRating | null>(null);
+  const [openEditDialog, setOpenEditDialog] = useState<boolean>(false);
 
   const totalComments = course.rating.length;
   const totalPages = Math.ceil(totalComments / commentsPerPage);
@@ -102,22 +117,27 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courses }) => {
     indexOfLastComment
   );
 
+  // Hàm xử lý phân trang
   const handleChangePage = (
     event: React.ChangeEvent<unknown>,
     value: number
   ) => {
     setCurrentPage(value);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  // Hàm bắt đầu khóa học
   const handleStartCourse = () => {
     router.push(`/course/${course.id}/player`);
   };
 
+  // Lấy token khi component mount
   useEffect(() => {
     const fetchedToken = getAuthToken();
     setToken(fetchedToken);
   }, []);
 
+  // Hàm thêm vào giỏ hàng
   const handleEnroll = useCallback(
     async (event: React.MouseEvent) => {
       event.stopPropagation();
@@ -140,13 +160,13 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courses }) => {
     [token, course.id, notifySuccess, notifyError, setCartCount]
   );
 
+  // Hàm xử lý khi click vào bài giảng
   const handleLectureClick = (lectureId: string) => {
-    // Xử lý khi người dùng click vào bài giảng (có thể điều hướng đến video hoặc nội dung bài giảng)
     router.push(`/course/${course.id}/lecture/${lectureId}`);
   };
 
-  const handleSubmitComment = async () => {
-    // Kiểm tra nếu đánh giá hoặc nhận xét không hợp lệ
+  // Hàm xử lý gửi đánh giá mới
+  const handleSubmitNewComment = async () => {
     if (newRating <= 0 || newComment.trim() === "") {
       notifyInfo("Vui lòng đánh giá và nhập nhận xét.");
       return;
@@ -164,7 +184,7 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courses }) => {
         token || ""
       );
 
-      if (response?.status === "Successfully" && response?.message) {
+      if (response?.status === "Successfully") {
         notifySuccess(
           response.message || "Cảm ơn bạn đã đánh giá khóa học này!"
         );
@@ -173,9 +193,9 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courses }) => {
         setNewRating(0);
         setNewComment("");
 
-        // Kiểm tra router.asPath có hợp lệ hay không trước khi gọi router.replace
+        // Tải lại trang để cập nhật đánh giá mới
         if (router.asPath) {
-          router.replace(router.asPath); // Điều hướng lại trang hiện tại
+          router.replace(router.asPath);
         } else {
           router.push("/all-courses/");
         }
@@ -187,6 +207,80 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courses }) => {
         error?.message || "Có lỗi xảy ra khi gửi đánh giá. Vui lòng thử lại!"
       );
     }
+  };
+
+  // Hàm xử lý cập nhật đánh giá hiện có
+  const handleUpdateComment = async () => {
+    if (newRating <= 0 || newComment.trim() === "") {
+      notifyInfo("Vui lòng đánh giá và nhập nhận xét.");
+      return;
+    }
+
+    const data = {
+      score: newRating,
+      content: newComment.trim(),
+    };
+
+    try {
+      if (!userRating) {
+        notifyError("Không tìm thấy đánh giá để cập nhật.");
+        return;
+      }
+
+      const response = await courseApi.ratingEditCourse(
+        course.id,
+        userRating.user.uid,
+        data,
+        token || ""
+      );
+
+      if (response?.status === "Successfully") {
+        notifySuccess(response.message || "Cập nhật đánh giá thành công!");
+
+        // Reset form
+        setNewRating(0);
+        setNewComment("");
+
+        // Đóng dialog nếu đang mở
+        setOpenEditDialog(false);
+
+        // Reset userRating sau khi cập nhật
+        setUserRating(null);
+
+        // Tải lại trang để cập nhật đánh giá mới
+        if (router.asPath) {
+          router.replace(router.asPath);
+        } else {
+          router.push("/all-courses/");
+        }
+      } else {
+        throw new Error(
+          response?.message || "Cập nhật đánh giá không thành công."
+        );
+      }
+    } catch (error: any) {
+      notifyError(
+        error?.message ||
+          "Có lỗi xảy ra khi cập nhật đánh giá. Vui lòng thử lại!"
+      );
+    }
+  };
+
+  // Hàm mở dialog chỉnh sửa đánh giá
+  const handleOpenEditDialog = (rating: CourseRating) => {
+    setUserRating(rating);
+    setNewRating(rating.score);
+    setNewComment(rating.content);
+    setOpenEditDialog(true);
+  };
+
+  // Hàm đóng dialog chỉnh sửa đánh giá
+  const handleCloseEditDialog = () => {
+    setOpenEditDialog(false);
+    // Reset lại giá trị nếu người dùng hủy chỉnh sửa
+    setUserRating(null);
+    setNewRating(0);
+    setNewComment("");
   };
 
   return (
@@ -488,7 +582,8 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courses }) => {
 
           {/* Rating and Comments */}
           <Box>
-            {isValidStudent && (
+            {/* Form Đánh Giá */}
+            {isValidStudent && !userRating && (
               <Box
                 sx={{
                   mb: 3,
@@ -516,8 +611,8 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courses }) => {
                   </Typography>
                   <Rating
                     name="rating"
-                    value={newRating}
                     precision={0.5}
+                    value={newRating}
                     onChange={(event, newValue) => {
                       setNewRating(newValue || 0);
                     }}
@@ -536,7 +631,7 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courses }) => {
                 <Button
                   variant="contained"
                   color="primary"
-                  onClick={handleSubmitComment}
+                  onClick={handleSubmitNewComment}
                 >
                   Gửi Đánh Giá
                 </Button>
@@ -549,60 +644,81 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courses }) => {
                 Nhận xét
               </Typography>
               {currentComments.length > 0 ? (
-                currentComments.map((r, index) => (
-                  <Box
-                    key={index}
-                    sx={{
-                      mb: 3,
-                      padding: 2,
-                      backgroundColor: "#f0f0f06a",
-                      borderRadius: 2,
-                    }}
-                  >
-                    <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                      <Avatar
-                        src={r.user.avt}
-                        alt={r.user.fullName}
-                        sx={{ mr: 2 }}
-                      />
-                      <Typography
-                        variant="subtitle1"
-                        sx={{ fontWeight: "bold", mr: 1 }}
-                      >
-                        {r.user.fullName}
-                      </Typography>
-                      <Rating value={r.score} readOnly />
-                    </Box>
-                    {/* Làm nổi bật nội dung nhận xét */}
+                currentComments.map((r: CourseRating, index: number) => {
+                  const isUserComment =
+                    token && r.user.uid === getUserIdFromToken(token);
+
+                  return (
                     <Box
+                      key={index}
                       sx={{
-                        backgroundColor: "#f0f0f0",
+                        mb: 3,
                         padding: 2,
+                        backgroundColor: "#f0f0f06a",
                         borderRadius: 2,
-                        mt: 1,
-                        borderLeft: "4px solid #1976d2",
                       }}
                     >
-                      <Typography
-                        variant="body1"
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", mb: 1 }}
+                      >
+                        <Avatar
+                          src={r.user.avt}
+                          alt={r.user.fullName}
+                          sx={{ mr: 2 }}
+                        >
+                          {r.user.fullName.charAt(0)}
+                        </Avatar>
+                        <Typography
+                          variant="subtitle1"
+                          sx={{ fontWeight: "bold", mr: 1 }}
+                        >
+                          {r.user.fullName}
+                        </Typography>
+                        <Rating value={r.score} readOnly />
+                        {/* Nút Chỉnh Sửa Đánh Giá */}
+                        {isUserComment && (
+                          <Tooltip title="Chỉnh sửa đánh giá">
+                            <IconButton
+                              onClick={() => handleOpenEditDialog(r)}
+                              color="primary"
+                              size="small"
+                              sx={{ ml: 1 }}
+                            >
+                              <EditIcon />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                      </Box>
+                      {/* Nội dung nhận xét */}
+                      <Box
                         sx={{
-                          fontWeight: "medium",
-                          color: "#333",
-                          fontSize: "1rem",
+                          backgroundColor: "#f0f0f0",
+                          padding: 2,
+                          borderRadius: 2,
+                          mt: 1,
+                          borderLeft: "4px solid #1976d2",
                         }}
                       >
-                        {r.content}
-                      </Typography>
+                        <Typography
+                          variant="body1"
+                          sx={{
+                            fontWeight: "medium",
+                            color: "#333",
+                            fontSize: "1rem",
+                          }}
+                        >
+                          {r.content}
+                        </Typography>
+                      </Box>
                     </Box>
-                  </Box>
-                ))
+                  );
+                })
               ) : (
                 <Typography variant="body1" color="text.secondary">
                   Chưa có bình luận nào.
                 </Typography>
               )}
 
-              {/* Phân trang */}
               {totalPages > 1 && (
                 <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
                   <Pagination
@@ -617,6 +733,62 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courses }) => {
           </Box>
         </Grid>
       </Grid>
+
+      {/* Dialog Chỉnh Sửa Đánh Giá */}
+      {userRating && (
+        <Dialog
+          open={openEditDialog}
+          onClose={handleCloseEditDialog}
+          fullWidth
+          maxWidth="sm"
+        >
+          <DialogTitle>Cập nhật đánh giá của bạn</DialogTitle>
+          <DialogContent>
+            <Box
+              sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                <Typography variant="body1" sx={{ mr: 2 }}>
+                  Đánh giá sao:
+                </Typography>
+                <Rating
+                  name="edit-rating"
+                  precision={0.5}
+                  value={newRating}
+                  onChange={(event, newValue) => {
+                    setNewRating(newValue || 0);
+                  }}
+                />
+              </Box>
+              <TextField
+                label="Nhận xét của bạn"
+                multiline
+                rows={4}
+                variant="outlined"
+                fullWidth
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={handleCloseEditDialog}
+              color="secondary"
+              variant="outlined"
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={handleUpdateComment}
+              color="primary"
+              variant="contained"
+            >
+              Cập nhật
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
     </Box>
   );
 };

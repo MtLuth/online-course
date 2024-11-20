@@ -207,6 +207,21 @@ class CourseApi extends BaseApi {
     });
     return response;
   }
+  public async ratingEditCourse(
+    id: string,
+    uid: string,
+    data: CourseRating,
+    token: string
+  ): Promise<any> {
+    const response = await this.put(`/course/rating/${id}`, data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        uid: `${uid}`,
+      },
+    });
+    return response;
+  }
 }
 
 export const courseApi = new CourseApi();
