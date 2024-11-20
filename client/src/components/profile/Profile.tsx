@@ -91,17 +91,27 @@ const Profile = () => {
           },
         }}
       >
-        {userRole === "admin" && (
-          <Link href="/dashboard/" passHref legacyBehavior>
-            <MenuItem component="a" onClick={handleClose2}>
-              <ListItemIcon>
-                <IconDashboard fontSize="small" />
-              </ListItemIcon>
-              <ListItemText>Bảng điều khiển</ListItemText>
-            </MenuItem>
-          </Link>
-        )}
         {userRole === "teacher" && (
+          <>
+            <Link href="/dashboard/" passHref legacyBehavior>
+              <MenuItem component="a" onClick={handleClose2}>
+                <ListItemIcon>
+                  <IconDashboard fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>Bảng điều khiển</ListItemText>
+              </MenuItem>
+            </Link>
+            <Link href="/my-courses" passHref legacyBehavior>
+              <MenuItem component="a" onClick={handleClose2}>
+                <ListItemIcon>
+                  <IconCourses fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>Khóa học của tôi</ListItemText>
+              </MenuItem>
+            </Link>
+          </>
+        )}
+        {userRole === "admin" && (
           <Link href="/dashboard/" passHref legacyBehavior>
             <MenuItem component="a" onClick={handleClose2}>
               <ListItemIcon>
@@ -120,14 +130,7 @@ const Profile = () => {
             <ListItemText>Hồ sơ cá nhân</ListItemText>
           </MenuItem>
         </Link>
-        <Link href="/my-courses" passHref legacyBehavior>
-          <MenuItem component="a" onClick={handleClose2}>
-            <ListItemIcon>
-              <IconCourses fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Khóa học của tôi</ListItemText>
-          </MenuItem>
-        </Link>
+
         <Link href="/mylearning" passHref legacyBehavior>
           <MenuItem component="a" onClick={handleClose2}>
             <ListItemIcon>
