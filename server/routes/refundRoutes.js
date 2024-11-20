@@ -28,4 +28,10 @@ refundRouter
   .get(authMiddleware.validateUser, refundController.viewDetailRefund)
   .put(authMiddleware.validateUser, refundController.updateRefundStatus);
 
+refundRouter.put(
+  "/cancel/:id",
+  authMiddleware.validateUser,
+  refundController.studentCancelRefund
+);
+
 export default refundRouter;
