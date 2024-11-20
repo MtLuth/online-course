@@ -66,9 +66,16 @@ class WithdrawRequestService {
   async adminUpdateStatus(id, status, reason) {
     try {
       await withdrawRequestRepo.updateStatus(id, status);
+
+      const withdraw = await withdrawRequestRepo.getWithdrawById(id);
+      const amount = withdraw.amount;
+      const uid = withdraw.uid;
       if (status === "Cancel") {
-        const withdraw = await withdrawRequestRepo.getWithdrawById(id);
-        const uid = withdraw.uid;
+        await walletRepo.updateWallet(uid, {
+          withdrawable: amount,
+          withdrawPending: -amount,
+        });
+
         const instructor = await instructorRepo.getInstructorByUid(uid);
         const templateEmail = getTemplateCancelWithdraw(
           id,
@@ -81,6 +88,12 @@ class WithdrawRequestService {
           templateEmail
         );
         await sendEmail(mailDialUp);
+      }
+      if (status === "Complete") {
+        await walletRepo.updateWallet(uid, {
+          withdrawPending: -amount,
+          withdrawnAmount: amount,
+        });
       }
       return "Cập nhật yêu cầu rút tiền thành công!";
     } catch (error) {

@@ -41,7 +41,12 @@ class WithdrawRequestRepo {
     if (!doc.exists) {
       throw new AppError(`Không tìm thấy yêu cầu`, 400);
     }
-    await this.dbRef.doc(id).update({ status: WithdrawStatus[status] });
+    if (doc.data().status !== WithdrawStatus.Pending) {
+      throw new AppError("Không thể chuyển trạng thái", 400);
+    }
+    if (doc.data().status === WithdrawStatus[status]) {
+      await this.dbRef.doc(id).update({ status: WithdrawStatus[status] });
+    }
   }
 
   async getWithdrawById(id) {
