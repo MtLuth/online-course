@@ -142,7 +142,14 @@ class RefundService {
     }
   }
 
-  async studentUpdateStatus() {}
+  async studentCancelRefund(id) {
+    try {
+      await refundRepo.updateStatusRefund(id, RefundStatus.Cancel);
+      return "Bạn đã hủy hoàn tiền cho đơn hàng này!";
+    } catch (error) {
+      throw new AppError(ErrorMessage.Internal, 500);
+    }
+  }
 }
 
 export default new RefundService();

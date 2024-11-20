@@ -70,6 +70,15 @@ class RefundController {
     req.results = results;
     next();
   });
+
+  studentCancelRefund = catchAsync(async (req, res, next) => {
+    const id = req.params.id;
+    const message = await refundService.studentCancelRefund(id);
+    res.status(200).json({
+      status: "Successfully",
+      message: message,
+    });
+  });
 }
 
 export default new RefundController();
