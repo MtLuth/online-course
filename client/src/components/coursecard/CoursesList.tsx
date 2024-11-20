@@ -294,12 +294,11 @@ const CoursesList: React.FC<CoursesListProps> = ({
         {showEdit ? "Các Khóa Học Của Tôi" : "Tất cả các Khóa Học"}
       </Typography>
       <Box sx={{ display: "flex", flexGrow: 1 }}>
-        <Box sx={{ minWidth: 250, pr: 2 }}>
+        <Box sx={{ maxWidth: 250, pr: 1 }}>
           <Typography variant="h6" sx={{ mb: 2 }}>
             Tìm kiếm khóa học
           </Typography>
 
-          {/* Accordion chọn số lượng hiển thị */}
           <Accordion>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography>Hiển thị số lượng</Typography>
@@ -321,7 +320,6 @@ const CoursesList: React.FC<CoursesListProps> = ({
             </AccordionDetails>
           </Accordion>
 
-          {/* Accordion chọn danh mục */}
           {!showEdit && (
             <>
               <Accordion>
@@ -377,7 +375,6 @@ const CoursesList: React.FC<CoursesListProps> = ({
             </>
           )}
 
-          {/* Accordion Tìm kiếm tên khóa học */}
           <Accordion>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography>Tìm kiếm tên khóa học</Typography>
@@ -388,14 +385,14 @@ const CoursesList: React.FC<CoursesListProps> = ({
                   <TextField
                     fullWidth
                     label="Nhập tên ..."
-                    value={searchInput} // Bind to searchInput
+                    value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
                   />
                   <Button
                     type="submit"
                     variant="contained"
                     color="primary"
-                    sx={{ height: "56px" }} // Match TextField height
+                    sx={{ height: "56px" }}
                   >
                     Tìm kiếm
                   </Button>
@@ -404,7 +401,6 @@ const CoursesList: React.FC<CoursesListProps> = ({
             </AccordionDetails>
           </Accordion>
 
-          {/* Conditional Accordion for Tình trạng when showEdit is true */}
           {showEdit && (
             <Accordion>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>

@@ -78,10 +78,6 @@ export default function LandingHero() {
               spacing={3}
               alignItems="center"
             >
-              <Button color="inherit" size="large" variant="contained">
-                Bắt Đầu Ngay
-              </Button>
-
               <Stack
                 direction="row"
                 alignItems="center"
@@ -95,7 +91,7 @@ export default function LandingHero() {
                 >
                   <Iconify width={24} icon="carbon:play" />
                 </Fab>
-                Xem Video
+                Bắt Đầu Ngay
               </Stack>
             </Stack>
 
