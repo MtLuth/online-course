@@ -1,6 +1,7 @@
 const IncomeStatus = {
   InProgress: "Đang xử lý",
   Complete: "Đã xử lý xong",
+  Refund: "Đã hoàn tiền"
 };
 class Income {
   constructor(amount, course, status, orderCode, date) {
