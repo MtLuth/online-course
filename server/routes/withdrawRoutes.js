@@ -18,4 +18,12 @@ withdrawRouter
     pagination
   );
 
+withdrawRouter
+  .route("/admin/:id")
+  .put(
+    authMiddleware.validateUser,
+    authMiddleware.validateRoleAdmin,
+    withdrawController.adminUpdateStatus
+  );
+
 export default withdrawRouter;

@@ -1,4 +1,5 @@
 import firebaseAdmin from "../firebase/firebaseAdmin.js";
+import AppError from "../utils/appError.js";
 
 const WithdrawStatus = {
   Pending: "Chờ xử lý",
@@ -33,6 +34,22 @@ class WithdrawRequestRepo {
       ...item.data(),
     }));
     return results;
+  }
+
+  async updateStatus(id, status) {
+    const doc = await this.dbRef.doc(id).get();
+    if (!doc.exists) {
+      throw new AppError(`Không tìm thấy yêu cầu`, 400);
+    }
+    await this.dbRef.doc(id).update({ status: WithdrawStatus[status] });
+  }
+
+  async getWithdrawById(id) {
+    const doc = await this.dbRef.doc(id).get();
+    if (!doc.exists) {
+      throw new AppError(`Không tìm thấy yêu cầu`, 400);
+    }
+    return { id: doc.id, ...doc.data() };
   }
 }
 

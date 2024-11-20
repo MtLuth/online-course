@@ -2,6 +2,11 @@ import instructorRepo from "../repository/instructorRepo.js";
 import walletRepo from "../repository/walletRepo.js";
 import withdrawRequestRepo from "../repository/withdrawRequestRepo.js";
 import AppError from "../utils/appError.js";
+import {
+  getTemplateCancelWithdraw,
+  mailOptions,
+  sendEmail,
+} from "./emailService.js";
 
 class WithdrawRequestService {
   async createWithdrawRequest(uid, amount, bankName, bankNumber) {
@@ -55,6 +60,31 @@ class WithdrawRequestService {
         `Lỗi khi lấy danh sách yêu cầu rút tiền: ${error}`,
         500
       );
+    }
+  }
+
+  async adminUpdateStatus(id, status, reason) {
+    try {
+      await withdrawRequestRepo.updateStatus(id, status);
+      if (status === "Cancel") {
+        const withdraw = await withdrawRequestRepo.getWithdrawById(id);
+        const uid = withdraw.uid;
+        const instructor = await instructorRepo.getInstructorByUid(uid);
+        const templateEmail = getTemplateCancelWithdraw(
+          id,
+          withdraw.amount,
+          reason
+        );
+        const mailDialUp = mailOptions(
+          instructor.email,
+          "Yêu cầu rút tiền Elearning",
+          templateEmail
+        );
+        await sendEmail(mailDialUp);
+      }
+      return "Cập nhật yêu cầu rút tiền thành công!";
+    } catch (error) {
+      throw new AppError(error, 500);
     }
   }
 }

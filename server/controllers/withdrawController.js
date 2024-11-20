@@ -36,6 +36,30 @@ class WithdrawController {
     req.results = results;
     next();
   });
+
+  adminUpdateStatus = catchAsync(async (req, res, next) => {
+    const id = req.params.id;
+    const statusKey = Object.keys(WithdrawStatus);
+    const status = await yup
+      .string()
+      .label("status")
+      .required()
+      .oneOf(statusKey)
+      .validate(req.body.status);
+    let reason;
+    if (status === "Cancel") {
+      reason = await yup
+        .string()
+        .label("reason")
+        .required()
+        .validate(req.body.reason);
+    }
+    const message = await withdrawService.adminUpdateStatus(id, status, reason);
+    res.status(200).json({
+      status: "Successfully",
+      message: message,
+    });
+  });
 }
 
 export default new WithdrawController();
