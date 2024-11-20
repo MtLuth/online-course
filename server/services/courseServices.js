@@ -1,3 +1,4 @@
+import ErrorMessage from "../messages/errorMessage.js";
 import Instructor from "../model/instructorModel.js";
 import courseRepo from "../repository/courseRepo.js";
 import Course from "../repository/courseRepo.js";
@@ -138,10 +139,10 @@ class CourseService {
 
   async studentEditRating(courseId, uid, newScore, newContent) {
     try {
-      // const isValid = await myLearningsRepo.checkIsValidStudent(uid, courseId);
-      // if (!isValid) {
-      //   throw new AppError("Bạn không có quyền đánh giá khóa học!");
-      // }
+      const isValid = await myLearningsRepo.checkIsValidStudent(uid, courseId);
+      if (!isValid) {
+        throw new AppError("Bạn không có quyền đánh giá khóa học!");
+      }
       await courseRepo.studentEditRating(courseId, uid, newScore, newContent);
       return "Cập nhật thành công!";
     } catch (error) {
@@ -149,6 +150,15 @@ class CourseService {
         `Lỗi trong quá trình cập nhật đánh giá! ${error}`,
         500
       );
+    }
+  }
+
+  async studentDeleteRating(courseId, uid) {
+    try {
+      const message = await courseRepo.studentDeleteRating(courseId, uid);
+      return message;
+    } catch (error) {
+      throw new AppError(ErrorMessage.Internal, 500);
     }
   }
 }

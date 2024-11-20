@@ -21,6 +21,19 @@ class WithdrawRequestRepo {
       status: WithdrawStatus.Pending,
     });
   }
+
+  async adminGetWithdrawRequest(status) {
+    let query = this.dbRef;
+    if (status) {
+      query = query.where("status", "==", status);
+    }
+    const snapshot = await query.get();
+    const results = snapshot.docs.map((item) => ({
+      id: item.id,
+      ...item.data(),
+    }));
+    return results;
+  }
 }
 
 export default new WithdrawRequestRepo();

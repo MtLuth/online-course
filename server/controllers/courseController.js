@@ -137,6 +137,16 @@ class CourseController {
       message: message,
     });
   });
+
+  studentDeleteRating = catchAsync(async (req, res, next) => {
+    const uid = req.uid;
+    const courseId = req.params.courseId;
+    const message = await courseServices.studentDeleteRating(courseId, uid);
+    res.status(200).json({
+      status: "Successfully",
+      message: message,
+    });
+  });
 }
 
 export default new CourseController();

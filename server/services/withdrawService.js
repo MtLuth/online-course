@@ -1,3 +1,4 @@
+import instructorRepo from "../repository/instructorRepo.js";
 import walletRepo from "../repository/walletRepo.js";
 import withdrawRequestRepo from "../repository/withdrawRequestRepo.js";
 import AppError from "../utils/appError.js";
@@ -23,6 +24,37 @@ class WithdrawRequestService {
       return "Yêu cầu của bạn sẽ được giải quyết từ 3-5 ngày!";
     } catch (error) {
       throw new AppError(error, 500);
+    }
+  }
+
+  async adminGetAllWithdrawRequest(status, searchParam) {
+    try {
+      let withdraws = await withdrawRequestRepo.adminGetWithdrawRequest(status);
+      withdraws = await Promise.all(
+        withdraws.map(async (item) => {
+          const uid = item.uid;
+          const instructor = await instructorRepo.getInstructorByUid(uid);
+          return {
+            ...item,
+            fullName: instructor?.fullName || "Unknown",
+            email: instructor?.email || "Unknown",
+          };
+        })
+      );
+      if (searchParam?.trim()) {
+        const searchLower = searchParam.toLowerCase();
+        withdraws = withdraws.filter(
+          (item) =>
+            item.email.toLowerCase().includes(searchLower) ||
+            item.fullName.toLowerCase().includes(searchLower)
+        );
+      }
+      return withdraws;
+    } catch (error) {
+      throw new AppError(
+        `Lỗi khi lấy danh sách yêu cầu rút tiền: ${error}`,
+        500
+      );
     }
   }
 }
