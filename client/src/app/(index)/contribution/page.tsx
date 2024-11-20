@@ -30,13 +30,15 @@ const members = [
     id: "21110851",
     name: "Mai Tấn Tài",
     role: "Back-End",
-    avatarUrl: "https://i.postimg.cc/2SQ1Rwsk/avatar1.png",
+    avatarUrl:
+      "https://i.postimg.cc/C5hdVyYY/z5895513054853-c60514d860b8e6e167e84dfcaabd05cf.jpg",
   },
   {
     id: "21110224",
     name: "Hồ Gia Kiệt",
     role: "Front-End",
-    avatarUrl: "https://i.postimg.cc/2SQ1Rwsk/avatar1.png",
+    avatarUrl:
+      "https://i.postimg.cc/SsLVdWjt/106016847-1024870894596035-120332683462108316-n.jpg",
   },
 ];
 
