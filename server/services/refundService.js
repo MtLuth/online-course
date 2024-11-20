@@ -127,12 +127,27 @@ class RefundService {
     }
   }
 
-  async getAllRefundOfStudent(uid, status) {
+  async getAllRefundOfStudent(uid, status, searchParam) {
     try {
-      const results = await refundRepo.getAllRefundOfStudent(uid, status);
+      let results = await refundRepo.getAllRefundOfStudent(uid, status);
+      if (searchParam) {
+        results = results.filter((item) =>
+          item.orderCode.includes(searchParam)
+        );
+      }
+      results = results.sort((a, b) => b.date - a.date);
       return results;
     } catch (error) {
       throw new AppError(`Lỗi khi lấy danh sách yêu cầu hoàn tiền!`, 500);
+    }
+  }
+
+  async studentCancelRefund(id) {
+    try {
+      await refundRepo.updateStatusRefund(id, RefundStatus.Cancel);
+      return "Bạn đã hủy hoàn tiền cho đơn hàng này!";
+    } catch (error) {
+      throw new AppError(ErrorMessage.Internal, 500);
     }
   }
 }

@@ -96,19 +96,25 @@ class PaymentService {
         inProgress: income.amount,
       });
 
-      setTimeout(async () => {
-        try {
-          await Promise.all([
-            incomeRepo.updateStatusIncome(newId, IncomeStatus.Complete),
-            walletRepo.updateWallet(uid, {
-              inProgress: -income.amount,
-              withdrawable: income.amount,
-            }),
-          ]);
-        } catch (error) {
-          console.error("Error updating wallet or income status:", error);
-        }
-      }, 1000 * 60);
+      setTimeout(
+        async () => {
+          try {
+            if (income.refundStatus === false) {
+              await Promise.all([
+                incomeRepo.updateStatusIncome(newId, IncomeStatus.Complete),
+                walletRepo.updateWallet(uid, {
+                  inProgress: -income.amount,
+                  withdrawable: income.amount,
+                }),
+              ]);
+            }
+            await incomeRepo.updateStatusIncome(newId, IncomeStatus.Refund);
+          } catch (error) {
+            console.error("Error updating wallet or income status:", error);
+          }
+        },
+        1000 * 60 * 3
+      );
     } catch (error) {
       throw new AppError(error, 500);
     }

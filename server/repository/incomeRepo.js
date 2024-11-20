@@ -7,7 +7,11 @@ class IncomeRepo {
   }
 
   async addIncome(uid, income) {
-    const docRef = await this.dbRef.add({ uid: uid, ...income });
+    const docRef = await this.dbRef.add({
+      uid: uid,
+      ...income,
+      refundStatus: false,
+    });
     const newId = docRef.id;
     return newId;
   }
