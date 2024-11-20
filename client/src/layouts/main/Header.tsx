@@ -34,7 +34,9 @@ export default function Header({ headerOnDark }: Props) {
   const { sessionToken } = useAppContext();
   const offset = useOffSetTop();
   const mdUp = useResponsive("up", "md");
-
+  const filteredNavConfig = navConfig.filter(
+    (item) => !(item.title === "Trở Thành Chuyên Gia" && sessionToken)
+  );
   const renderContent = (
     <>
       <Box sx={{ lineHeight: 0, position: "relative" }}>
@@ -54,7 +56,7 @@ export default function Header({ headerOnDark }: Props) {
           display: { xs: "none", md: "flex" },
         }}
       >
-        <NavDesktop data={navConfig} />
+        <NavDesktop data={filteredNavConfig} />
       </Stack>
 
       <Box sx={{ flexGrow: { xs: 1, md: "unset" } }} />

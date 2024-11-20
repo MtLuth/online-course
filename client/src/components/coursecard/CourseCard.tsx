@@ -276,62 +276,64 @@ const CourseCard: React.FC<CourseCardProps> = ({
           </Typography>
         )}
 
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mt: 1,
-          }}
-        >
-          <Button
-            variant="contained"
-            color="primary"
+        {token && (
+          <Box
             sx={{
-              borderRadius: 2,
-              boxShadow: 3,
-              fontWeight: "bold",
-              ":hover": {
-                boxShadow: 6,
-                transform: "scale(1.05)",
-                backgroundColor: "#1976d2",
-              },
-              flex: 1,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mt: 1,
             }}
-            onClick={() => router.push(`/course/${course.id}`)}
           >
-            Xem Chi Tiết
-          </Button>
-          {!course.isMyLearning && !showEdit && (
             <Button
-              variant="outlined"
-              color="secondary"
+              variant="contained"
+              color="primary"
               sx={{
                 borderRadius: 2,
                 boxShadow: 3,
                 fontWeight: "bold",
-                marginLeft: 1,
                 ":hover": {
-                  color: "#fff",
                   boxShadow: 6,
                   transform: "scale(1.05)",
                   backgroundColor: "#1976d2",
                 },
                 flex: 1,
               }}
-              onClick={handleAddToCart}
-              startIcon={
-                isAddingToCart ? (
-                  <CircularProgress size={20} color="inherit" />
-                ) : (
-                  <ShoppingCartIcon />
-                )
-              }
+              onClick={() => router.push(`/course/${course.id}`)}
             >
-              Thêm vào giỏ
+              Xem Chi Tiết
             </Button>
-          )}
-        </Box>
+            {!course.isMyLearning && !showEdit && (
+              <Button
+                variant="outlined"
+                color="secondary"
+                sx={{
+                  borderRadius: 2,
+                  boxShadow: 3,
+                  fontWeight: "bold",
+                  marginLeft: 1,
+                  ":hover": {
+                    color: "#fff",
+                    boxShadow: 6,
+                    transform: "scale(1.05)",
+                    backgroundColor: "#1976d2",
+                  },
+                  flex: 1,
+                }}
+                onClick={handleAddToCart}
+                startIcon={
+                  isAddingToCart ? (
+                    <CircularProgress size={20} color="inherit" />
+                  ) : (
+                    <ShoppingCartIcon />
+                  )
+                }
+              >
+                Thêm vào giỏ
+              </Button>
+            )}
+          </Box>
+        )}
       </Box>
     </Card>
   );

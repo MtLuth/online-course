@@ -24,7 +24,7 @@ const CourseDetailPage: React.FC = () => {
           setError(response.message || "Không thể tải chi tiết khóa học.");
         }
       } catch (err: any) {
-        setError(err.message || "Đã xảy ra lỗi khi tải chi tiết khóa học.");
+        setError(err.message || "Vui lòng đăng nhập để xem chi tiết khóa học!");
       } finally {
         setLoading(false);
       }

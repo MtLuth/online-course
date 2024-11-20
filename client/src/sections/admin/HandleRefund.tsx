@@ -238,7 +238,91 @@ const RefundRequestTable = () => {
                     >
                       {request.status}
                     </Typography>
-                  </TableCell>
+                </Box>
+                <Box mb={2} display="flex" justifyContent="space-between" alignItems="center">
+                    {showSearch ? (
+                        <TextField
+                            label="Tìm kiếm"
+                            variant="outlined"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            placeholder="Tìm theo email hoặc mã đơn hàng"
+                            sx={{ width: "60%" }}
+                            InputProps={{
+                                endAdornment: (
+                                    <IconButton
+                                        onClick={() => {
+                                            setShowSearch(false);
+                                            setSearchTerm("");
+                                            setPage(1);
+                                        }}
+                                    >
+                                        <Close />
+                                    </IconButton>
+                                ),
+                            }}
+                        />
+                    ) : (
+                        <IconButton onClick={() => setShowSearch(true)}>
+                            <Search />
+                        </IconButton>
+                    )}
+                </Box>
+                <TableContainer component={Paper}>
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>Email</TableCell>
+                                <TableCell>Mã đơn hàng</TableCell>
+                                <TableCell>Số tiền</TableCell>
+                                <TableCell>Ngày</TableCell>
+                                <TableCell align="right">
+                                    <FormControl variant="outlined" size="small">
+                                        <InputLabel>Trạng thái</InputLabel>
+                                        <Select
+                                            value={filterStatus}
+                                            onChange={handleFilterStatusChange}
+                                            label="Trạng thái"
+                                            autoWidth
+                                        >
+                                            <MenuItem value="all">Tất cả</MenuItem>
+                                            <MenuItem value="Accepted">Đã chấp nhận</MenuItem>
+                                            <MenuItem value="InProgress">Đang xử lý</MenuItem>
+                                            <MenuItem value="Complete">Đã hoàn tiền</MenuItem>
+                                            <MenuItem value="Reject">Từ chối</MenuItem>
+                                        </Select>
+                                    </FormControl>
+                                </TableCell>
+                                <TableCell align="center">Hành động</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {refundRequests.map((request) => (
+                                <TableRow key={request.id}>
+                                    <TableCell>{request.email}</TableCell>
+                                    <TableCell>{request.orderCode}</TableCell>
+                                    <TableCell>{request.amount.toLocaleString()} VND</TableCell>
+                                    <TableCell>{request.date}</TableCell>
+                                    <TableCell align="right">
+                                        <Typography
+                                            variant="body2"
+                                            sx={{
+                                                color:
+                                                    request.status === "Đã hoàn tiền"
+                                                        ? "#28a745" // Xanh lá cây
+                                                        : request.status === "Đang xử lý"
+                                                            ? "#ff9800" // Cam
+                                                            : request.status === "Đã chấp nhận"
+                                                                ? "#007bff" // Xanh dương
+                                                                : request.status === "Hệ thống từ chối"
+                                                                    ? "#dc3545" // Đỏ
+                                                                    : "#000", // Màu mặc định
+                                                fontWeight: "bold",
+                                            }}
+                                        >
+                                            {request.status}
+                                        </Typography>
+                                    </TableCell>
 
                   <TableCell align="center">
                     <IconButton

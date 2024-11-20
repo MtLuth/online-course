@@ -32,7 +32,7 @@ const Profile = () => {
   const router = useRouter();
   const { setSessionToken, role } = useAppContext();
   const { notifySuccess, notifyError } = useToastNotification();
-
+  const { userRole } = useAppContext();
   const handleClick2 = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl2(event.currentTarget);
   };
@@ -40,7 +40,7 @@ const Profile = () => {
   const handleClose2 = () => {
     setAnchorEl2(null);
   };
-
+  console.log(userRole);
   const handleLogout = async () => {
     try {
       await authApi.logout();
@@ -69,7 +69,7 @@ const Profile = () => {
         onClick={handleClick2}
       >
         <Avatar
-          src="" // Bạn có thể thêm src avatar người dùng nếu có
+          src=""
           alt="E"
           sx={{
             width: 35,
@@ -91,20 +91,30 @@ const Profile = () => {
           },
         }}
       >
+        {userRole === "admin" && (
+          <Link href="/dashboard/admin/teacher" passHref legacyBehavior>
+            <MenuItem component="a" onClick={handleClose2}>
+              <ListItemIcon>
+                <IconDashboard fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Bảng điều khiển</ListItemText>
+            </MenuItem>
+          </Link>
+        )}
+        <Link href="/profile" passHref legacyBehavior>
+          <MenuItem component="a" onClick={handleClose2}>
+            <ListItemIcon>
+              <IconProfile fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Hồ sơ cá nhân</ListItemText>
+          </MenuItem>
+        </Link>
         <Link href="/my-courses" passHref legacyBehavior>
           <MenuItem component="a" onClick={handleClose2}>
             <ListItemIcon>
               <IconCourses fontSize="small" />
             </ListItemIcon>
             <ListItemText>Khóa học của tôi</ListItemText>
-          </MenuItem>
-        </Link>
-        <Link href="/dashboard/admin/teacher" passHref legacyBehavior>
-          <MenuItem component="a" onClick={handleClose2}>
-            <ListItemIcon>
-              <IconDashboard fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Bảng điều khiển</ListItemText>
           </MenuItem>
         </Link>
         <Link href="/mylearning" passHref legacyBehavior>
@@ -115,14 +125,7 @@ const Profile = () => {
             <ListItemText>Học tập</ListItemText>
           </MenuItem>
         </Link>
-        <Link href="/profile" passHref legacyBehavior>
-          <MenuItem component="a" onClick={handleClose2}>
-            <ListItemIcon>
-              <IconProfile fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Hồ sơ cá nhân</ListItemText>
-          </MenuItem>
-        </Link>
+
         <Link href="/history" passHref legacyBehavior>
           <MenuItem component="a" onClick={handleClose2}>
             <ListItemIcon>

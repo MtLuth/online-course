@@ -60,14 +60,13 @@ export default function LoginView() {
         }
         if (response.status === "success") {
           const { tokenPairs, role } = response.message;
-
-          // Lưu session token và role vào AppContext
           setSessionToken(tokenPairs.accessToken);
+          localStorage.setItem("role", role);
           setUserRole(role);
 
           notifySuccess("Đăng nhập thành công!");
           reset();
-          router.push("/"); // Điều hướng về trang chính
+          router.push("/");
         }
       })
       .catch((error) => {

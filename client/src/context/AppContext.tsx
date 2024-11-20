@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 
 const AppContext = createContext({
   sessionToken: "",
@@ -28,6 +28,13 @@ export default function AppProvider({
 }) {
   const [sessionToken, setSessionToken] = useState(initialToken);
   const [userRole, setUserRole] = useState(initialRole);
+
+  useEffect(() => {
+    const savedRole = localStorage.getItem("role");
+    if (savedRole) {
+      setUserRole(savedRole);
+    }
+  }, []);
 
   return (
     <AppContext.Provider

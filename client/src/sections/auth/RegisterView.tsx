@@ -1,18 +1,24 @@
 "use client";
 
 import * as Yup from "yup";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
-import LoadingButton from "@mui/lab/LoadingButton";
 import InputAdornment from "@mui/material/InputAdornment";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Divider from "@mui/material/Divider";
+import Box from "@mui/material/Box";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
+import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
 
 import Iconify from "src/components/iconify";
 import { useBoolean } from "@/hook/useBoolean";
@@ -21,7 +27,6 @@ import { paths } from "@/routes/path";
 import FormProvider from "@/components/hook-form/FormProvider";
 import RHFTextField from "@/components/hook-form/RHFTextField";
 import { useToastNotification } from "@/hook/useToastNotification";
-import { useState } from "react";
 import { authApi } from "@/server/Auth";
 import { useRouter } from "next/navigation";
 
@@ -36,26 +41,18 @@ export default function RegisterView() {
     fullName: Yup.string()
       .required("Vui lòng nhập họ và tên")
       .min(6, "Tối thiểu 6 ký tự")
-      .max(20, "Tối đa 20 ký tự"),
+      .max(50, "Tối đa 50 ký tự"),
     email: Yup.string()
       .required("Vui lòng nhập email")
       .email("Email không hợp lệ"),
-    phoneNumber: Yup.string()
-      .required("Vui lòng nhập số điện thoại")
-      .matches(
-        /^\+84\d{9,10}$/,
-        "Số điện thoại không hợp lệ. Vui lòng nhập đúng số điện thoại với mã vùng +84"
-      )
-      .test("phone-length", "Số điện thoại không hợp lệ", (value) => {
-        const phoneNumberWithoutPlus = value?.replace("+", "");
-        return (
-          phoneNumberWithoutPlus.length >= 10 &&
-          phoneNumberWithoutPlus.length <= 11
-        );
-      }),
+    phoneNumber: Yup.string().required("Vui lòng nhập số điện thoại"),
     password: Yup.string()
       .required("Vui lòng nhập mật khẩu")
-      .min(6, "Mật khẩu cần ít nhất 6 ký tự"),
+      .min(6, "Mật khẩu cần ít nhất 6 ký tự")
+      .matches(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).*$/,
+        "Mật khẩu phải chứa ít nhất một chữ hoa, một chữ thường, một chữ số và một ký tự đặc biệt"
+      ),
     confirmPassword: Yup.string()
       .required("Vui lòng xác nhận mật khẩu")
       .oneOf([Yup.ref("password")], "Mật khẩu không khớp"),
@@ -78,6 +75,7 @@ export default function RegisterView() {
     reset,
     handleSubmit,
     formState: { isSubmitting },
+    control,
   } = methods;
 
   const onSubmit = handleSubmit(async (data) => {
@@ -85,7 +83,7 @@ export default function RegisterView() {
       .register(data)
       .then((res) => {
         notifySuccess(
-          "Đăng ký thành công! Vui lòng kiểm tra lại Email để xác thực tài khoản!"
+          "Đăng ký thành công! Vui lòng kiểm tra Email để xác thực tài khoản!"
         );
         reset();
         router.push("/login");
@@ -96,6 +94,23 @@ export default function RegisterView() {
         notifyError(errorMessage);
       });
   });
+
+  // Sử dụng useWatch để theo dõi giá trị của password
+  const password = useWatch({
+    control,
+    name: "password",
+    defaultValue: "",
+  });
+
+  // Kiểm tra các yêu cầu của mật khẩu
+  const isMinLength = password.length >= 6;
+  const hasUpperCase = /[A-Z]/.test(password);
+  const hasLowerCase = /[a-z]/.test(password);
+  const hasNumber = /[0-9]/.test(password);
+  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+  const isPasswordValid =
+    isMinLength && hasUpperCase && hasLowerCase && hasNumber && hasSpecialChar;
 
   const renderHead = (
     <Stack spacing={1} alignItems="center">
@@ -143,6 +158,63 @@ export default function RegisterView() {
           }}
         />
 
+        {/* Hiển thị yêu cầu mật khẩu */}
+        <Box sx={{ mt: 1 }}>
+          <Typography variant="subtitle2">Mật khẩu phải chứa:</Typography>
+          <List dense>
+            <ListItem>
+              <ListItemIcon>
+                {isMinLength ? (
+                  <Iconify icon="material-symbols:check-circle" color="green" />
+                ) : (
+                  <Iconify icon="material-symbols:cancel" color="red" />
+                )}
+              </ListItemIcon>
+              <ListItemText primary="Ít nhất 6 ký tự" />
+            </ListItem>
+            <ListItem>
+              <ListItemIcon>
+                {hasUpperCase ? (
+                  <Iconify icon="material-symbols:check-circle" color="green" />
+                ) : (
+                  <Iconify icon="material-symbols:cancel" color="red" />
+                )}
+              </ListItemIcon>
+              <ListItemText primary="Ít nhất một chữ hoa (A-Z)" />
+            </ListItem>
+            <ListItem>
+              <ListItemIcon>
+                {hasLowerCase ? (
+                  <Iconify icon="material-symbols:check-circle" color="green" />
+                ) : (
+                  <Iconify icon="material-symbols:cancel" color="red" />
+                )}
+              </ListItemIcon>
+              <ListItemText primary="Ít nhất một chữ thường (a-z)" />
+            </ListItem>
+            <ListItem>
+              <ListItemIcon>
+                {hasNumber ? (
+                  <Iconify icon="material-symbols:check-circle" color="green" />
+                ) : (
+                  <Iconify icon="material-symbols:cancel" color="red" />
+                )}
+              </ListItemIcon>
+              <ListItemText primary="Ít nhất một chữ số (0-9)" />
+            </ListItem>
+            <ListItem>
+              <ListItemIcon>
+                {hasSpecialChar ? (
+                  <Iconify icon="material-symbols:check-circle" color="green" />
+                ) : (
+                  <Iconify icon="material-symbols:cancel" color="red" />
+                )}
+              </ListItemIcon>
+              <ListItemText primary="Ít nhất một ký tự đặc biệt (!@#$%^&*)" />
+            </ListItem>
+          </List>
+        </Box>
+
         <RHFTextField
           name="confirmPassword"
           label="Xác nhận mật khẩu"
@@ -164,16 +236,22 @@ export default function RegisterView() {
           }}
         />
 
-        <LoadingButton
-          fullWidth
-          color="inherit"
-          size="large"
-          type="submit"
-          variant="contained"
-          loading={isSubmitting}
-        >
-          Đăng ký
-        </LoadingButton>
+        {isSubmitting ? (
+          <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <Button
+            fullWidth
+            color="inherit"
+            size="large"
+            type="submit"
+            variant="contained"
+            disabled={!isPasswordValid}
+          >
+            Đăng ký
+          </Button>
+        )}
       </Stack>
     </FormProvider>
   );

@@ -7,24 +7,13 @@ import Iconify from "@/components/iconify";
 
 const FEATURES = [
   {
-    icon: "carbon:learning",
+    icon: "carbon:group",
     title: "Học Tập Linh Hoạt",
     description:
       "Học bất cứ lúc nào, bất cứ nơi nào với các khóa học trực tuyến linh hoạt.",
   },
   {
-    icon: "carbon:certified",
-    title: "Chứng Chỉ Uy Tín",
-    description:
-      "Nhận chứng chỉ sau khi hoàn thành khóa học từ các chuyên gia hàng đầu.",
-  },
-  {
     icon: "carbon:group",
-    title: "Cộng Đồng Mạnh Mẽ",
-    description: "Tham gia cộng đồng học viên để chia sẻ và học hỏi thêm.",
-  },
-  {
-    icon: "carbon:support",
     title: "Hỗ Trợ 24/7",
     description:
       "Đội ngũ hỗ trợ luôn sẵn sàng giải đáp mọi thắc mắc của bạn bất cứ lúc nào.",
@@ -34,12 +23,6 @@ const FEATURES = [
     title: "Công Cụ Học Tập Tiên Tiến",
     description:
       "Sử dụng các công cụ và tài nguyên học tập hiện đại để nâng cao trải nghiệm học tập.",
-  },
-  {
-    icon: "carbon:earth",
-    title: "Kết Nối Toàn Cầu",
-    description:
-      "Tiếp cận với học viên và chuyên gia từ khắp nơi trên thế giới.",
   },
 ];
 

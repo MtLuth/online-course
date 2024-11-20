@@ -10,8 +10,8 @@ export default function ElearningView() {
   return (
     <>
       <LandingHero />
-      <LandingCourses />
       <FeaturesSection />
+      <LandingCourses />
       <PageRegister />
       <TestimonialsSection />
     </>
