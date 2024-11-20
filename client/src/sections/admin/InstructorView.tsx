@@ -10,26 +10,21 @@ import {
   IconButton,
   TablePagination,
   Paper,
-  Menu,
-  MenuItem,
   FormControl,
   InputLabel,
   Select,
   SelectChangeEvent,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   TextField,
-  Button,
-  DialogContentText,
   Typography,
+  MenuItem,
 } from "@mui/material";
-import { MoreVert, Search, Close } from "@mui/icons-material";
+import { Visibility, Search, Close } from "@mui/icons-material";
 import BaseCard from "@/components/shared/DashboardCard";
+import DetailInstructor from "@/sections/admin/DetailInstructors";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 type Instructor = {
+  uid: string;
   avt: string;
   fullName: string;
   email: string;
@@ -46,14 +41,12 @@ const InstructorInfoTable = () => {
   const [total, setTotal] = useState(0);
   const [filterStatus, setFilterStatus] = useState("all");
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedInstructor, setSelectedInstructor] =
-    useState<Instructor | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [showSearch, setShowSearch] = useState(false);
-  const [rejectionReason, setRejectionReason] = useState("");
-  const [openDialog, setOpenDialog] = useState(false);
-  const [isRejecting, setIsRejecting] = useState(false);
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
+  const [selectedInstructorDetail, setSelectedInstructorDetail] =
+    useState<Instructor | null>(null);
+  const [openDetailDialog, setOpenDetailDialog] = useState(false);
 
   const { replace } = useRouter();
   const pathname = usePathname();
@@ -77,15 +70,16 @@ const InstructorInfoTable = () => {
       if (debouncedSearchTerm.trim()) {
         queryParams.set("searchParam", debouncedSearchTerm);
       }
-
       const url = `http://localhost:8080/api/v1/instructor?${queryParams.toString()}`;
-      console.log("Fetch URL:", url);
-
       const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
-        setInstructors(data.message.results ?? []);
-        setTotal(data.message.itemCount ?? 10);
+        const instructorsWithUid = data.message.results.map((instr: any) => ({
+          uid: instr.id,
+          ...instr,
+        }));
+        setInstructors(instructorsWithUid);
+        setTotal(data.message.itemCount ?? 0);
       } else {
         console.error("Failed to fetch data:", response.statusText);
       }
@@ -95,16 +89,16 @@ const InstructorInfoTable = () => {
   };
 
   useEffect(() => {
+    fetchInstructors();
+  }, [page, limit, filterStatus, debouncedSearchTerm]);
+
+  useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
     }, 300);
 
     return () => clearTimeout(timer);
   }, [searchTerm]);
-
-  useEffect(() => {
-    fetchInstructors();
-  }, [page, limit, filterStatus, debouncedSearchTerm]);
 
   const handleChangePage = (
     event: React.MouseEvent<HTMLButtonElement> | null,
@@ -129,59 +123,52 @@ const InstructorInfoTable = () => {
     replace(`${pathname}?${params.toString()}`);
   };
 
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
+  };
+
   const handleFilterChange = (event: SelectChangeEvent) => {
     setFilterStatus(event.target.value as string);
     setPage(1);
   };
 
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value);
+  const handleViewDetails = (instructor: Instructor) => {
+    setSelectedInstructorDetail(instructor);
+    setOpenDetailDialog(true);
   };
 
-  const handleMenuOpen = (
-    event: React.MouseEvent<HTMLElement>,
-    instructor: Instructor
-  ) => {
-    setAnchorEl(event.currentTarget);
-    setSelectedInstructor(instructor);
+  const handleCloseDetailDialog = () => {
+    setOpenDetailDialog(false);
+    setSelectedInstructorDetail(null);
   };
 
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-    setSelectedInstructor(null);
-  };
-
-  const handleOpenDialog = () => {
-    setOpenDialog(true);
-  };
-
-  const handleActionClick = (action: "Duyệt đơn" | "Từ chối") => {
-    if (action === "Duyệt đơn") {
-      setIsRejecting(false);
-      handleOpenDialog();
-    } else if (action === "Từ chối") {
-      setIsRejecting(true);
-      handleOpenDialog();
-    }
-  };
-
-  const handleDialogClose = (decision: "Đồng ý" | "Từ chối") => {
-    if (decision === "Đồng ý") {
-    } else if (decision === "Từ chối" && !rejectionReason.trim()) {
-      alert("Vui lòng nhập lý do từ chối.");
-      return;
-    }
-    setOpenDialog(false);
-    setRejectionReason("");
-  };
-
-  const getStatusColor = (status: string) => {
-    return status === "active" ? "#6fbf73" : "#ff9800";
+  const handleUpdate = (uid: string, newStatus: string) => {
+    setInstructors((prevInstructors) =>
+      prevInstructors.map((instr) =>
+        instr.uid === uid ? { ...instr, status: newStatus } : instr
+      )
+    );
+    setOpenDetailDialog(false);
+    setSelectedInstructorDetail(null);
   };
 
   return (
     <BaseCard title="Danh sách Chuyên gia">
       <>
+        <Box sx={{ textAlign: "center", py: 2 }}>
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: "bold",
+              fontSize: "24px",
+              color: "#2c3e50",
+              textTransform: "uppercase",
+              letterSpacing: "1px",
+            }}
+          >
+            Danh sách Giảng viên
+          </Typography>
+        </Box>
         <Box
           mb={2}
           display="flex"
@@ -220,77 +207,64 @@ const InstructorInfoTable = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell align="center">Ảnh đại diện</TableCell>
                 <TableCell>Họ và tên</TableCell>
                 <TableCell>Email</TableCell>
                 <TableCell>Chuyên môn</TableCell>
-                <TableCell align="right">Kinh nghiệm</TableCell>
-                <TableCell>Trình độ học vấn</TableCell>
+                <TableCell>Học vấn</TableCell>
                 <TableCell align="right">
-                  <FormControl
-                    variant="outlined"
-                    size="small"
-                    sx={{ minWidth: 120 }}
-                  >
-                    <InputLabel>Tình trạng</InputLabel>
+                  <FormControl variant="outlined" size="small">
+                    <InputLabel>Trạng thái</InputLabel>
                     <Select
                       value={filterStatus}
                       onChange={handleFilterChange}
-                      label="Tình trạng"
+                      label="Trạng thái"
+                      autoWidth
                     >
                       <MenuItem value="all">Tất cả</MenuItem>
                       <MenuItem value="active">Hoạt động</MenuItem>
                       <MenuItem value="pending">Chờ duyệt</MenuItem>
+                      <MenuItem value="inactive">Chưa kích hoạt</MenuItem>
                     </Select>
                   </FormControl>
                 </TableCell>
+
                 <TableCell align="center">Hành động</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {instructors.map((instr, index) => (
-                <TableRow key={index}>
-                  <TableCell align="center">
-                    <img
-                      src={instr.avt}
-                      alt="avatar"
-                      width="40"
-                      height="40"
-                      style={{ borderRadius: "50%" }}
-                    />
-                  </TableCell>
+              {instructors.map((instr) => (
+                <TableRow key={instr.uid}>
                   <TableCell>{instr.fullName}</TableCell>
                   <TableCell>{instr.email}</TableCell>
                   <TableCell>{instr.expertise}</TableCell>
-                  <TableCell align="right">{instr.experience}</TableCell>
                   <TableCell>{instr.education}</TableCell>
                   <TableCell align="center">
                     <Typography
                       variant="body2"
                       sx={{
-                        color: getStatusColor(instr.status),
+                        color:
+                          instr.status === "active"
+                            ? "#6fbf73"
+                            : instr.status === "pending"
+                            ? "#ff9800"
+                            : "#9e9e9e",
                         fontWeight: "bold",
                       }}
                     >
-                      {instr.status}
+                      {instr.status === "active"
+                        ? "Hoạt động"
+                        : instr.status === "pending"
+                        ? "Chờ duyệt"
+                        : "Chưa kích hoạt"}
                     </Typography>
                   </TableCell>
                   <TableCell align="center">
-                    <IconButton onClick={(e) => handleMenuOpen(e, instr)}>
-                      <MoreVert />
-                    </IconButton>
-                    <Menu
-                      anchorEl={anchorEl}
-                      open={Boolean(anchorEl)}
-                      onClose={handleMenuClose}
+                    <IconButton
+                      onClick={() => handleViewDetails(instr)}
+                      aria-label="Xem chi tiết"
                     >
-                      <MenuItem
-                        onClick={() => handleActionClick("Duyệt đơn")}
-                        disabled={instr.status === "Active"}
-                      >
-                        Duyệt đơn
-                      </MenuItem>
-                    </Menu>
+                      <Visibility />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               ))}
@@ -304,41 +278,16 @@ const InstructorInfoTable = () => {
           onPageChange={handleChangePage}
           rowsPerPage={limit}
           onRowsPerPageChange={handleChangeRowsPerPage}
-          rowsPerPageOptions={[5, 10, 20, 50]}
+          rowsPerPageOptions={[5, 10, 15, 20]}
           showFirstButton
           showLastButton
         />
-        <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-          <DialogTitle>Xác nhận Duyệt đơn</DialogTitle>
-          <DialogContent>
-            <DialogContentText>
-              Bạn có chắc chắn muốn duyệt đơn này?
-            </DialogContentText>
-            {isRejecting && (
-              <TextField
-                autoFocus
-                margin="dense"
-                label="Lý do từ chối"
-                type="text"
-                fullWidth
-                variant="outlined"
-                value={rejectionReason}
-                onChange={(e) => setRejectionReason(e.target.value)}
-              />
-            )}
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => handleDialogClose("Đồng ý")} color="primary">
-              Đồng ý
-            </Button>
-            <Button onClick={() => setIsRejecting(true)} color="error">
-              Từ chối
-            </Button>
-            <Button onClick={() => setOpenDialog(false)} color="error">
-              Hủy
-            </Button>
-          </DialogActions>
-        </Dialog>
+        <DetailInstructor
+          open={openDetailDialog}
+          instructor={selectedInstructorDetail}
+          onClose={handleCloseDetailDialog}
+          onUpdate={fetchInstructors}
+        />
       </>
     </BaseCard>
   );

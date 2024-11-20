@@ -10,6 +10,7 @@ import { Toaster } from "react-hot-toast";
 import AppProvider from "@/context/AppContext";
 import { cookies } from "next/headers";
 import { CartProvider } from "@/context/CartContext";
+import { ProfileProvider } from "@/context/ProfileContext";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -34,6 +35,7 @@ export default async function RootLayout({
 }>) {
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get("accessToken");
+
   return (
     <html lang="en">
       <body
@@ -43,12 +45,14 @@ export default async function RootLayout({
           <ThemeProvider>
             <AppProvider initialToken={sessionToken?.value}>
               <CartProvider>
-                <MotionLazy>
-                  <Toaster />
-                  <ProgressBar />
-                  <SettingsDrawer />
-                  {children}
-                </MotionLazy>
+                <ProfileProvider>
+                  <MotionLazy>
+                    <Toaster />
+                    <ProgressBar />
+                    <SettingsDrawer />
+                    {children}
+                  </MotionLazy>
+                </ProfileProvider>
               </CartProvider>
             </AppProvider>
           </ThemeProvider>
