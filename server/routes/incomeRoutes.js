@@ -9,4 +9,8 @@ incomeRouter
   .route("/")
   .get(authMiddleware.validateUser, incomeController.getAllIncomes, pagination);
 
+incomeRouter
+  .route("/:id")
+  .get(authMiddleware.validateUser, incomeController.getIncomeById);
+
 export default incomeRouter;

@@ -8,6 +8,15 @@ class IncomeController {
     req.results = results;
     next();
   });
+
+  getIncomeById = catchAsync(async (req, res, next) => {
+    const id = req.params.id;
+    const income = await incomeService.getIncomeById(id);
+    res.status(200).json({
+      status: "Successfully",
+      message: income,
+    });
+  });
 }
 
 export default new IncomeController();
