@@ -22,6 +22,7 @@ import walletRouter from "../routes/walletRoutes.js";
 import refundRouter from "../routes/refundRoutes.js";
 import withdrawRouter from "../routes/withdrawRoutes.js";
 import bankRouter from "../routes/bankRoutes.js";
+import dashboardRouter from "../routes/dashboardRoutes.js";
 
 dotenv.config("./../config.env");
 
@@ -59,6 +60,7 @@ app.use(`${apiUrlGroup}/refund`, refundRouter);
 app.use(`${apiUrlGroup}/withdraw`, withdrawRouter);
 app.use(`${apiUrlGroup}/conversation`, conversationRouter);
 app.use(`${apiUrlGroup}/bank`, bankRouter);
+app.use(`${apiUrlGroup}/dashboard`, dashboardRouter);
 
 app.all("*", (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));

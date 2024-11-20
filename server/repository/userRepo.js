@@ -73,6 +73,17 @@ class UserRepo {
 
     throw new AppError("Không thể lấy thông tin người dùng!", 400);
   }
+
+  async getNumberOfRole() {
+    let userRoles = {};
+    console.log("aaaa");
+    const snapshot = await this.dbRef.get();
+    snapshot.docs.forEach((item) => {
+      const role = item.data().role || "unknown";
+      userRoles[role] = (userRoles[role] || 0) + 1;
+    });
+    return userRoles;
+  }
 }
 
 export default new UserRepo();
