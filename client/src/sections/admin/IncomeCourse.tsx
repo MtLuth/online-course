@@ -20,6 +20,7 @@ import { Visibility, Search, Close } from "@mui/icons-material";
 import DetailIncomeDialog from "@/sections/admin/DetailIncomes";
 
 type IncomeRecord = {
+    id: string;
     uid: string;
     courseTitle: string;
     orderCode: string;
@@ -61,6 +62,7 @@ const IncomeTable = () => {
 
                 setIncomeData(
                     results.map((item: any) => ({
+                        id: item.id,
                         uid: item.uid,
                         courseTitle: item.course.title,
                         orderCode: item.orderCode,
@@ -179,7 +181,11 @@ const IncomeTable = () => {
                     rowsPerPage={limit}
                     onRowsPerPageChange={(e) => setLimit(parseInt(e.target.value, 10))}
                 />
-                <DetailIncomeDialog open={openDialog} onClose={handleCloseDialog} record={selectedRecord} />
+                <DetailIncomeDialog
+                    open={openDialog}
+                    onClose={handleCloseDialog}
+                    record={selectedRecord}
+                />
             </>
         </BaseCard>
     );
