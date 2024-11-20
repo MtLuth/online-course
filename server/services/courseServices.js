@@ -135,6 +135,22 @@ class CourseService {
       throw new AppError(error, 500);
     }
   }
+
+  async studentEditRating(courseId, uid, newScore, newContent) {
+    try {
+      // const isValid = await myLearningsRepo.checkIsValidStudent(uid, courseId);
+      // if (!isValid) {
+      //   throw new AppError("Bạn không có quyền đánh giá khóa học!");
+      // }
+      await courseRepo.studentEditRating(courseId, uid, newScore, newContent);
+      return "Cập nhật thành công!";
+    } catch (error) {
+      throw new AppError(
+        `Lỗi trong quá trình cập nhật đánh giá! ${error}`,
+        500
+      );
+    }
+  }
 }
 
 export default new CourseService();

@@ -45,11 +45,10 @@ courseRouter.get(
   courseController.studentGetCourseById
 );
 
-courseRouter.post(
-  "/rating/:courseId",
-  authMiddleware.validateUser,
-  courseController.studentRatingCourse
-);
+courseRouter
+  .route("/rating/:courseId")
+  .post(authMiddleware.validateUser, courseController.studentRatingCourse)
+  .put(authMiddleware.validateUser, courseController.studentEditRatingCourse);
 
 courseRouter.get("/", courseController.getAllCourse, pagination);
 

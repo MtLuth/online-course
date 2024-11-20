@@ -5,7 +5,6 @@ import {
   ratingSchema,
 } from "../validator/validationSchema.js";
 import yup from "yup";
-import paginate from "express-paginate";
 
 class CourseController {
   createCourse = catchAsync(async (req, res, next) => {
@@ -110,6 +109,29 @@ class CourseController {
       uid: uid,
       ...ratingInformation,
     });
+    res.status(200).json({
+      status: "Successfully",
+      message: message,
+    });
+  });
+
+  studentEditRatingCourse = catchAsync(async (req, res, next) => {
+    const uid = req.uid;
+    const courseId = req.params.courseId;
+    const schema = yup.object({
+      score: yup.number().min(1).max(5),
+      content: yup.string().min(10),
+    });
+
+    const { score, content } = await schema.validate(req.body, {
+      abortEarly: false,
+    });
+    const message = await courseServices.studentEditRating(
+      courseId,
+      uid,
+      score,
+      content
+    );
     res.status(200).json({
       status: "Successfully",
       message: message,

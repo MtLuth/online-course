@@ -233,5 +233,33 @@ class CourseRepo {
       rating: rating,
     });
   }
+
+  async studentEditRating(courseId, uid, newScore, newContent) {
+    const doc = await this.dbRef.doc(courseId).get();
+    if (!doc.exists) {
+      throw new Error("Course not found");
+    }
+
+    const data = doc.data();
+    let rating = data.rating ? data.rating : [];
+
+    const userRatingIndex = rating.findIndex((item) => item.user.uid === uid);
+
+    if (userRatingIndex === -1) {
+      throw new Error("Không tìm thấy rating");
+    }
+    const updatedRating = { ...rating[userRatingIndex] };
+    if (newScore !== undefined) {
+      updatedRating.score = newScore;
+    }
+    if (newContent !== undefined) {
+      updatedRating.content = newContent;
+    }
+
+    rating[userRatingIndex] = updatedRating;
+    await this.dbRef.doc(courseId).update({ rating });
+
+    return "Cập nhật thành công!";
+  }
 }
 export default new CourseRepo();
