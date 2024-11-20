@@ -35,6 +35,7 @@ class IncomeRepo {
         const data = doc.data();
         const course = data.course;
         return {
+          id: doc.id,
           uid: data.uid,
           course: {
             courseId: course.courseId,
