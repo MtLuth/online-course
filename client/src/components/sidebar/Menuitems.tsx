@@ -43,6 +43,16 @@ const Menuitems = [
   },
   {
     navlabel: true,
+    subheader: "Thống kê",
+  },
+  {
+    id: uniqueId(),
+    title: "Doanh thu khóa học",
+    icon: IconCopy,
+    href: "/dashboard/admin/incomes/",
+  },
+  {
+    navlabel: true,
     subheader: "Quản Lý Website",
   },
   {

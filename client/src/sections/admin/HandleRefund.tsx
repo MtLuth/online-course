@@ -1,33 +1,32 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import {
-  Box,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  TableContainer,
-  TablePagination,
-  Paper,
-  Typography,
-  Select,
-  MenuItem,
-  IconButton,
-  FormControl,
-  InputLabel,
-  TextField,
-  Menu,
-  MenuItem as MuiMenuItem,
-  SelectChangeEvent,
-} from "@mui/material";
 import BaseCard from "@/components/shared/DashboardCard";
-import { MoreVert, Search, Close } from "@mui/icons-material";
 import { useAppContext } from "@/context/AppContext";
 import DetailRequest from "@/sections/admin/DetailRequest";
 import UpdateRequestDialog from "@/sections/admin/UpdateRequest";
-import { request } from "http";
+import { Close, MoreVert, Search } from "@mui/icons-material";
+import {
+  Box,
+  FormControl,
+  IconButton,
+  InputLabel,
+  Menu,
+  MenuItem,
+  MenuItem as MuiMenuItem,
+  Paper,
+  Select,
+  SelectChangeEvent,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TablePagination,
+  TableRow,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { styled } from "@mui/system";
+import React, { useEffect, useState } from "react";
 
 type RefundRequest = {
   id: string;
@@ -56,7 +55,7 @@ const RefundRequestTable = () => {
   const [showSearch, setShowSearch] = useState(false);
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedRequest, setSelectedRequest] = useState<RefundRequest | null>(
-    null
+    null,
   );
   const [openDetailDialog, setOpenDetailDialog] = useState(false);
   const [openEditStatusDialog, setOpenEditStatusDialog] = useState(false);
@@ -91,7 +90,7 @@ const RefundRequestTable = () => {
             amount: item.amount,
             status: item.status,
             date: new Date(item.date).toLocaleDateString("vi-VN"),
-          }))
+          })),
         );
         setTotal(itemCount);
       } else {
@@ -108,7 +107,7 @@ const RefundRequestTable = () => {
 
   const handleOpenMenu = (
     event: React.MouseEvent<HTMLElement>,
-    request: RefundRequest
+    request: RefundRequest,
   ) => {
     setMenuAnchorEl(event.currentTarget);
     setSelectedRequest(request);
@@ -227,12 +226,12 @@ const RefundRequestTable = () => {
                           request.status === "Đã hoàn tiền"
                             ? "#28a745" // Xanh lá cây
                             : request.status === "Đang xử lý"
-                            ? "#ff9800" // Cam
-                            : request.status === "Đã chấp nhận"
-                            ? "#007bff" // Xanh dương
-                            : request.status === "Từ chối"
-                            ? "#dc3545" // Đỏ
-                            : "#000", // Màu mặc định
+                              ? "#ff9800" // Cam
+                              : request.status === "Đã chấp nhận"
+                                ? "#007bff" // Xanh dương
+                                : request.status === "Hệ thống từ chối"
+                                  ? "#dc3545" // Đỏ
+                                  : "#000", // Màu mặc định
                         fontWeight: "bold",
                       }}
                     >
