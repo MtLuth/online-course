@@ -100,6 +100,22 @@ class WithdrawRequestService {
       throw new AppError(error, 500);
     }
   }
+
+  async getWithdrawById(id) {
+    try {
+      const withdraw = await withdrawRequestRepo.getWithdrawById(id);
+      const instructor = await instructorRepo.getInstructorByUid(withdraw.uid);
+      return {
+        ...withdraw,
+        instructor: {
+          fullName: instructor.fullName,
+          email: instructor.email,
+        },
+      };
+    } catch (error) {
+      throw new AppError(error, 500);
+    }
+  }
 }
 
 export default new WithdrawRequestService();

@@ -24,6 +24,7 @@ withdrawRouter
     authMiddleware.validateUser,
     authMiddleware.validateRoleAdmin,
     withdrawController.adminUpdateStatus
-  );
+  )
+  .get(withdrawController.getWithdrawById);
 
 export default withdrawRouter;

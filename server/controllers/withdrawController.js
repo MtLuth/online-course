@@ -60,6 +60,15 @@ class WithdrawController {
       message: message,
     });
   });
+
+  getWithdrawById = catchAsync(async (req, res, next) => {
+    const id = req.params.id;
+    const withdraw = await withdrawService.getWithdrawById(id);
+    res.status(200).json({
+      status: "Successfully",
+      message: withdraw,
+    });
+  });
 }
 
 export default new WithdrawController();
