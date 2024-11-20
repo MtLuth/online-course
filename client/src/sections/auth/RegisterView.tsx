@@ -35,7 +35,7 @@ export default function RegisterView() {
   const RegisterSchema = Yup.object().shape({
     fullName: Yup.string()
       .required("Vui lòng nhập họ và tên")
-      .min(6, "Tối thiểu 6 ký tự")
+      .min(8, "Tối thiểu 8 ký tự")
       .max(20, "Tối đa 20 ký tự"),
     email: Yup.string()
       .required("Vui lòng nhập email")
@@ -55,7 +55,7 @@ export default function RegisterView() {
       }),
     password: Yup.string()
       .required("Vui lòng nhập mật khẩu")
-      .min(6, "Mật khẩu cần ít nhất 6 ký tự"),
+      .min(8, "Mật khẩu cần ít nhất 8 ký tự"),
     confirmPassword: Yup.string()
       .required("Vui lòng xác nhận mật khẩu")
       .oneOf([Yup.ref("password")], "Mật khẩu không khớp"),
