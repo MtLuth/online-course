@@ -16,11 +16,7 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  MenuItem,
-  Select,
-  InputLabel,
-  FormControl,
-  Autocomplete, // Import Autocomplete
+  Autocomplete,
 } from "@mui/material";
 import { getAuthToken } from "@/utils/auth";
 import { walletApi } from "@/server/Wallet";
@@ -39,8 +35,16 @@ interface WithdrawData {
   amount: number;
 }
 
+interface WalletData {
+  uid: string;
+  inProgress: number;
+  withdrawable: number;
+  withdrawnAmount: number;
+  withdrawPending: number;
+}
+
 const Wallet: React.FC = () => {
-  const [walletData, setWalletData] = useState<any>(null);
+  const [walletData, setWalletData] = useState<WalletData | null>(null);
   const [userData, setUserData] = useState<any>(null); // State for user data
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -78,7 +82,6 @@ const Wallet: React.FC = () => {
     fetchWalletData();
   }, [token]);
 
-  // Fetch user profile data based on walletData.uid
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (walletData && walletData.uid) {
@@ -176,11 +179,11 @@ const Wallet: React.FC = () => {
       if (response.status === "Successfully") {
         notifySuccess(response.message);
         // Update wallet data
-        setWalletData((prev: any) => ({
-          ...prev,
-          withdrawable: prev.withdrawable - amount,
-          withdrawnAmount: prev.withdrawnAmount + amount, // Assuming you want to increment withdrawnAmount
-          refundRequest: (prev.refundRequest || 0) + amount,
+        setWalletData((prev) => ({
+          ...prev!,
+          withdrawable: prev!.withdrawable - amount,
+          withdrawnAmount: prev!.withdrawnAmount + amount,
+          withdrawPending: (prev!.withdrawPending || 0) + amount,
         }));
         handleCloseWithdraw();
       } else {
@@ -290,12 +293,12 @@ const Wallet: React.FC = () => {
 
             <Box sx={{ mb: 2 }}>
               <Typography variant="body1" sx={{ fontWeight: "bold" }}>
-                Yêu Cầu Hoàn Tiền:
+                Yêu Cầu Rút Tiền:
               </Typography>
               <Typography variant="h6" color="error">
-                {walletData.refundRequest && walletData.refundRequest > 0
-                  ? walletData.refundRequest.toLocaleString()
-                  : "N/A"}{" "}
+                {walletData.withdrawPending && walletData.withdrawPending > 0
+                  ? walletData.withdrawPending.toLocaleString()
+                  : "0"}{" "}
                 VND
               </Typography>
             </Box>

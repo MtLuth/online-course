@@ -22,6 +22,7 @@ import { useRouter } from "@/routes/hooks/useRouter";
 import { useToastNotification } from "@/hook/useToastNotification";
 import { authApi } from "@/server/Auth";
 import { useAppContext } from "@/context/AppContext";
+import Cookies from "js-cookie";
 
 export default function LoginView() {
   const passwordShow = useBoolean();
@@ -61,9 +62,7 @@ export default function LoginView() {
         if (response.status === "success") {
           const { tokenPairs, role } = response.message;
           setSessionToken(tokenPairs.accessToken);
-          localStorage.setItem("role", role);
-          setUserRole(role);
-
+          Cookies.set("role", role, { expires: 1 });
           notifySuccess("Đăng nhập thành công!");
           reset();
           router.push("/");

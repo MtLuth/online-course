@@ -1,11 +1,9 @@
 import ChangePassword from "@/sections/profile/ChangePassword";
 
 export const metadata = {
-    title: "Hồ sơ của tôi | Elearning",
+  title: "Chỉnh Sửa Hồ sơ của tôi | Elearning",
 };
 
 export default function LoginBackgroundPage() {
-    return (
-        <ChangePassword />
-    );
+  return <ChangePassword />;
 }

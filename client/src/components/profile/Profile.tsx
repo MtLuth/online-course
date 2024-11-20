@@ -26,6 +26,7 @@ import { useRouter } from "next/navigation";
 import { authApi } from "@/server/Auth";
 import { useAppContext } from "@/context/AppContext";
 import { useToastNotification } from "@/hook/useToastNotification";
+import Cookies from "js-cookie";
 
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState<null | HTMLElement>(null);
@@ -36,15 +37,14 @@ const Profile = () => {
   const handleClick2 = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl2(event.currentTarget);
   };
-
   const handleClose2 = () => {
     setAnchorEl2(null);
   };
-  console.log(userRole);
   const handleLogout = async () => {
     try {
       await authApi.logout();
       setSessionToken(null);
+      Cookies.remove("role");
       notifySuccess("Đã đăng xuất thành công!");
       router.push("/login");
     } catch (error) {
@@ -92,7 +92,7 @@ const Profile = () => {
         }}
       >
         {userRole === "admin" && (
-          <Link href="/dashboard/admin/teacher" passHref legacyBehavior>
+          <Link href="/dashboard/" passHref legacyBehavior>
             <MenuItem component="a" onClick={handleClose2}>
               <ListItemIcon>
                 <IconDashboard fontSize="small" />
@@ -101,6 +101,17 @@ const Profile = () => {
             </MenuItem>
           </Link>
         )}
+        {userRole === "teacher" && (
+          <Link href="/dashboard/" passHref legacyBehavior>
+            <MenuItem component="a" onClick={handleClose2}>
+              <ListItemIcon>
+                <IconDashboard fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Bảng điều khiển</ListItemText>
+            </MenuItem>
+          </Link>
+        )}
+
         <Link href="/profile" passHref legacyBehavior>
           <MenuItem component="a" onClick={handleClose2}>
             <ListItemIcon>

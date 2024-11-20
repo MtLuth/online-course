@@ -271,7 +271,7 @@ const RefundList: React.FC = () => {
                           {cancelingId === refund.id ? (
                             <CircularProgress size={24} color="inherit" />
                           ) : (
-                            "Hủy"
+                            "Hủy YC"
                           )}
                         </Button>
                       )}

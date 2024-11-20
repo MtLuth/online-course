@@ -1,5 +1,7 @@
+// src/sections/admin/HandleRefund.tsx
+
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Table,
@@ -18,16 +20,17 @@ import {
   InputLabel,
   TextField,
   Menu,
-  MenuItem as MuiMenuItem,
-  SelectChangeEvent,
+  Tooltip,
+  CircularProgress,
 } from "@mui/material";
-import BaseCard from "@/components/shared/DashboardCard";
 import { MoreVert, Search, Close } from "@mui/icons-material";
 import { useAppContext } from "@/context/AppContext";
 import DetailRequest from "@/sections/admin/DetailRequest";
 import UpdateRequestDialog from "@/sections/admin/UpdateRequest";
-import { request } from "http";
 import { styled } from "@mui/system";
+import debounce from "lodash/debounce";
+import DashboardCard from "@/components/shared/DashboardCard"; // Đảm bảo đường dẫn và tên chính xác
+import { useToastNotification } from "@/hook/useToastNotification";
 
 type RefundRequest = {
   id: string;
@@ -45,10 +48,15 @@ const HeaderBox = styled(Box)(({ theme }) => ({
   color: theme.palette.primary.contrastText,
   borderRadius: theme.spacing(2, 2, 0, 0),
 }));
+
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+  fontWeight: "bold",
+}));
+
 const RefundRequestTable = () => {
   const [refundRequests, setRefundRequests] = useState<RefundRequest[]>([]);
   const [filterStatus, setFilterStatus] = useState("all");
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(0);
   const [limit, setLimit] = useState(5);
   const [total, setTotal] = useState(0);
   const { sessionToken } = useAppContext();
@@ -60,17 +68,24 @@ const RefundRequestTable = () => {
   );
   const [openDetailDialog, setOpenDetailDialog] = useState(false);
   const [openEditStatusDialog, setOpenEditStatusDialog] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const fetchRefundRequests = async () => {
+  const { notifySuccess, notifyError } = useToastNotification();
+
+  const API_BASE_URL =
+    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+
+  const fetchRefundRequests = useCallback(async () => {
+    setLoading(true);
     try {
       const queryParams = new URLSearchParams();
-      queryParams.set("page", page.toString());
+      queryParams.set("page", (page + 1).toString());
       queryParams.set("limit", limit.toString());
 
       if (filterStatus !== "all") queryParams.set("status", filterStatus);
       if (searchTerm.trim()) queryParams.set("searchParam", searchTerm.trim());
 
-      const url = `http://localhost:8080/api/v1/refund?${queryParams.toString()}`;
+      const url = `${API_BASE_URL}/api/v1/refund?${queryParams.toString()}`;
       const response = await fetch(url, {
         method: "GET",
         headers: {
@@ -95,16 +110,21 @@ const RefundRequestTable = () => {
         );
         setTotal(itemCount);
       } else {
-        console.error("Failed to fetch data:", response.statusText);
+        const errorData = await response.json();
+        notifyError(
+          errorData.message || "Không thể tải dữ liệu yêu cầu hoàn tiền."
+        );
       }
-    } catch (error) {
-      console.error("Error fetching refund requests:", error);
+    } catch (error: any) {
+      notifyError("Đã xảy ra lỗi khi tải dữ liệu yêu cầu hoàn tiền.");
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [page, limit, filterStatus, searchTerm]);
 
   useEffect(() => {
     fetchRefundRequests();
-  }, [page, limit, filterStatus, searchTerm]);
+  }, [fetchRefundRequests]);
 
   const handleOpenMenu = (
     event: React.MouseEvent<HTMLElement>,
@@ -135,14 +155,36 @@ const RefundRequestTable = () => {
   const handleCloseEditStatusDialog = () => {
     setOpenEditStatusDialog(false);
   };
+
   const handleFilterStatusChange = (event: SelectChangeEvent<string>) => {
     setFilterStatus(event.target.value);
-    setPage(1);
+    setPage(0);
+  };
+
+  const handleSearchClear = () => {
+    setSearchTerm("");
+    setShowSearch(false);
+    setPage(0);
+  };
+
+  // Debounce search input to prevent excessive API calls
+  const debouncedSearch = useCallback(
+    debounce((value: string) => {
+      setSearchTerm(value);
+      setPage(0);
+    }, 500),
+    []
+  );
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    debouncedSearch(value);
   };
 
   return (
-    <BaseCard>
+    <DashboardCard>
       <>
+        {/* Header */}
         <Box sx={{ textAlign: "center", py: 2 }}>
           <HeaderBox>
             <Typography variant="h4" component="h1" fontWeight="bold">
@@ -150,28 +192,28 @@ const RefundRequestTable = () => {
             </Typography>
           </HeaderBox>
         </Box>
+
+        {/* Thanh Tìm Kiếm và Lọc Trạng Thái */}
         <Box
           mb={2}
           display="flex"
           justifyContent="space-between"
           alignItems="center"
         >
+          {/* Thanh Tìm Kiếm */}
           {showSearch ? (
             <TextField
               label="Tìm kiếm"
               variant="outlined"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={handleSearchChange}
               placeholder="Tìm theo email hoặc mã đơn hàng"
-              sx={{ width: "60%" }}
+              sx={{ width: { xs: "100%", sm: "60%" }, mr: 1 }}
               InputProps={{
                 endAdornment: (
                   <IconButton
-                    onClick={() => {
-                      setShowSearch(false);
-                      setSearchTerm("");
-                      setPage(1);
-                    }}
+                    onClick={handleSearchClear}
+                    aria-label="Clear search"
                   >
                     <Close />
                   </IconButton>
@@ -179,172 +221,129 @@ const RefundRequestTable = () => {
               }}
             />
           ) : (
-            <IconButton onClick={() => setShowSearch(true)}>
-              <Search />
-            </IconButton>
+            <Tooltip title="Tìm kiếm">
+              <IconButton
+                onClick={() => setShowSearch(true)}
+                aria-label="Open search"
+                color="primary"
+              >
+                <Search />
+              </IconButton>
+            </Tooltip>
           )}
-        </Box>
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Email</TableCell>
-                <TableCell>Mã đơn hàng</TableCell>
-                <TableCell>Số tiền</TableCell>
-                <TableCell>Ngày</TableCell>
-                <TableCell align="right">
-                  <FormControl variant="outlined" size="small">
-                    <InputLabel>Trạng thái</InputLabel>
-                    <Select
-                      value={filterStatus}
-                      onChange={handleFilterStatusChange}
-                      label="Trạng thái"
-                      autoWidth
-                    >
-                      <MenuItem value="all">Tất cả</MenuItem>
-                      <MenuItem value="Accepted">Đã chấp nhận</MenuItem>
-                      <MenuItem value="InProgress">Đang xử lý</MenuItem>
-                      <MenuItem value="Complete">Đã hoàn tiền</MenuItem>
-                      <MenuItem value="Reject">Từ chối</MenuItem>
-                    </Select>
-                  </FormControl>
-                </TableCell>
-                <TableCell align="center">Hành động</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {refundRequests.map((request) => (
-                <TableRow key={request.id}>
-                  <TableCell>{request.email}</TableCell>
-                  <TableCell>{request.orderCode}</TableCell>
-                  <TableCell>{request.amount.toLocaleString()} VND</TableCell>
-                  <TableCell>{request.date}</TableCell>
-                  <TableCell align="right">
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color:
-                          request.status === "Đã hoàn tiền"
-                            ? "#28a745" // Xanh lá cây
-                            : request.status === "Đang xử lý"
-                            ? "#ff9800" // Cam
-                            : request.status === "Đã chấp nhận"
-                            ? "#007bff" // Xanh dương
-                            : request.status === "Từ chối"
-                            ? "#dc3545" // Đỏ
-                            : "#000", // Màu mặc định
-                        fontWeight: "bold",
-                      }}
-                    >
-                      {request.status}
-                    </Typography>
-                </Box>
-                <Box mb={2} display="flex" justifyContent="space-between" alignItems="center">
-                    {showSearch ? (
-                        <TextField
-                            label="Tìm kiếm"
-                            variant="outlined"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder="Tìm theo email hoặc mã đơn hàng"
-                            sx={{ width: "60%" }}
-                            InputProps={{
-                                endAdornment: (
-                                    <IconButton
-                                        onClick={() => {
-                                            setShowSearch(false);
-                                            setSearchTerm("");
-                                            setPage(1);
-                                        }}
-                                    >
-                                        <Close />
-                                    </IconButton>
-                                ),
-                            }}
-                        />
-                    ) : (
-                        <IconButton onClick={() => setShowSearch(true)}>
-                            <Search />
-                        </IconButton>
-                    )}
-                </Box>
-                <TableContainer component={Paper}>
-                    <Table>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell>Email</TableCell>
-                                <TableCell>Mã đơn hàng</TableCell>
-                                <TableCell>Số tiền</TableCell>
-                                <TableCell>Ngày</TableCell>
-                                <TableCell align="right">
-                                    <FormControl variant="outlined" size="small">
-                                        <InputLabel>Trạng thái</InputLabel>
-                                        <Select
-                                            value={filterStatus}
-                                            onChange={handleFilterStatusChange}
-                                            label="Trạng thái"
-                                            autoWidth
-                                        >
-                                            <MenuItem value="all">Tất cả</MenuItem>
-                                            <MenuItem value="Accepted">Đã chấp nhận</MenuItem>
-                                            <MenuItem value="InProgress">Đang xử lý</MenuItem>
-                                            <MenuItem value="Complete">Đã hoàn tiền</MenuItem>
-                                            <MenuItem value="Reject">Từ chối</MenuItem>
-                                        </Select>
-                                    </FormControl>
-                                </TableCell>
-                                <TableCell align="center">Hành động</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {refundRequests.map((request) => (
-                                <TableRow key={request.id}>
-                                    <TableCell>{request.email}</TableCell>
-                                    <TableCell>{request.orderCode}</TableCell>
-                                    <TableCell>{request.amount.toLocaleString()} VND</TableCell>
-                                    <TableCell>{request.date}</TableCell>
-                                    <TableCell align="right">
-                                        <Typography
-                                            variant="body2"
-                                            sx={{
-                                                color:
-                                                    request.status === "Đã hoàn tiền"
-                                                        ? "#28a745" // Xanh lá cây
-                                                        : request.status === "Đang xử lý"
-                                                            ? "#ff9800" // Cam
-                                                            : request.status === "Đã chấp nhận"
-                                                                ? "#007bff" // Xanh dương
-                                                                : request.status === "Hệ thống từ chối"
-                                                                    ? "#dc3545" // Đỏ
-                                                                    : "#000", // Màu mặc định
-                                                fontWeight: "bold",
-                                            }}
-                                        >
-                                            {request.status}
-                                        </Typography>
-                                    </TableCell>
 
-                  <TableCell align="center">
-                    <IconButton
-                      onClick={(e) => handleOpenMenu(e, request)}
-                      aria-label="Menu"
-                    >
-                      <MoreVert />
-                    </IconButton>
-                  </TableCell>
+          {/* Lọc Trạng Thái */}
+          <FormControl variant="outlined" size="small" sx={{ minWidth: 150 }}>
+            <InputLabel>Trạng thái</InputLabel>
+            <Select
+              value={filterStatus}
+              onChange={handleFilterStatusChange}
+              label="Trạng thái"
+            >
+              <MenuItem value="all">Tất cả</MenuItem>
+              <MenuItem value="Accepted">Đã chấp nhận</MenuItem>
+              <MenuItem value="InProgress">Đang xử lý</MenuItem>
+              <MenuItem value="Complete">Đã hoàn tiền</MenuItem>
+              <MenuItem value="Reject">Từ chối</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
+
+        {/* Hiển thị Spinner khi đang tải dữ liệu */}
+        {loading ? (
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              minHeight: "200px",
+            }}
+          >
+            <CircularProgress />
+          </Box>
+        ) : refundRequests.length > 0 ? (
+          <TableContainer component={Paper} elevation={3}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <StyledTableCell>Email</StyledTableCell>
+                  <StyledTableCell>Mã đơn hàng</StyledTableCell>
+                  <StyledTableCell>Số tiền (VND)</StyledTableCell>
+                  <StyledTableCell>Ngày</StyledTableCell>
+                  <StyledTableCell align="right">Trạng thái</StyledTableCell>
+                  <StyledTableCell align="center">Hành động</StyledTableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+              </TableHead>
+              <TableBody>
+                {refundRequests.map((request) => (
+                  <TableRow key={request.id} hover>
+                    <TableCell>{request.email}</TableCell>
+                    <TableCell>{request.orderCode}</TableCell>
+                    <TableCell>{request.amount.toLocaleString()} VND</TableCell>
+                    <TableCell>{request.date}</TableCell>
+                    <TableCell align="right">
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color:
+                            request.status === "Đã hoàn tiền"
+                              ? "#28a745" // Xanh lá cây
+                              : request.status === "Đang xử lý"
+                              ? "#ff9800" // Cam
+                              : request.status === "Đã chấp nhận"
+                              ? "#007bff" // Xanh dương
+                              : request.status === "Từ chối"
+                              ? "#dc3545" // Đỏ
+                              : "#000", // Màu mặc định
+                          fontWeight: "bold",
+                        }}
+                      >
+                        {request.status}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="center">
+                      <Tooltip title="Thao tác">
+                        <IconButton
+                          onClick={(e) => handleOpenMenu(e, request)}
+                          aria-label="Menu"
+                        >
+                          <MoreVert />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        ) : (
+          <Box
+            sx={{
+              textAlign: "center",
+              py: 4,
+            }}
+          >
+            <Typography variant="h6" color="textSecondary">
+              Không có dữ liệu yêu cầu hoàn tiền.
+            </Typography>
+          </Box>
+        )}
+
+        {/* Phân Trang */}
         <TablePagination
           component="div"
           count={total}
-          page={page - 1}
-          onPageChange={(e, newPage) => setPage(newPage + 1)}
+          page={page}
+          onPageChange={(event, newPage) => setPage(newPage)}
           rowsPerPage={limit}
-          onRowsPerPageChange={(e) => setLimit(parseInt(e.target.value, 10))}
+          onRowsPerPageChange={(event) =>
+            setLimit(parseInt(event.target.value, 10))
+          }
+          rowsPerPageOptions={[5, 10, 25]}
+          sx={{ mt: 2 }}
         />
+
+        {/* Menu Thao Tác */}
         <Menu
           anchorEl={menuAnchorEl}
           open={Boolean(menuAnchorEl)}
@@ -352,22 +351,21 @@ const RefundRequestTable = () => {
           anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
           transformOrigin={{ vertical: "top", horizontal: "center" }}
         >
-          <MuiMenuItem onClick={handleOpenDetailDialog}>
-            Xem chi tiết
-          </MuiMenuItem>
+          <MenuItem onClick={handleOpenDetailDialog}>Xem chi tiết</MenuItem>
           {selectedRequest?.status !== "Từ chối" &&
             selectedRequest?.status !== "Đã hoàn tiền" && (
-              <MuiMenuItem onClick={handleOpenEditStatusDialog}>
-                Cập nhật
-              </MuiMenuItem>
+              <MenuItem onClick={handleOpenEditStatusDialog}>Cập nhật</MenuItem>
             )}
         </Menu>
 
+        {/* Dialog Chi Tiết Yêu Cầu */}
         <DetailRequest
           open={openDetailDialog}
           requestId={selectedRequest?.id || null}
           onClose={handleCloseDetailDialog}
         />
+
+        {/* Dialog Cập Nhật Trạng Thái Yêu Cầu */}
         <UpdateRequestDialog
           open={openEditStatusDialog}
           requestId={selectedRequest?.id || null}
@@ -376,7 +374,7 @@ const RefundRequestTable = () => {
           onStatusUpdate={fetchRefundRequests}
         />
       </>
-    </BaseCard>
+    </DashboardCard>
   );
 };
 

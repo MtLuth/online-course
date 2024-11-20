@@ -144,7 +144,7 @@ class RefundService {
 
   async studentCancelRefund(id) {
     try {
-      await refundRepo.updateStatusRefund(id, RefundStatus.Cancel);
+      await refundRepo.updateStatusRefund(id, "Cancel");
       return "Bạn đã hủy hoàn tiền cho đơn hàng này!";
     } catch (error) {
       throw new AppError(ErrorMessage.Internal, 500);

@@ -1,7 +1,7 @@
 import LoginView from "@/sections/auth/LoginView";
 
 export const metadata = {
-  title: "Login",
+  title: "Đăng Nhập",
 };
 
 export default function LoginBackgroundPage() {

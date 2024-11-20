@@ -1,5 +1,6 @@
 "use client";
 
+import Cookies from "js-cookie";
 import React, { createContext, useContext, useState, useEffect } from "react";
 
 const AppContext = createContext({
@@ -30,7 +31,7 @@ export default function AppProvider({
   const [userRole, setUserRole] = useState(initialRole);
 
   useEffect(() => {
-    const savedRole = localStorage.getItem("role");
+    const savedRole = Cookies.get("role");
     if (savedRole) {
       setUserRole(savedRole);
     }
