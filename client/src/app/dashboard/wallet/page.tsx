@@ -1,3 +1,4 @@
+// src/components/Wallet.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -8,19 +9,52 @@ import {
   Card,
   CardContent,
   CircularProgress,
-  Chip,
   Divider,
   Avatar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  MenuItem,
+  Select,
+  InputLabel,
+  FormControl,
+  Autocomplete, // Import Autocomplete
 } from "@mui/material";
 import { getAuthToken } from "@/utils/auth";
 import { walletApi } from "@/server/Wallet";
-import { userApi } from "@/server/User"; // Import userApi
+import { userApi } from "@/server/User";
+import { useToastNotification } from "@/hook/useToastNotification";
+import { paymentApi } from "@/server/Payment";
+
+interface Bank {
+  bankName: string;
+  logo: string;
+}
+
+interface WithdrawData {
+  bankName: string;
+  bankNumber: string;
+  amount: number;
+}
 
 const Wallet: React.FC = () => {
   const [walletData, setWalletData] = useState<any>(null);
   const [userData, setUserData] = useState<any>(null); // State for user data
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [banks, setBanks] = useState<Bank[]>([]); // State for bank list
+
+  const [openWithdraw, setOpenWithdraw] = useState<boolean>(false);
+  const [withdrawData, setWithdrawData] = useState<WithdrawData>({
+    bankName: "",
+    bankNumber: "",
+    amount: 0,
+  });
+  const [withdrawLoading, setWithdrawLoading] = useState<boolean>(false);
+
+  const { notifySuccess, notifyError } = useToastNotification();
 
   const token = getAuthToken();
 
@@ -65,10 +99,104 @@ const Wallet: React.FC = () => {
     fetchUserProfile();
   }, [walletData, token]); // Trigger when walletData changes
 
-  // Handle withdraw button click
-  const handleWithdraw = () => {
-    // Thêm logic để xử lý rút tiền, có thể hiển thị một modal xác nhận
-    alert("Rút tiền thành công!");
+  // Fetch bank list when modal opens
+  useEffect(() => {
+    const fetchBanks = async () => {
+      try {
+        const response = await paymentApi.bank();
+        if (response.status === "Successfully") {
+          setBanks(response.message);
+        } else {
+          notifyError("Không thể tải danh sách ngân hàng.");
+        }
+      } catch (err) {
+        console.error(err);
+        notifyError("Đã xảy ra lỗi khi tải danh sách ngân hàng.");
+      }
+    };
+
+    if (openWithdraw) {
+      fetchBanks();
+    }
+  }, [openWithdraw]);
+
+  // Handle withdraw button click to open modal
+  const handleWithdrawClick = () => {
+    setOpenWithdraw(true);
+  };
+
+  // Handle modal close
+  const handleCloseWithdraw = () => {
+    setOpenWithdraw(false);
+    setWithdrawData({
+      bankName: "",
+      bankNumber: "",
+      amount: 0,
+    });
+  };
+
+  // Handle form input change
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>
+  ) => {
+    const { name, value } = e.target;
+    setWithdrawData((prev) => ({
+      ...prev,
+      [name as string]: value,
+    }));
+  };
+
+  // Handle withdraw form submission
+  const handleWithdrawSubmit = async () => {
+    const { bankName, bankNumber, amount } = withdrawData;
+
+    // Validate input
+    if (!bankName || !bankNumber || !amount) {
+      notifyError("Vui lòng điền đầy đủ thông tin.");
+      return;
+    }
+
+    if (amount > (walletData?.withdrawable || 0)) {
+      notifyError("Số tiền rút phải nhỏ hơn số dư có thể rút!");
+      return;
+    }
+
+    setWithdrawLoading(true);
+
+    try {
+      const response = await paymentApi.withDraw(
+        {
+          bankName,
+          bankNumber,
+          amount,
+        },
+        token
+      );
+
+      if (response.status === "Successfully") {
+        notifySuccess(response.message);
+        // Update wallet data
+        setWalletData((prev: any) => ({
+          ...prev,
+          withdrawable: prev.withdrawable - amount,
+          withdrawnAmount: prev.withdrawnAmount + amount, // Assuming you want to increment withdrawnAmount
+          refundRequest: (prev.refundRequest || 0) + amount,
+        }));
+        handleCloseWithdraw();
+      } else {
+        // Handle API error message
+        notifyError(response.message);
+      }
+    } catch (err: any) {
+      console.error(err);
+      const errorMessage =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Có lỗi xảy ra. Vui lòng thử lại sau.";
+      notifyError(errorMessage);
+    } finally {
+      setWithdrawLoading(false);
+    }
   };
 
   return (
@@ -172,8 +300,6 @@ const Wallet: React.FC = () => {
               </Typography>
             </Box>
 
-            {/* User Profile Information */}
-
             {/* Withdraw Button */}
             <Button
               variant="contained"
@@ -189,8 +315,8 @@ const Wallet: React.FC = () => {
                   boxShadow: 6,
                 },
               }}
-              onClick={handleWithdraw}
-              disabled={walletData.withdrawable <= 0}
+              onClick={handleWithdrawClick}
+              disabled={!walletData || walletData.withdrawable <= 0}
             >
               Rút Tiền
             </Button>
@@ -205,6 +331,102 @@ const Wallet: React.FC = () => {
           Không có dữ liệu ví.
         </Typography>
       )}
+
+      {/* Withdraw Modal */}
+      <Dialog
+        open={openWithdraw}
+        onClose={handleCloseWithdraw}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Rút Tiền</DialogTitle>
+        <DialogContent>
+          <Box component="form" noValidate sx={{ mt: 2 }}>
+            {/* Autocomplete Cho Chọn Ngân Hàng */}
+            <Autocomplete
+              options={banks}
+              getOptionLabel={(option) => option.bankName}
+              renderOption={(props, option) => (
+                <Box
+                  component="li"
+                  sx={{ display: "flex", alignItems: "center" }}
+                  {...props}
+                  key={option.bankName}
+                >
+                  <Avatar
+                    src={option.logo}
+                    alt={option.bankName}
+                    sx={{ width: 24, height: 24, mr: 1 }}
+                  />
+                  {option.bankName}
+                </Box>
+              )}
+              value={
+                banks.find((bank) => bank.bankName === withdrawData.bankName) ||
+                null
+              }
+              onChange={(event, newValue) => {
+                setWithdrawData((prev) => ({
+                  ...prev,
+                  bankName: newValue ? newValue.bankName : "",
+                }));
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Chọn Ngân Hàng"
+                  required
+                  margin="normal"
+                />
+              )}
+              fullWidth
+              sx={{ mb: 2 }}
+            />
+
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="bankNumber"
+              label="Số Tài Khoản Ngân Hàng"
+              name="bankNumber"
+              value={withdrawData.bankNumber}
+              onChange={handleChange}
+            />
+
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="amount"
+              label="Số Tiền (VND)"
+              name="amount"
+              type="number"
+              InputProps={{
+                inputProps: { min: 1, max: walletData?.withdrawable || 0 },
+              }}
+              value={withdrawData.amount}
+              onChange={handleChange}
+              helperText={`Tối đa: ${
+                walletData ? walletData.withdrawable.toLocaleString() : "0"
+              } VND`}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseWithdraw} color="secondary">
+            Hủy
+          </Button>
+          <Button
+            onClick={handleWithdrawSubmit}
+            color="primary"
+            variant="contained"
+            disabled={withdrawLoading}
+          >
+            {withdrawLoading ? <CircularProgress size={24} /> : "Xác Nhận"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

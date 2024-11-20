@@ -24,7 +24,6 @@ uploadRouter.post(
 
 uploadRouter.post(
   "/resources",
-  authMiddleware.validateUser,
   uploadResource.any("files"),
   uploadController.uploadResources
 );

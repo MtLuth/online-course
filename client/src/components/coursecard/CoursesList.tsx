@@ -1,5 +1,3 @@
-// File: src/components/CoursesList.tsx
-
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
@@ -45,6 +43,7 @@ interface CoursesListProps {
   isPublished?: boolean;
   orderByPrice?: string;
   showEdit?: boolean;
+  id?: string;
 }
 
 const CoursesList: React.FC<CoursesListProps> = ({
@@ -53,14 +52,11 @@ const CoursesList: React.FC<CoursesListProps> = ({
   isPublished,
   orderByPrice = "asc",
   showEdit = false,
+  id = "",
 }) => {
   const router = useRouter();
   const token = getAuthToken();
-
-  // Extract uid from token
-  const [uid, setUid] = useState<string | undefined>("");
-
-  // Sử dụng useRef để tạo cờ
+  const [uid, setUid] = useState<string | undefined>(id);
   const hasFetchedRef = useRef<boolean>(false);
 
   useEffect(() => {

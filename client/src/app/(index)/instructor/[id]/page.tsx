@@ -81,7 +81,6 @@ const InstructorProfilePage = () => {
       </Box>
     );
   }
-
   if (!instructor) {
     return (
       <Typography variant="h6" sx={{ textAlign: "center", mt: 4 }}>
@@ -275,7 +274,7 @@ const InstructorProfilePage = () => {
             <CloseIcon />
           </IconButton>
           <iframe
-            src={`https://docs.google.com/viewer?embedded=true&url=${certificateUrl}`}
+            src={`https://docs.google.com/viewer?url=${certificateUrl}&embedded=true`}
             width="100%"
             height="100%"
             frameBorder="0"

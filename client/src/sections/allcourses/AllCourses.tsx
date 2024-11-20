@@ -3,11 +3,16 @@
 import CoursesList from "@/components/coursecard/CoursesList";
 import { cookies } from "next/headers";
 import { GetAllCoursesResponse } from "@/interfaces/CourseDetail";
-import { jwtDecode } from "jwt-decode";
 import { courseApi } from "@/server/Cource";
+import { jwtDecode } from "jwt-decode";
 
 interface AllCoursesProps {
   searchParams: { [key: string]: string | string[] | undefined };
+}
+
+interface TokenPayload {
+  user_id: string; // Ensure this matches your token's payload
+  // Add other fields if necessary
 }
 
 const AllCourses = async ({ searchParams }: AllCoursesProps) => {
@@ -48,11 +53,13 @@ const AllCourses = async ({ searchParams }: AllCoursesProps) => {
   let uid = "";
   if (token) {
     try {
-      const decoded: any = jwtDecode(token);
+      const decoded: TokenPayload = jwtDecode<TokenPayload>(token);
       if (decoded && decoded.user_id) {
         uid = decoded.user_id;
       }
-    } catch (error) {}
+    } catch (error) {
+      console.error("Error decoding token:", error);
+    }
   }
   console.log(uid);
   const coursesResponse: GetAllCoursesResponse = await courseApi.getAllCourses(
@@ -81,6 +88,7 @@ const AllCourses = async ({ searchParams }: AllCoursesProps) => {
       isPublished={isPublished}
       orderByPrice={orderByPrice}
       showEdit={false}
+      id={uid}
     />
   );
 };

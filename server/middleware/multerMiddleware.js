@@ -32,6 +32,7 @@ const resourceFilter = (req, file, cb) => {
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     "application/pdf",
+    "application/msword",
   ];
 
   if (allowedMimeTypes.includes(file.mimetype)) {
@@ -39,7 +40,7 @@ const resourceFilter = (req, file, cb) => {
   } else {
     cb(
       new Error(
-        "Invalid file type. Only ZIP, RAR, DOCX, XLSX, PDF are allowed."
+        "Chỉ những file ZIP, RAR, DOC, DOCX, XLSX, PDF là được chấp nhận"
       ),
       false
     );
