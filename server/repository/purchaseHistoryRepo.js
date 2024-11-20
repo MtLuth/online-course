@@ -74,6 +74,37 @@ class PurchaseHistory {
     console.log(newSku);
     await this.dbRef.doc(orderCode).update({ sku: newSku });
   }
+
+  async getIncomeAdmin() {
+    const snapshot = await this.dbRef
+      .where("status", "!=", PurchaseStatus.refund)
+      .get();
+    const results = snapshot.docs.reduce(
+      (sum, item) => sum + item.data().total,
+      0
+    );
+    return {
+      amount: results * 0.06,
+      order: (await this.dbRef.get()).docs.length,
+    };
+  }
+
+  async getPurchaseOfInstructor(uid) {
+    let courses = [];
+    const snapshot = await this.dbRef
+      .where("status", "!=", PurchaseStatus.refund)
+      .get();
+    snapshot.docs.forEach((doc) => {
+      const data = doc.data();
+      const filterCourses = data.sku.filter((item) => item.instructor === uid);
+      courses = courses.concat(filterCourses);
+    });
+    const amount = courses.reduce((sum, item) => sum + item.salePrice, 0);
+    return {
+      amount: amount * 0.94,
+      order: courses.length,
+    };
+  }
 }
 
 export default new PurchaseHistory();

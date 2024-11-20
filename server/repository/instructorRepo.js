@@ -33,6 +33,12 @@ class InstructorRepo {
       ...data,
     };
   }
+
+  async getNumberOfInstructorsByStatus(status) {
+    const snapshot = await this.dbRef.where("status", "==", status).get();
+    const total = snapshot.docs.length;
+    return total;
+  }
 }
 
 export default new InstructorRepo();

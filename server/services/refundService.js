@@ -10,6 +10,8 @@ import {
   mailOptions,
   sendEmail,
 } from "./emailService.js";
+import incomeRepo from "../repository/incomeRepo.js";
+import myLearningsRepo from "../repository/myLearningsRepo.js";
 
 class RefundService {
   async createRefund(uid, refundInformation) {
@@ -34,7 +36,7 @@ class RefundService {
         if (courses.includes(item.courseId)) {
           if (item.refundStatus) {
             throw new AppError(
-              `Bạn đã gửi yêu cầu hoàn tiền cho khóa học ${item.title} rồi!`,
+              `Bạn đã gửi yêu cầu hoàn tiền cho hóa đơn này rồi!`,
               400
             );
           }
@@ -60,6 +62,11 @@ class RefundService {
         refundInformation.reason,
         refundInformation.payeeAccount
       );
+
+      await Promise.all([
+        incomeRepo.updateRefundStatus(orderCode, true),
+        myLearningsRepo.removeCourses(uid, refundCourses),
+      ]);
       await refundRepo.createRefund(uid, refund);
       return "Yêu cầu hoàn tiền của bạn đã được gửi đi!";
     } catch (error) {
@@ -147,7 +154,8 @@ class RefundService {
       await refundRepo.updateStatusRefund(id, "Cancel");
       return "Bạn đã hủy hoàn tiền cho đơn hàng này!";
     } catch (error) {
-      throw new AppError(ErrorMessage.Internal, 500);
+      console.log(error);
+      throw new AppError(error, 500);
     }
   }
 }
