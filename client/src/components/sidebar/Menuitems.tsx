@@ -23,7 +23,7 @@ const Menuitems = [
     id: uniqueId(),
     title: "Tạo khóa học",
     icon: IconCopy,
-    href: "/dashboard/teacher/create-cource/",
+    href: "/dashboard/teacher/create-course/",
   },
   {
     navlabel: true,
@@ -61,7 +61,6 @@ const Menuitems = [
     icon: IconCopy,
     href: "/dashboard/admin/handle-refund/",
   },
-
 ];
 
 export default Menuitems;

@@ -37,6 +37,7 @@ type RefundRequest = {
   status: string;
   date: string;
 };
+
 const HeaderBox = styled(Box)(({ theme }) => ({
   textAlign: "center",
   padding: theme.spacing(4, 2),
@@ -145,7 +146,7 @@ const RefundRequestTable = () => {
         <Box sx={{ textAlign: "center", py: 2 }}>
           <HeaderBox>
             <Typography variant="h4" component="h1" fontWeight="bold">
-              Danh sách Yêu Cầu Hoàn Tiền
+              Danh sách Yêu cầu hoàn tiền
             </Typography>
           </HeaderBox>
         </Box>
