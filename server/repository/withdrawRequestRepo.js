@@ -25,7 +25,7 @@ class WithdrawRequestRepo {
   async adminGetWithdrawRequest(status) {
     let query = this.dbRef;
     if (status) {
-      query = query.where("status", "==", status);
+      query = query.where("status", "==", WithdrawStatus[status]);
     }
     const snapshot = await query.get();
     const results = snapshot.docs.map((item) => ({
