@@ -127,14 +127,22 @@ class RefundService {
     }
   }
 
-  async getAllRefundOfStudent(uid, status) {
+  async getAllRefundOfStudent(uid, status, searchParam) {
     try {
-      const results = await refundRepo.getAllRefundOfStudent(uid, status);
+      let results = await refundRepo.getAllRefundOfStudent(uid, status);
+      if (searchParam) {
+        results = results.filter((item) =>
+          item.orderCode.includes(searchParam)
+        );
+      }
+      results = results.sort((a, b) => b.date - a.date);
       return results;
     } catch (error) {
       throw new AppError(`Lỗi khi lấy danh sách yêu cầu hoàn tiền!`, 500);
     }
   }
+
+  async studentUpdateStatus() {}
 }
 
 export default new RefundService();
