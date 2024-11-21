@@ -99,7 +99,7 @@ class PaymentService {
               orderCode,
               new Date()
             );
-            const newId = await this.addIncome(uid, income);
+            const newId = await this.addIncome(course.instructor, income);
             newIncomes.push(newId);
           })
         );
