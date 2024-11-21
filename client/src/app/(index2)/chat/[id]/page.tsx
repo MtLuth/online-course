@@ -19,6 +19,7 @@ import {
   ListItemAvatar,
   ListItemText,
   Divider,
+  Tooltip, // 1. Import Tooltip
 } from "@mui/material";
 import { useToastNotification } from "@/hook/useToastNotification";
 import { getAuthToken } from "@/utils/auth";
@@ -40,17 +41,31 @@ const ChatPage = () => {
   const { notifyError, notifySuccess } = useToastNotification(); // Toast notifications
   const token = getAuthToken();
 
-  const messagesEndRef = useRef<HTMLDivElement>(null); // Ref to scroll to bottom
-  const conversationsRef = useRef<HTMLDivElement>(null); // Ref to conversations list
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const conversationsRef = useRef<HTMLDivElement>(null);
 
-  const [imageToSend, setImageToSend] = useState<File | null>(null); // Ảnh cần gửi
-  const [isImageDialogOpen, setIsImageDialogOpen] = useState<boolean>(false); // Trạng thái mở hộp thoại xác nhận
+  const [imageToSend, setImageToSend] = useState<File | null>(null);
+  const [isImageDialogOpen, setIsImageDialogOpen] = useState<boolean>(false);
 
   // State để lưu trữ hồ sơ của người dùng hiện tại
   const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  // 2. Create a helper function to format the timestamp
+  const formatDate = (timestamp?: number): string => {
+    if (!timestamp) return "Unknown date";
+    const date = new Date(timestamp);
+    if (isNaN(date.getTime())) return "Invalid date";
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const seconds = String(date.getSeconds()).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-indexed
+    const year = date.getFullYear();
+    return `${hours}:${minutes}:${seconds} ${day}/${month}/${year}`;
   };
 
   // Decode token to get user ID và lấy hồ sơ người dùng hiện tại
@@ -236,9 +251,6 @@ const ChatPage = () => {
       if (response.ok) {
         setNewMessage("");
         setImageToSend(null);
-        notifySuccess("Tin nhắn đã được gửi.");
-        // Optionally, append the new message to messages state
-        // setMessages((prevMessages) => [...prevMessages, data.message]);
       } else {
         notifyError(data.message || "Không thể gửi tin nhắn.");
       }
@@ -411,6 +423,7 @@ const ChatPage = () => {
             messages.map((msgItem, index) => {
               const msg = msgItem.message || msgItem;
               const isUser = msg.sender === uid;
+
               return (
                 <Box
                   key={index}
@@ -435,23 +448,31 @@ const ChatPage = () => {
                     }
                     sx={{ width: 40, height: 40, margin: "0 8px" }}
                   />
-                  <Box
-                    sx={{
-                      maxWidth: "70%",
-                      backgroundColor: isUser ? "#DCF8C6" : "#E1F5FE",
-                      padding: 1.5,
-                      borderRadius: 2,
-                      boxShadow: 1,
-                    }}
-                  >
-                    {/* Hiển thị tên người gửi */}
-                    <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>
-                      {isUser
-                        ? currentUserProfile?.fullName || "Bạn"
-                        : currentConversationProfile?.fullName || "Chuyên Gia"}
-                    </Typography>
-                    {renderMessageContent(msg)}
-                  </Box>
+                  {/* 3. Wrap the message bubble with Tooltip */}
+                  <Tooltip title={formatDate(msg.date)}>
+                    <Box
+                      sx={{
+                        maxWidth: "70%",
+                        backgroundColor: isUser ? "#DCF8C6" : "#E1F5FE",
+                        padding: 1.5,
+                        borderRadius: 2,
+                        boxShadow: 1,
+                        cursor: "pointer", // Optional: change cursor to indicate hoverable
+                      }}
+                    >
+                      {/* Hiển thị tên người gửi */}
+                      <Typography
+                        variant="subtitle2"
+                        sx={{ fontWeight: "bold" }}
+                      >
+                        {isUser
+                          ? currentUserProfile?.fullName || "Bạn"
+                          : currentConversationProfile?.fullName ||
+                            "Chuyên Gia"}
+                      </Typography>
+                      {renderMessageContent(msg)}
+                    </Box>
+                  </Tooltip>
                 </Box>
               );
             })

@@ -18,8 +18,18 @@ class RefundApi extends BaseApi {
     super("/refund");
   }
 
-  public async refundUser(token: string): Promise<any> {
+  public async refundUser(
+    token: string,
+    page: number = 1,
+    limit: number = 10,
+    searchParam: string = ""
+  ): Promise<any> {
     const response = await this.get(`/refund/student`, {
+      params: {
+        searchParam,
+        page,
+        limit,
+      },
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
