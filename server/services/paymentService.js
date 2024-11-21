@@ -82,13 +82,11 @@ class PaymentService {
         }
         const uid = purchase.uid;
         const sku = purchase.sku;
-        await Promise.allSettled(
+        await Promise.all(
           sku.map(async (course) => {
-            courseRepo.increaseEnrollment(course.courseId).catch((err) => {
+            courseRepo.updateEnrollment(course.courseId, 1).catch((err) => {
               throw new AppError(`Error in courseId ${course.courseId}:`, err);
             });
-            console.log("delete", course.courseId);
-            await cartRepo.removeCourse(uid, course.courseId);
 
             let amount = course.salePrice * 0.94;
             amount = Math.round(amount);
@@ -100,11 +98,12 @@ class PaymentService {
               orderCode,
               new Date()
             );
-            this.addIncome(course.instructor, income).catch((err) => {
+            await this.addIncome(course.instructor, income).catch((err) => {
               throw new AppError(`Error in courseId ${course.courseId}:`, err);
             });
           })
         );
+        await cartRepo.removeCourses(uid, sku);
         const message = await myLearningsRepo.addCourses(uid, sku);
         return message;
       }
@@ -128,7 +127,7 @@ class PaymentService {
             console.error("Error updating wallet or income status:", error);
           }
         },
-        1000 * 60 * 3
+        1000 * 60 * 1
       );
     } catch (error) {
       throw new AppError(error, 500);
@@ -137,6 +136,7 @@ class PaymentService {
 
   async updateStatusIncome(id) {
     try {
+      console.log(id);
       const income = await incomeRepo.getIncomeById(id);
       const amount = income.amount;
       const uid = income.uid;

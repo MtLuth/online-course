@@ -16,6 +16,7 @@ import incomeRepo from "../repository/incomeRepo.js";
 import myLearningsRepo from "../repository/myLearningsRepo.js";
 import walletRepo from "../repository/walletRepo.js";
 import { REFUSED } from "dns";
+import courseRepo from "../repository/courseRepo.js";
 
 class RefundService {
   async createRefund(uid, refundInformation) {
@@ -70,6 +71,9 @@ class RefundService {
       await Promise.all([
         incomeRepo.updateRefundStatus(orderCode, true),
         myLearningsRepo.removeCourses(uid, refundCourses),
+        refundCourses.forEach((course) => {
+          courseRepo.updateEnrollment(course.courseId, -1);
+        }),
       ]);
       await refundRepo.createRefund(uid, refund);
       return "Yêu cầu hoàn tiền của bạn đã được gửi đi!";
@@ -180,7 +184,7 @@ class RefundService {
           item.orderCode.includes(searchParam)
         );
       }
-      results = results.sort((a, b) => b.date - a.date);
+      results = results.sort((a, b) => new Date(b.date) - new Date(a.date));
       return results;
     } catch (error) {
       throw new AppError(`Lỗi khi lấy danh sách yêu cầu hoàn tiền!`, 500);
@@ -196,12 +200,11 @@ class RefundService {
       const purchase = await purchaseHistoryRepo.getPurchaseByCode(
         refund.orderCode
       );
-      if (Date.now() - purchase.boughtAt._seconds * 1000 > 1000 * 60 * 3) {
+      if (Date.now() - purchase.boughtAt._seconds * 1000 > 1000 * 60 * 24) {
         await Promise.all([
           purchaseHistoryRepo.updateStatusPurchase(
             refund.orderCode,
-            purchase.sku,
-            false
+            PurchaseStatus.succeed
           ),
           purchase.sku.forEach((item) => {
             walletRepo.updateWallet(item.instructor, {
@@ -219,7 +222,10 @@ class RefundService {
       }
       await Promise.all([
         myLearningsRepo.addCourses(purchase.uid, purchase.sku),
-        await refundRepo.updateStatusRefund(id, "Cancel"),
+        purchase.sku.forEach((course) => {
+          courseRepo.updateEnrollment(course.courseId, 1);
+        }),
+        refundRepo.updateStatusRefund(id, "Cancel"),
       ]);
       return "Bạn đã hủy hoàn tiền cho đơn hàng này!";
     } catch (error) {

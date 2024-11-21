@@ -62,6 +62,20 @@ class Cart {
     console.log("Đã xóa sản phẩm khỏi cửa hàng");
     return "Đã xóa sản phẩm khỏi cửa hàng!";
   }
+
+  async removeCourses(uid, courses) {
+    const snapshot = await this.dbRef.doc(uid).get();
+    if (!snapshot.exists) {
+      return;
+    }
+    const coursesId = courses.map((course) => course.courseId);
+    const newCourses = snapshot.data().courses;
+    coursesId.forEach((id) => delete newCourses[id]);
+    await this.dbRef.doc(uid).update({
+      courses: newCourses,
+      total: snapshot.data().total - coursesId.length,
+    });
+  }
 }
 
 export default new Cart();
