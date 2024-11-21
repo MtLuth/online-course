@@ -24,7 +24,6 @@ import DetailInstructor from "@/sections/admin/DetailInstructors";
 import { instructorApi } from "@/server/Instructor";
 import { styled } from "@mui/system";
 
-// Tùy chỉnh các thành phần để cải thiện giao diện
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
   borderRadius: theme.spacing(2),

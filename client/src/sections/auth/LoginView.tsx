@@ -62,6 +62,7 @@ export default function LoginView() {
         if (response.status === "success") {
           const { tokenPairs, role } = response.message;
           setSessionToken(tokenPairs.accessToken);
+          setUserRole(role);
           Cookies.set("role", role, { expires: 1 });
           notifySuccess("Đăng nhập thành công!");
           reset();

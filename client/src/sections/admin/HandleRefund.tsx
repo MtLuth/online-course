@@ -167,7 +167,6 @@ const RefundRequestTable = () => {
     setPage(0);
   };
 
-  // Debounce search input to prevent excessive API calls
   const debouncedSearch = useCallback(
     debounce((value: string) => {
       setSearchTerm(value);
@@ -193,7 +192,6 @@ const RefundRequestTable = () => {
           </HeaderBox>
         </Box>
 
-        {/* Thanh Tìm Kiếm và Lọc Trạng Thái */}
         <Box
           mb={2}
           display="flex"

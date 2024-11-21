@@ -14,9 +14,6 @@ const SidebarItems = ({ toggleMobileSidebar }: any) => {
 
   const { userRole } = useAppContext();
 
-  console.log("Menuitems:", Menuitems); // Thêm log để kiểm tra
-
-  // Kiểm tra xem Menuitems có phải là mảng không
   if (!Array.isArray(Menuitems)) {
     console.error("Menuitems không phải là một mảng!", Menuitems);
     return (
@@ -25,13 +22,11 @@ const SidebarItems = ({ toggleMobileSidebar }: any) => {
       </Box>
     );
   }
-
-  // Lọc các mục menu dựa trên userRole
   const filteredMenuItems = Menuitems.filter((item) => {
     if (item.roles && !item.roles.includes(userRole)) {
-      return false; // Ẩn mục này nếu userRole không nằm trong roles
+      return false;
     }
-    return true; // Hiển thị các mục khác
+    return true;
   });
 
   return (

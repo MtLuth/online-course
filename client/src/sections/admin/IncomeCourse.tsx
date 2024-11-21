@@ -39,7 +39,7 @@ const HeaderBox = styled(Box)(({ theme }) => ({
   padding: theme.spacing(4, 2),
   backgroundColor: theme.palette.primary.main,
   color: theme.palette.primary.contrastText,
-  borderRadius: theme.spacing(2, 2, 0, 0),
+  borderRadius: theme.spacing(2),
 }));
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -93,7 +93,6 @@ const IncomeTable = () => {
           }))
         );
         setTotal(itemCount);
-        notifySuccess("Đã tải dữ liệu thành công!");
       } else {
         const errorData = await response.json();
         notifyError(errorData.message || "Không thể tải dữ liệu doanh thu.");

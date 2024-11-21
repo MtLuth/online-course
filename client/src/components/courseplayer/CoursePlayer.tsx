@@ -1,4 +1,3 @@
-// components/courseplayer/CoursePlayer.tsx
 "use client";
 
 import React from "react";
@@ -8,6 +7,8 @@ import VideoPlayer from "@/components/VideoPlayer";
 import LectureNavigation from "@/components/LectureNavigation";
 import LectureList from "@/components/courseplayer/LectureList";
 import ResourcesList from "@/components/courseplayer/ResourcesList"; // Import component ResourcesList
+import parse from "html-react-parser"; // Import html-react-parser
+import DOMPurify from "dompurify"; // Import dompurify
 
 interface CoursePlayerProps {
   course: CourseDetailType;
@@ -55,6 +56,12 @@ const CoursePlayer: React.FC<CoursePlayerProps> = ({
     setCurrentLectureIndex({ section: newSection, lecture: newLecture });
   };
 
+  // Function to safely parse and sanitize HTML
+  const renderDescription = (htmlString: string) => {
+    const cleanHTML = DOMPurify.sanitize(htmlString);
+    return parse(cleanHTML);
+  };
+
   return (
     <Box sx={{ flexGrow: 1, p: 2 }}>
       <Grid container spacing={2}>
@@ -82,8 +89,9 @@ const CoursePlayer: React.FC<CoursePlayerProps> = ({
           ) : currentLecture?.type === "article" ? (
             <Paper sx={{ p: 2, mb: 2 }} elevation={3}>
               <Typography variant="body1">
-                {currentLecture.description ||
-                  "Không có mô tả cho bài giảng này."}
+                {currentLecture.description
+                  ? renderDescription(currentLecture.description)
+                  : "Không có mô tả cho bài giảng này."}
               </Typography>
             </Paper>
           ) : (
