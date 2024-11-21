@@ -154,7 +154,6 @@ export default function RegisterView() {
           }}
         />
 
-        {/* Hiển thị yêu cầu mật khẩu */}
         <Box sx={{ mt: 1 }}>
           <Typography variant="subtitle2">Mật khẩu phải chứa:</Typography>
           <List dense>
@@ -166,7 +165,7 @@ export default function RegisterView() {
                   <Iconify icon="material-symbols:cancel" color="red" />
                 )}
               </ListItemIcon>
-              <ListItemText primary="Ít nhất 6 ký tự" />
+              <ListItemText primary="Ít nhất 8 ký tự" />
             </ListItem>
             <ListItem>
               <ListItemIcon>

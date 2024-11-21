@@ -82,6 +82,7 @@ class PaymentService {
         }
         const uid = purchase.uid;
         const sku = purchase.sku;
+        let newIncomes = [];
         await Promise.all(
           sku.map(async (course) => {
             courseRepo.updateEnrollment(course.courseId, 1).catch((err) => {
@@ -98,11 +99,14 @@ class PaymentService {
               orderCode,
               new Date()
             );
-            await this.addIncome(course.instructor, income).catch((err) => {
-              throw new AppError(`Error in courseId ${course.courseId}:`, err);
-            });
+            const newId = await this.addIncome(uid, income);
+            newIncomes.push(newId);
           })
         );
+        console.log(newIncomes.length);
+        setTimeout(async () => {
+          await this.updateStatusIncome(newIncomes);
+        }, 1000 * 30);
         await cartRepo.removeCourses(uid, sku);
         const message = await myLearningsRepo.addCourses(uid, sku);
         return message;
@@ -115,42 +119,38 @@ class PaymentService {
   async addIncome(uid, income) {
     try {
       const newId = await incomeRepo.addIncome(uid, income);
+      console.log("ADD", income.amount);
       await walletRepo.updateWallet(uid, {
         inProgress: income.amount,
       });
-
-      setTimeout(
-        async () => {
-          try {
-            await this.updateStatusIncome(newId);
-          } catch (error) {
-            console.error("Error updating wallet or income status:", error);
-          }
-        },
-        1000 * 60 * 1
-      );
+      return newId;
     } catch (error) {
       throw new AppError(error, 500);
     }
   }
 
-  async updateStatusIncome(id) {
+  async updateStatusIncome(incomes) {
     try {
-      console.log(id);
-      const income = await incomeRepo.getIncomeById(id);
-      const amount = income.amount;
-      const uid = income.uid;
-      if (income.refundStatus === false) {
-        await Promise.all([
-          incomeRepo.updateStatusIncome(id, IncomeStatus.Complete),
-          walletRepo.updateWallet(uid, {
-            withdrawable: amount,
-            inProgress: -amount,
-          }),
-        ]);
-      }
+      await Promise.all(
+        incomes.map(async (id) => {
+          const income = await incomeRepo.getIncomeById(id);
+          const { amount, uid, refundStatus } = income;
+
+          console.log(amount);
+
+          if (!refundStatus) {
+            await Promise.all([
+              incomeRepo.updateStatusIncome(id, IncomeStatus.Complete),
+              walletRepo.updateWallet(uid, {
+                withdrawable: amount,
+                inProgress: -amount,
+              }),
+            ]);
+          }
+        })
+      );
     } catch (error) {
-      throw new AppError(error, 500);
+      throw new AppError(error.message, 500);
     }
   }
 }
