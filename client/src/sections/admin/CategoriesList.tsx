@@ -1,4 +1,3 @@
-"use client";
 import React, { useEffect, useState } from "react";
 import {
   Button,
@@ -21,8 +20,8 @@ import { categoriesApi } from "@/server/Categories";
 import BaseCard from "@/components/shared/DashboardCard";
 import { useToastNotification } from "@/hook/useToastNotification";
 import { styled } from "@mui/system";
-import { getAuthToken } from "@/utils/auth";
 
+// Styled Header Box
 const HeaderBox = styled(Box)(({ theme }) => ({
   textAlign: "center",
   padding: theme.spacing(4, 2),
@@ -31,8 +30,7 @@ const HeaderBox = styled(Box)(({ theme }) => ({
   borderRadius: theme.spacing(2, 2, 0, 0),
 }));
 
-const CategoriesList = () => {
-  const token = getAuthToken();
+const CategoriesList = ({ token }) => {
   const [categories, setCategories] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
   const [editCategory, setEditCategory] = useState(null);

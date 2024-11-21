@@ -1,7 +1,5 @@
-// src/components/RefundList.tsx
 "use client";
-
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -23,18 +21,12 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  TextField,
 } from "@mui/material";
 import { refundApi } from "@/server/Refund";
 import { getAuthToken } from "@/utils/auth";
 import { useToastNotification } from "@/hook/useToastNotification";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import debounce from "lodash.debounce";
 
 export interface PayeeAccount {
   bankNumber: string;
@@ -57,7 +49,7 @@ export interface RefundItem {
   payeeAccount: PayeeAccount;
   uid: string;
   email: string;
-  date: number; // Giả sử đây là timestamp số nguyên
+  date: number;
   status: string;
 }
 
@@ -87,15 +79,11 @@ const RefundList: React.FC = () => {
   const [openDialog, setOpenDialog] = useState<boolean>(false); // Trạng thái Dialog
   const [selectedRefund, setSelectedRefund] = useState<RefundItem | null>(null); // Yêu cầu được chọn để hủy
 
-  // State cho số lượng mục trên mỗi trang
-  const [limit, setLimit] = useState<number>(5); // Mặc định 5 mục/trang
-
-  // State cho tìm kiếm
-  const [searchParam, setSearchParam] = useState<string>("");
-
   const { notifyError, notifySuccess } = useToastNotification();
 
-  const fetchRefunds = async (page: number, limit: number, search: string) => {
+  const refundsPerPage = 5;
+
+  const fetchRefunds = async (page: number) => {
     setLoading(true);
     setError(null);
     try {
@@ -106,12 +94,7 @@ const RefundList: React.FC = () => {
         return;
       }
 
-      const response: RefundResponse = await refundApi.refundUser(
-        token,
-        page,
-        limit,
-        search
-      );
+      const response: RefundResponse = await refundApi.refundUser(token);
 
       if (response.status === "Successfully") {
         setRefunds(response.message.results);
@@ -128,19 +111,9 @@ const RefundList: React.FC = () => {
     }
   };
 
-  // Debounce hàm tìm kiếm để giảm số lượng gọi API khi người dùng nhập nhanh
-  const debouncedFetchRefunds = useCallback(
-    debounce((page: number, limit: number, search: string) => {
-      fetchRefunds(page, limit, search);
-    }, 500),
-    []
-  );
-
   useEffect(() => {
-    debouncedFetchRefunds(currentPage, limit, searchParam);
-    // Hủy debounce khi component unmount
-    return debouncedFetchRefunds.cancel;
-  }, [currentPage, limit, searchParam, debouncedFetchRefunds]);
+    fetchRefunds(currentPage);
+  }, [currentPage]);
 
   const handleChangePage = (
     event: React.ChangeEvent<unknown>,
@@ -149,24 +122,12 @@ const RefundList: React.FC = () => {
     setCurrentPage(value);
   };
 
-  const handleChangeLimit = (event: React.ChangeEvent<{ value: unknown }>) => {
-    setLimit(event.target.value as number);
-    setCurrentPage(1); // Reset về trang đầu khi thay đổi limit
-  };
-
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchParam(event.target.value);
-    setCurrentPage(1); // Reset về trang đầu khi thay đổi tìm kiếm
-  };
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Đã hoàn tiền":
         return "success";
       case "Hệ thống từ chối":
         return "error";
-      case "Đang xử lý":
-        return "warning";
       default:
         return "default";
     }
@@ -199,7 +160,7 @@ const RefundList: React.FC = () => {
 
       if (response.status === "Successfully") {
         notifySuccess("Hủy yêu cầu hoàn tiền thành công.");
-        fetchRefunds(currentPage, limit, searchParam);
+        fetchRefunds(currentPage);
       } else {
         notifyError(response.status || "Không thể hủy yêu cầu.");
       }
@@ -227,34 +188,6 @@ const RefundList: React.FC = () => {
       >
         Danh Sách Yêu Cầu Hoàn Tiền
       </Typography>
-
-      {/* Thanh tìm kiếm */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 2,
-        }}
-      >
-        {/* Thành phần chọn số lượng mục trên mỗi trang */}
-        <FormControl variant="standard" sx={{ minWidth: 120 }}>
-          <InputLabel id="limit-select-label">Mục/trang</InputLabel>
-          <Select
-            labelId="limit-select-label"
-            id="limit-select"
-            value={limit}
-            onChange={handleChangeLimit}
-            label="Mục/trang"
-          >
-            <MenuItem value={5}>5</MenuItem>
-            <MenuItem value={10}>10</MenuItem>
-            <MenuItem value={20}>20</MenuItem>
-            <MenuItem value={50}>50</MenuItem>
-          </Select>
-        </FormControl>
-      </Box>
-
       {loading ? (
         <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
           <CircularProgress />
@@ -265,7 +198,7 @@ const RefundList: React.FC = () => {
         <Alert severity="info">Không có yêu cầu hoàn tiền nào.</Alert>
       ) : (
         <>
-          <TableContainer component={Paper} elevation={3}>
+          <TableContainer component={Paper}>
             <Table aria-label="refund table">
               <TableHead>
                 <TableRow>
@@ -357,9 +290,6 @@ const RefundList: React.FC = () => {
                 page={currentPage}
                 onChange={handleChangePage}
                 color="primary"
-                shape="rounded"
-                showFirstButton
-                showLastButton
               />
             </Box>
           )}

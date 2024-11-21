@@ -91,7 +91,7 @@ const DetailInstructor: React.FC<DetailInstructorProps> = ({
 
   const handleApprove = async () => {
     if (!instructor?.id) {
-      notifyError("Không tìm thấy ID Chuyên Gia.");
+      notifyError("Không tìm thấy ID giảng viên.");
       return;
     }
     setLoading(true);
@@ -133,7 +133,7 @@ const DetailInstructor: React.FC<DetailInstructorProps> = ({
 
   const handleConfirmReject = async () => {
     if (!instructor?.id) {
-      notifyError("Không tìm thấy ID Chuyên Gia");
+      notifyError("Không tìm thấy ID giảng viên.");
       return;
     }
     if (!rejectionReason.trim()) {
@@ -189,7 +189,7 @@ const DetailInstructor: React.FC<DetailInstructorProps> = ({
   return (
     <>
       <Dialog open={open} onClose={handleClose} fullWidth maxWidth="lg">
-        <StyledDialogTitle>Chi tiết Chuyên Gia</StyledDialogTitle>
+        <StyledDialogTitle>Chi tiết Giảng viên</StyledDialogTitle>
         <DialogContent>
           {instructor && (
             <Box sx={{ padding: 3 }}>

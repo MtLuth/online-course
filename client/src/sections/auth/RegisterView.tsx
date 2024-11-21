@@ -48,11 +48,7 @@ export default function RegisterView() {
     phoneNumber: Yup.string().required("Vui lòng nhập số điện thoại"),
     password: Yup.string()
       .required("Vui lòng nhập mật khẩu")
-      .min(6, "Mật khẩu cần ít nhất 8 ký tự")
-      .matches(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).*$/,
-        "Mật khẩu phải chứa ít nhất một chữ hoa, một chữ thường, một chữ số và một ký tự đặc biệt"
-      ),
+      .min(8, "Mật khẩu cần ít nhất 8 ký tự"),
     confirmPassword: Yup.string()
       .required("Vui lòng xác nhận mật khẩu")
       .oneOf([Yup.ref("password")], "Mật khẩu không khớp"),

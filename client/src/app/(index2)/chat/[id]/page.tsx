@@ -19,7 +19,6 @@ import {
   ListItemAvatar,
   ListItemText,
   Divider,
-  Tooltip,
 } from "@mui/material";
 import { useToastNotification } from "@/hook/useToastNotification";
 import { getAuthToken } from "@/utils/auth";
@@ -29,13 +28,6 @@ import InsertEmoticonIcon from "@mui/icons-material/InsertEmoticon";
 import { messageApi } from "@/server/Message";
 import { userApi } from "@/server/User";
 import { jwtDecode } from "jwt-decode";
-
-interface UserProfile {
-  email: string;
-  fullName: string;
-  phoneNumber: string | null;
-  avt: string;
-}
 
 const ChatPage = () => {
   const { id } = useParams(); // Current conversation ID from route
@@ -48,34 +40,17 @@ const ChatPage = () => {
   const { notifyError, notifySuccess } = useToastNotification(); // Toast notifications
   const token = getAuthToken();
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const conversationsRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null); // Ref to scroll to bottom
+  const conversationsRef = useRef<HTMLDivElement>(null); // Ref to conversations list
 
-  const [imageToSend, setImageToSend] = useState<File | null>(null);
-  const [isImageDialogOpen, setIsImageDialogOpen] = useState<boolean>(false);
+  const [imageToSend, setImageToSend] = useState<File | null>(null); // Ảnh cần gửi
+  const [isImageDialogOpen, setIsImageDialogOpen] = useState<boolean>(false); // Trạng thái mở hộp thoại xác nhận
 
   // State để lưu trữ hồ sơ của người dùng hiện tại
-  const [currentUserProfile, setCurrentUserProfile] =
-    useState<UserProfile | null>(null);
-  const [conversationUserProfile, setConversationUserProfile] =
-    useState<UserProfile | null>(null);
+  const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  // 2. Create a helper function to format the timestamp
-  const formatDate = (timestamp?: number): string => {
-    if (!timestamp) return "Unknown date";
-    const date = new Date(timestamp);
-    if (isNaN(date.getTime())) return "Invalid date";
-    const hours = String(date.getHours()).padStart(2, "0");
-    const minutes = String(date.getMinutes()).padStart(2, "0");
-    const seconds = String(date.getSeconds()).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-indexed
-    const year = date.getFullYear();
-    return `${hours}:${minutes}:${seconds} ${day}/${month}/${year}`;
   };
 
   // Decode token to get user ID và lấy hồ sơ người dùng hiện tại
@@ -88,7 +63,7 @@ const ChatPage = () => {
         } else {
           notifyError("Không thể lấy thông tin hồ sơ của bạn.");
         }
-      } catch (error: any) {
+      } catch (error) {
         console.error("Error fetching current user profile:", error);
         notifyError("Đã xảy ra lỗi khi lấy thông tin hồ sơ của bạn.");
       }
@@ -126,7 +101,6 @@ const ChatPage = () => {
           (conversation: any) => {
             return {
               ...conversation,
-              // Optionally, you can add profile here if available
             };
           }
         );
@@ -136,7 +110,7 @@ const ChatPage = () => {
       } else {
         notifyError("Không thể tải danh sách cuộc trò chuyện.");
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error fetching conversations:", error);
       notifyError("Đã xảy ra lỗi khi tải danh sách cuộc trò chuyện.");
     }
@@ -167,35 +141,11 @@ const ChatPage = () => {
       } else {
         notifyError(data.message || "Không thể tải tin nhắn.");
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error fetching messages:", error);
       notifyError("Đã xảy ra lỗi khi tải tin nhắn.");
     }
   };
-
-  // Fetch conversation user profile when id changes
-  useEffect(() => {
-    const fetchConversationUserProfile = async () => {
-      if (!id) {
-        setConversationUserProfile(null);
-        return;
-      }
-
-      try {
-        const response = await userApi.profileUser(id, token);
-        if (response.status === "Successfully") {
-          setConversationUserProfile(response.message);
-        } else {
-          notifyError("Không thể lấy thông tin hồ sơ cuộc trò chuyện.");
-        }
-      } catch (error: any) {
-        console.error("Error fetching conversation user profile:", error);
-        notifyError("Đã xảy ra lỗi khi lấy thông tin hồ sơ cuộc trò chuyện.");
-      }
-    };
-
-    fetchConversationUserProfile();
-  }, [id, token]);
 
   useEffect(() => {
     if (!id || !uid) return;
@@ -219,7 +169,7 @@ const ChatPage = () => {
       eventSource.close();
     });
 
-    fetchMessages(); // Fetch messages when EventSource is initialized
+    fetchMessages(); // Fetch messages khi EventSource được khởi tạo
 
     return () => {
       eventSource.close();
@@ -246,13 +196,13 @@ const ChatPage = () => {
       try {
         const response = await uploadApi.uploadImages([imageToSend], token);
         if (response.status === "Successfully") {
-          messageContent = response.message; // URL of the uploaded image
+          messageContent = response.message; // URL của ảnh đã tải lên
           contentType = "image";
         } else {
           notifyError("Không thể tải lên ảnh.");
           return;
         }
-      } catch (error: any) {
+      } catch (error) {
         console.error("Error uploading image:", error);
         notifyError("Đã xảy ra lỗi khi tải ảnh.");
         return;
@@ -286,10 +236,13 @@ const ChatPage = () => {
       if (response.ok) {
         setNewMessage("");
         setImageToSend(null);
+        notifySuccess("Tin nhắn đã được gửi.");
+        // Optionally, append the new message to messages state
+        // setMessages((prevMessages) => [...prevMessages, data.message]);
       } else {
         notifyError(data.message || "Không thể gửi tin nhắn.");
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error sending message:", error);
       notifyError("Đã xảy ra lỗi khi gửi tin nhắn.");
     }
@@ -301,7 +254,7 @@ const ChatPage = () => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
       setImageToSend(file);
-      setIsImageDialogOpen(true); // Open image confirmation dialog
+      setIsImageDialogOpen(true); // Mở hộp thoại xác nhận gửi ảnh
     }
   };
 
@@ -317,7 +270,7 @@ const ChatPage = () => {
     setImageToSend(null);
   };
 
-  // Handle sticker selection and insert into message input
+  // Handle sticker selection và chèn vào trường nhập tin nhắn
   const handleStickerSelect = (sticker: string) => {
     setNewMessage((prev) => prev + sticker);
     setStickerDialogOpen(false);
@@ -358,7 +311,9 @@ const ChatPage = () => {
   const stickers = ["🙂", "😂", "😎", "😍", "😜", "👍", "🎉", "❤️"];
 
   // Lấy hồ sơ của cuộc trò chuyện hiện tại
-  const currentConversationProfile = conversationUserProfile;
+  const currentConversationProfile = conversationList.find(
+    (conversation) => conversation.uid === id
+  )?.profile;
 
   return (
     <Box sx={{ display: "flex", height: "85vh" }}>
@@ -456,7 +411,6 @@ const ChatPage = () => {
             messages.map((msgItem, index) => {
               const msg = msgItem.message || msgItem;
               const isUser = msg.sender === uid;
-
               return (
                 <Box
                   key={index}
@@ -481,31 +435,23 @@ const ChatPage = () => {
                     }
                     sx={{ width: 40, height: 40, margin: "0 8px" }}
                   />
-                  {/* 3. Wrap the message bubble with Tooltip */}
-                  <Tooltip title={formatDate(msg.date)}>
-                    <Box
-                      sx={{
-                        maxWidth: "70%",
-                        backgroundColor: isUser ? "#DCF8C6" : "#E1F5FE",
-                        padding: 1.5,
-                        borderRadius: 2,
-                        boxShadow: 1,
-                        cursor: "pointer", // Optional: change cursor to indicate hoverable
-                      }}
-                    >
-                      {/* Hiển thị tên người gửi */}
-                      <Typography
-                        variant="subtitle2"
-                        sx={{ fontWeight: "bold" }}
-                      >
-                        {isUser
-                          ? currentUserProfile?.fullName || "Bạn"
-                          : currentConversationProfile?.fullName ||
-                            "Chuyên Gia"}
-                      </Typography>
-                      {renderMessageContent(msg)}
-                    </Box>
-                  </Tooltip>
+                  <Box
+                    sx={{
+                      maxWidth: "70%",
+                      backgroundColor: isUser ? "#DCF8C6" : "#E1F5FE",
+                      padding: 1.5,
+                      borderRadius: 2,
+                      boxShadow: 1,
+                    }}
+                  >
+                    {/* Hiển thị tên người gửi */}
+                    <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>
+                      {isUser
+                        ? currentUserProfile?.fullName || "Bạn"
+                        : currentConversationProfile?.fullName || "Chuyên Gia"}
+                    </Typography>
+                    {renderMessageContent(msg)}
+                  </Box>
                 </Box>
               );
             })

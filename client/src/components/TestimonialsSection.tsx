@@ -14,7 +14,7 @@ const TESTIMONIALS = [
   {
     name: "Trần Thị B",
     avatarUrl: "/avatars/user2.jpg",
-    comment: "Chuyên Gia nhiệt tình, nội dung phong phú. Rất đáng để tham gia.",
+    comment: "Giảng viên nhiệt tình, nội dung phong phú. Rất đáng để tham gia.",
   },
   {
     name: "Lê Văn C",
