@@ -47,7 +47,7 @@ export default function InstructorBecomeView() {
       .email("Email không hợp lệ"),
     password: Yup.string()
       .required("Vui lòng nhập mật khẩu")
-      .min(6, "Mật khẩu cần ít nhất 6 ký tự"),
+      .min(6, "Mật khẩu cần ít nhất 8 ký tự"),
     confirmPassword: Yup.string()
       .required("Vui lòng xác nhận mật khẩu")
       .oneOf([Yup.ref("password")], "Mật khẩu không khớp"),

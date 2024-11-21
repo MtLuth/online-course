@@ -111,7 +111,7 @@ export default function AdminDashboard() {
 
     const otherData = [
       { name: "Số khóa học", value: data.numberOfCourses },
-      { name: "Chuyên Gia đang chờ", value: data.numberInstructorPending },
+      { name: "Giảng viên đang chờ", value: data.numberInstructorPending },
       { name: "Hoàn tiền đang xử lý", value: data.numberRefundInProgress },
       { name: "Rút tiền đang chờ", value: data.numberWithdrawPending },
     ];

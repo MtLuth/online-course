@@ -30,7 +30,7 @@ class PaymentService {
     setTimeout(
       async () => {
         try {
-          const strOrderCode = String(orderCode);
+          let strOrderCode = String(orderCode);
           while (strOrderCode.length < 6) {
             strOrderCode = "0" + strOrderCode;
           }
@@ -42,7 +42,7 @@ class PaymentService {
           return;
         } catch (error) {
           console.log(error);
-          throw new AppError(`Lỗi khi loại bỏ đơn hàng không thanh toán`);
+          throw new AppError(`Lỗi khi loại bỏ đơn hàng không thanh toán`, 500);
         }
       },
       1000 * 60 * 3
@@ -76,51 +76,42 @@ class PaymentService {
 
         const purchase =
           await purchaseHistoryRepo.getPurchaseByCode(stringOrderCode);
-        if (!purchase) throw new AppError(`Không tìm thấy hóa đơn`, 400);
-
-        const { uid, sku } = purchase;
-        const newIncomes = [];
-
+        if (purchase === null) {
+          throw new AppError(`Không tìm thấy hóa đơn`, 400);
+        }
+        const uid = purchase.uid;
+        const sku = purchase.sku;
+        let newIncomes = [];
         await Promise.all(
           sku.map(async (course) => {
-            try {
-              await courseRepo.updateEnrollment(course.courseId, 1);
+            courseRepo.updateEnrollment(course.courseId, 1).catch((err) => {
+              throw new AppError(`Error in courseId ${course.courseId}:`, err);
+            });
 
-              const amount = Math.round(course.salePrice * 0.94);
-              const income = new Income(
-                amount,
-                course,
-                IncomeStatus.InProgress,
-                stringOrderCode,
-                new Date()
-              );
+            const amount = Math.round(course.salePrice * 0.94);
+            const income = new Income(
+              amount,
+              course,
+              IncomeStatus.InProgress,
+              stringOrderCode,
+              new Date()
+            );
 
-              const newId = await this.addIncome(uid, income);
-              newIncomes.push(newId);
-            } catch (err) {
-              console.error(
-                `Lỗi khi thêm khóa học ${course.courseId}:`,
-                err.message
-              );
-              throw err;
-            }
+            const income = new Income(
+              amount,
+              course,
+              IncomeStatus.InProgress,
+              orderCode,
+              new Date()
+            );
+            const newId = await this.addIncome(course.instructor, income);
+            newIncomes.push(newId);
           })
         );
-
-        console.log(`Thu nhập mới: ${newIncomes.length} mục được thêm`);
-
-        // Cập nhật trạng thái thu nhập sau 30 giây
+        console.log(newIncomes.length);
         setTimeout(async () => {
-          try {
-            await this.updateStatusIncome(newIncomes);
-          } catch (err) {
-            console.error(
-              `Lỗi khi cập nhật trạng thái thu nhập: ${err.message}`
-            );
-          }
+          await this.updateStatusIncome(newIncomes);
         }, 1000 * 30);
-
-        // Xóa các khóa học khỏi giỏ hàng và thêm vào danh sách học
         await cartRepo.removeCourses(uid, sku);
         const message = await myLearningsRepo.addCourses(uid, sku);
         return message;
@@ -133,13 +124,10 @@ class PaymentService {
   async addIncome(uid, income) {
     try {
       const newId = await incomeRepo.addIncome(uid, income);
-      console.log(`Thêm thu nhập: ${income.amount} vào người dùng: ${uid}`);
-
-      // Cập nhật ví
+      console.log("ADD", income.amount);
       await walletRepo.updateWallet(uid, {
         inProgress: income.amount,
       });
-
       return newId;
     } catch (error) {
       console.error(`Lỗi khi thêm thu nhập cho uid ${uid}: ${error.message}`);
@@ -152,16 +140,9 @@ class PaymentService {
       await Promise.all(
         incomes.map(async (id) => {
           const income = await incomeRepo.getIncomeById(id);
-
-          if (!income) {
-            console.error(`Không tìm thấy thu nhập với ID: ${id}`);
-            return;
-          }
-
           const { amount, uid, refundStatus } = income;
-          console.log(
-            `Thu nhập ${id}: Số tiền ${amount}, UID: ${uid}, refundStatus: ${refundStatus}`
-          );
+
+          console.log(amount);
 
           if (!refundStatus) {
             await Promise.all([
@@ -171,12 +152,10 @@ class PaymentService {
                 inProgress: -amount,
               }),
             ]);
-            console.log(`Cập nhật trạng thái thu nhập ID: ${id} hoàn tất`);
           }
         })
       );
     } catch (error) {
-      console.error(`Lỗi khi cập nhật trạng thái thu nhập: ${error.message}`);
       throw new AppError(error.message, 500);
     }
   }

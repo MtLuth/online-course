@@ -7,7 +7,7 @@ class Cart {
   async addCourse(uid, course) {
     const snapshot = await this.dbRef.doc(uid).get();
     const data = snapshot.data();
-    let courses = data.courses;
+    let courses = data.courses || {};
     const id = course.id;
 
     courses[id] = {
@@ -61,6 +61,20 @@ class Cart {
     await this.dbRef.doc(uid).update({ courses: { ...courses }, total: total });
     console.log("Đã xóa sản phẩm khỏi cửa hàng");
     return "Đã xóa sản phẩm khỏi cửa hàng!";
+  }
+
+  async removeCourses(uid, courses) {
+    const snapshot = await this.dbRef.doc(uid).get();
+    if (!snapshot.exists) {
+      return;
+    }
+    const coursesId = courses.map((course) => course.courseId);
+    const newCourses = snapshot.data().courses;
+    coursesId.forEach((id) => delete newCourses[id]);
+    await this.dbRef.doc(uid).update({
+      courses: newCourses,
+      total: snapshot.data().total - coursesId.length,
+    });
   }
 }
 

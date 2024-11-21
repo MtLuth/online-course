@@ -189,12 +189,12 @@ class CourseRepo {
     return await Promise.all(promises);
   }
 
-  async increaseEnrollment(uid) {
-    const doc = await this.dbRef.doc(uid).get();
+  async updateEnrollment(courseId, number) {
+    const doc = await this.dbRef.doc(courseId).get();
     const data = doc.data();
     let enrollment = data.enrollment;
-    enrollment = enrollment + 1;
-    await this.dbRef.doc(uid).update({
+    enrollment = enrollment + number;
+    await this.dbRef.doc(courseId).update({
       enrollment: enrollment,
     });
   }

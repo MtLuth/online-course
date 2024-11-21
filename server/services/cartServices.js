@@ -6,6 +6,7 @@ class CartService {
   async addCourse(uid, courseId) {
     try {
       const course = await courseRepo.getCourseById(courseId);
+      console.log(course);
       let total;
       if (course) {
         total = await cartRepo.addCourse(uid, course);

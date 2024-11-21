@@ -377,7 +377,7 @@ const CoursesList: React.FC<CoursesListProps> = ({
 
           <Accordion>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography>Tìm kiếm tên khóa học</Typography>
+              <Typography>Tìm kiếm khóa học theo tên, mô tả,...</Typography>
             </AccordionSummary>
             <AccordionDetails>
               <form onSubmit={handleSearchSubmit}>
