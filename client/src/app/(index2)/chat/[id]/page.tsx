@@ -340,6 +340,9 @@ const ChatPage = () => {
                 onClick={() => router.push(`/chat/${conversation.uid}`)} // Navigate to the conversation
                 selected={conversation.uid === id} // Highlight the selected conversation
                 sx={{
+                  backgroundColor:
+                    conversation.uid === id ? "#4fc3f7" : "#f5f5f5",
+                  borderRadius: 1,
                   "&.Mui-selected": {
                     backgroundColor: "#81d4fa", // Darker blue background for selected item
                     "&:hover": {
@@ -348,7 +351,7 @@ const ChatPage = () => {
                   },
                   "&:hover": {
                     backgroundColor:
-                      conversation.uid === id ? "#4fc3f7" : "#f5f5f5", // Hover effect
+                      conversation.uid === id ? "#357897" : "#f5f5f5", // Hover effect
                   },
                 }}
               >
