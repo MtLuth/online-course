@@ -19,7 +19,7 @@ import {
   ListItemAvatar,
   ListItemText,
   Divider,
-  Tooltip, // 1. Import Tooltip
+  Tooltip,
 } from "@mui/material";
 import { useToastNotification } from "@/hook/useToastNotification";
 import { getAuthToken } from "@/utils/auth";
@@ -29,6 +29,13 @@ import InsertEmoticonIcon from "@mui/icons-material/InsertEmoticon";
 import { messageApi } from "@/server/Message";
 import { userApi } from "@/server/User";
 import { jwtDecode } from "jwt-decode";
+
+interface UserProfile {
+  email: string;
+  fullName: string;
+  phoneNumber: string | null;
+  avt: string;
+}
 
 const ChatPage = () => {
   const { id } = useParams(); // Current conversation ID from route
@@ -48,7 +55,10 @@ const ChatPage = () => {
   const [isImageDialogOpen, setIsImageDialogOpen] = useState<boolean>(false);
 
   // State để lưu trữ hồ sơ của người dùng hiện tại
-  const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
+  const [currentUserProfile, setCurrentUserProfile] =
+    useState<UserProfile | null>(null);
+  const [conversationUserProfile, setConversationUserProfile] =
+    useState<UserProfile | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -78,7 +88,7 @@ const ChatPage = () => {
         } else {
           notifyError("Không thể lấy thông tin hồ sơ của bạn.");
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching current user profile:", error);
         notifyError("Đã xảy ra lỗi khi lấy thông tin hồ sơ của bạn.");
       }
@@ -116,6 +126,7 @@ const ChatPage = () => {
           (conversation: any) => {
             return {
               ...conversation,
+              // Optionally, you can add profile here if available
             };
           }
         );
@@ -125,7 +136,7 @@ const ChatPage = () => {
       } else {
         notifyError("Không thể tải danh sách cuộc trò chuyện.");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching conversations:", error);
       notifyError("Đã xảy ra lỗi khi tải danh sách cuộc trò chuyện.");
     }
@@ -156,11 +167,35 @@ const ChatPage = () => {
       } else {
         notifyError(data.message || "Không thể tải tin nhắn.");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching messages:", error);
       notifyError("Đã xảy ra lỗi khi tải tin nhắn.");
     }
   };
+
+  // Fetch conversation user profile when id changes
+  useEffect(() => {
+    const fetchConversationUserProfile = async () => {
+      if (!id) {
+        setConversationUserProfile(null);
+        return;
+      }
+
+      try {
+        const response = await userApi.profileUser(id, token);
+        if (response.status === "Successfully") {
+          setConversationUserProfile(response.message);
+        } else {
+          notifyError("Không thể lấy thông tin hồ sơ cuộc trò chuyện.");
+        }
+      } catch (error: any) {
+        console.error("Error fetching conversation user profile:", error);
+        notifyError("Đã xảy ra lỗi khi lấy thông tin hồ sơ cuộc trò chuyện.");
+      }
+    };
+
+    fetchConversationUserProfile();
+  }, [id, token]);
 
   useEffect(() => {
     if (!id || !uid) return;
@@ -184,7 +219,7 @@ const ChatPage = () => {
       eventSource.close();
     });
 
-    fetchMessages(); // Fetch messages khi EventSource được khởi tạo
+    fetchMessages(); // Fetch messages when EventSource is initialized
 
     return () => {
       eventSource.close();
@@ -211,13 +246,13 @@ const ChatPage = () => {
       try {
         const response = await uploadApi.uploadImages([imageToSend], token);
         if (response.status === "Successfully") {
-          messageContent = response.message; // URL của ảnh đã tải lên
+          messageContent = response.message; // URL of the uploaded image
           contentType = "image";
         } else {
           notifyError("Không thể tải lên ảnh.");
           return;
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error uploading image:", error);
         notifyError("Đã xảy ra lỗi khi tải ảnh.");
         return;
@@ -254,7 +289,7 @@ const ChatPage = () => {
       } else {
         notifyError(data.message || "Không thể gửi tin nhắn.");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error sending message:", error);
       notifyError("Đã xảy ra lỗi khi gửi tin nhắn.");
     }
@@ -266,7 +301,7 @@ const ChatPage = () => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
       setImageToSend(file);
-      setIsImageDialogOpen(true); // Mở hộp thoại xác nhận gửi ảnh
+      setIsImageDialogOpen(true); // Open image confirmation dialog
     }
   };
 
@@ -282,7 +317,7 @@ const ChatPage = () => {
     setImageToSend(null);
   };
 
-  // Handle sticker selection và chèn vào trường nhập tin nhắn
+  // Handle sticker selection and insert into message input
   const handleStickerSelect = (sticker: string) => {
     setNewMessage((prev) => prev + sticker);
     setStickerDialogOpen(false);
@@ -323,9 +358,7 @@ const ChatPage = () => {
   const stickers = ["🙂", "😂", "😎", "😍", "😜", "👍", "🎉", "❤️"];
 
   // Lấy hồ sơ của cuộc trò chuyện hiện tại
-  const currentConversationProfile = conversationList.find(
-    (conversation) => conversation.uid === id
-  )?.profile;
+  const currentConversationProfile = conversationUserProfile;
 
   return (
     <Box sx={{ display: "flex", height: "85vh" }}>
