@@ -1,14 +1,14 @@
 import PayOs from "@payos/node";
-import AppError from "../utils/appError.js";
+import Income, { IncomeStatus } from "../model/incomeModel.js";
+import cartRepo from "../repository/cartRepo.js";
+import courseRepo from "../repository/courseRepo.js";
+import incomeRepo from "../repository/incomeRepo.js";
+import myLearningsRepo from "../repository/myLearningsRepo.js";
 import purchaseHistoryRepo, {
   PurchaseStatus,
 } from "../repository/purchaseHistoryRepo.js";
-import myLearningsRepo from "../repository/myLearningsRepo.js";
-import courseRepo from "../repository/courseRepo.js";
-import incomeRepo from "../repository/incomeRepo.js";
-import Income, { IncomeStatus } from "../model/incomeModel.js";
 import walletRepo from "../repository/walletRepo.js";
-import cartRepo from "../repository/cartRepo.js";
+import AppError from "../utils/appError.js";
 class PaymentService {
   constructor() {
     const clientId = "e6eed2dd-86ea-4758-b0ab-f49b28057aae";
@@ -67,90 +67,117 @@ class PaymentService {
   async successPayment(statusCode, orderCode) {
     try {
       if (statusCode === "00") {
-        let stringOrderCode = String(orderCode);
-        while (stringOrderCode.length < 6) {
-          stringOrderCode = "0" + stringOrderCode;
-        }
+        const stringOrderCode = String(orderCode).padStart(6, "0");
+
         await purchaseHistoryRepo.updateStatusPurchase(
           stringOrderCode,
           PurchaseStatus.succeed
         );
+
         const purchase =
           await purchaseHistoryRepo.getPurchaseByCode(stringOrderCode);
-        if (purchase === null) {
-          throw new AppError(`Không tìm thấy hóa đơn`, 400);
-        }
-        const uid = purchase.uid;
-        const sku = purchase.sku;
-        await Promise.allSettled(
+        if (!purchase) throw new AppError(`Không tìm thấy hóa đơn`, 400);
+
+        const { uid, sku } = purchase;
+        const newIncomes = [];
+
+        await Promise.all(
           sku.map(async (course) => {
-            courseRepo.increaseEnrollment(course.courseId).catch((err) => {
-              throw new AppError(`Error in courseId ${course.courseId}:`, err);
-            });
-            console.log("delete", course.courseId);
-            await cartRepo.removeCourse(uid, course.courseId);
+            try {
+              await courseRepo.updateEnrollment(course.courseId, 1);
 
-            let amount = course.salePrice * 0.94;
-            amount = Math.round(amount);
+              const amount = Math.round(course.salePrice * 0.94);
+              const income = new Income(
+                amount,
+                course,
+                IncomeStatus.InProgress,
+                stringOrderCode,
+                new Date()
+              );
 
-            const income = new Income(
-              amount,
-              course,
-              IncomeStatus.InProgress,
-              orderCode,
-              new Date()
-            );
-            this.addIncome(course.instructor, income).catch((err) => {
-              throw new AppError(`Error in courseId ${course.courseId}:`, err);
-            });
+              const newId = await this.addIncome(uid, income);
+              newIncomes.push(newId);
+            } catch (err) {
+              console.error(
+                `Lỗi khi thêm khóa học ${course.courseId}:`,
+                err.message
+              );
+              throw err;
+            }
           })
         );
+
+        console.log(`Thu nhập mới: ${newIncomes.length} mục được thêm`);
+
+        // Cập nhật trạng thái thu nhập sau 30 giây
+        setTimeout(async () => {
+          try {
+            await this.updateStatusIncome(newIncomes);
+          } catch (err) {
+            console.error(
+              `Lỗi khi cập nhật trạng thái thu nhập: ${err.message}`
+            );
+          }
+        }, 1000 * 30);
+
+        // Xóa các khóa học khỏi giỏ hàng và thêm vào danh sách học
+        await cartRepo.removeCourses(uid, sku);
         const message = await myLearningsRepo.addCourses(uid, sku);
         return message;
       }
     } catch (error) {
-      throw new AppError(`Lỗi khi thêm khóa học: ${error}`);
+      throw new AppError(`Lỗi khi thêm khóa học: ${error.message}`, 500);
     }
   }
 
   async addIncome(uid, income) {
     try {
       const newId = await incomeRepo.addIncome(uid, income);
+      console.log(`Thêm thu nhập: ${income.amount} vào người dùng: ${uid}`);
+
+      // Cập nhật ví
       await walletRepo.updateWallet(uid, {
         inProgress: income.amount,
       });
 
-      setTimeout(
-        async () => {
-          try {
-            await this.updateStatusIncome(newId);
-          } catch (error) {
-            console.error("Error updating wallet or income status:", error);
-          }
-        },
-        1000 * 60 * 3
-      );
+      return newId;
     } catch (error) {
-      throw new AppError(error, 500);
+      console.error(`Lỗi khi thêm thu nhập cho uid ${uid}: ${error.message}`);
+      throw new AppError(error.message, 500);
     }
   }
 
-  async updateStatusIncome(id) {
+  async updateStatusIncome(incomes) {
     try {
-      const income = await incomeRepo.getIncomeById(id);
-      const amount = income.amount;
-      const uid = income.uid;
-      if (income.refundStatus === false) {
-        await Promise.all([
-          incomeRepo.updateStatusIncome(id, IncomeStatus.Complete),
-          walletRepo.updateWallet(uid, {
-            withdrawable: amount,
-            inProgress: -amount,
-          }),
-        ]);
-      }
+      await Promise.all(
+        incomes.map(async (id) => {
+          const income = await incomeRepo.getIncomeById(id);
+
+          if (!income) {
+            console.error(`Không tìm thấy thu nhập với ID: ${id}`);
+            return;
+          }
+
+          const { amount, uid, refundStatus } = income;
+          console.log(
+            `Thu nhập ${id}: Số tiền ${amount}, UID: ${uid}, refundStatus: ${refundStatus}`
+          );
+
+          if (!refundStatus) {
+            await Promise.all([
+              incomeRepo.updateStatusIncome(id, IncomeStatus.Complete),
+              walletRepo.updateWallet(uid, {
+                withdrawable: amount,
+                inProgress: -amount,
+              }),
+            ]);
+            console.log(`Cập nhật trạng thái thu nhập ID: ${id} hoàn tất`);
+          }
+        })
+      );
     } catch (error) {
-      throw new AppError(error, 500);
+      console.error(`Lỗi khi cập nhật trạng thái thu nhập: ${error.message}`);
+      throw new AppError(error.message, 500);
     }
   }
 }
