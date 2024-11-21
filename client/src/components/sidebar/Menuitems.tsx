@@ -1,5 +1,3 @@
-// src/components/sidebar/Menuitems.tsx
-
 import {
   IconLayoutDashboard,
   IconFilePlus,
@@ -7,6 +5,7 @@ import {
   IconChartBar,
   IconCategory,
   IconReceiptRefund,
+  IconCreditCardPay,
 } from "@tabler/icons-react";
 import WalletIcon from "@mui/icons-material/Wallet";
 import { uniqueId } from "lodash";
@@ -79,9 +78,16 @@ const Menuitems = [
   },
   {
     id: uniqueId(),
-    title: "Xử Lý Yêu Cầu",
+    title: "Xử Lý Hoàn Tiền",
     icon: IconReceiptRefund,
     href: "/dashboard/admin/handle-refund/",
+    roles: ["admin"],
+  },
+  {
+    id: uniqueId(),
+    title: "Xử Lý Rút Tiền",
+    icon: IconCreditCardPay,
+    href: "/dashboard/admin/handle-withdraw/",
     roles: ["admin"],
   },
   {

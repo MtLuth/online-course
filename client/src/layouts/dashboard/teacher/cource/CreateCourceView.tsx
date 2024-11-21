@@ -1,4 +1,4 @@
-// File: src/components/CreateCourseView.tsx
+// CreateCourseView.tsx
 
 "use client";
 
@@ -46,6 +46,11 @@ import { courseApi } from "@/server/Cource";
 import { useRouter } from "next/navigation";
 import { useToastNotification } from "@/hook/useToastNotification";
 import CategorySelect from "./CategorySelect";
+import dynamic from "next/dynamic";
+
+// Dynamically import ReactQuill to prevent SSR issues
+const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
+import "react-quill/dist/quill.snow.css";
 
 // Interface Definitions
 interface LectureResource {
@@ -73,8 +78,8 @@ interface CourseData {
   description: string;
   category: string;
   price: number;
-  sale: number; // New field for sale percentage
-  salePrice: string; // New field for sale price (formatted string)
+  sale: number; // Stored as 0-1
+  salePrice: string;
   language: string;
   level: string;
   thumbnail: string | File | null;
@@ -89,8 +94,8 @@ interface CreateCourseData {
   description: string;
   category: string;
   price: number;
-  sale: number; // New field
-  salePrice: string; // New field for sale price
+  sale: number; // Stored as 0-1
+  salePrice: string; // Formatted string
   language: string;
   level: string;
   thumbnail: string;
@@ -119,7 +124,7 @@ interface CreateCourseViewProps {
   courseId?: string;
 }
 
-// Validation Schema with Sale Percentage and Duration Validation
+// Validation Schema with Sale as Decimal (0-1) and Quill.js Validation
 const getValidationSchema = (isEditMode: boolean) =>
   Yup.object().shape({
     title: Yup.string().required("Tiêu đề khóa học là bắt buộc."),
@@ -130,7 +135,7 @@ const getValidationSchema = (isEditMode: boolean) =>
       .min(1, "Giá phải lớn hơn 0."),
     sale: Yup.number()
       .min(0, "Sale Percentage phải từ 0% đến 100%.")
-      .max(100, "Sale Percentage phải từ 0% đến 100%.")
+      .max(1, "Sale Percentage phải từ 0% đến 100%.")
       .required("Sale Percentage là bắt buộc."),
     salePrice: Yup.string().required("Giá sau giảm là bắt buộc."), // Ensuring salePrice is present
     language: Yup.string()
@@ -160,12 +165,6 @@ const getValidationSchema = (isEditMode: boolean) =>
                     "Thời lượng phải ở định dạng hh:mm:ss."
                   )
                   .required("Thời lượng là bắt buộc."),
-                type: Yup.string()
-                  .oneOf(
-                    ["video", "article"],
-                    "Loại bài giảng phải là video hoặc article."
-                  )
-                  .required("Loại bài giảng là bắt buộc."),
               })
             )
             .min(1, "Ít nhất một bài giảng."),
@@ -182,14 +181,15 @@ const CourseConfig: React.FC = React.memo(() => {
   // Handle Sale Percentage Change
   const handleSaleChange = useCallback(
     (event: Event, newValue: number | number[]) => {
-      setFieldValue("sale", newValue as number);
+      const percentage = Array.isArray(newValue) ? newValue[0] : newValue;
+      setFieldValue("sale", percentage / 100); // Convert to decimal
     },
     [setFieldValue]
   );
 
   // Calculate Sale Price
   const calculatedSalePrice = useMemo(() => {
-    const discountedPrice = values.price * (1 - values.sale / 100);
+    const discountedPrice = values.price * (1 - values.sale);
     return discountedPrice.toLocaleString("vi-VN", {
       style: "currency",
       currency: "VND",
@@ -257,7 +257,7 @@ const CourseConfig: React.FC = React.memo(() => {
         <Grid item xs={12} sm={6}>
           <Typography gutterBottom>Giảm giá (%)</Typography>
           <Slider
-            value={values.sale}
+            value={values.sale * 100} // Convert to percentage for display
             onChange={handleSaleChange}
             aria-labelledby="sale-percentage-slider"
             valueLabelDisplay="auto"
@@ -583,7 +583,7 @@ const CourseImageRequirements: React.FC<CourseImageRequirementsProps> =
     );
   });
 
-// Lecture Item Component with Duration Picker
+// Lecture Item Component with Duration Picker and Quill.js for Article Descriptions
 interface LectureProps {
   sectionIndex: number;
   lectureIndex: number;
@@ -639,6 +639,17 @@ const LectureItem: React.FC<LectureProps> = React.memo(
         ""
       );
     }, [setFieldValue, sectionIndex, lectureIndex]);
+
+    // Handle Description Change for Article
+    const handleDescriptionChange = useCallback(
+      (content: string) => {
+        setFieldValue(
+          `content[${sectionIndex}].lectures[${lectureIndex}].description`,
+          content
+        );
+      },
+      [setFieldValue, sectionIndex, lectureIndex]
+    );
 
     return (
       <Paper
@@ -739,7 +750,6 @@ const LectureItem: React.FC<LectureProps> = React.memo(
                         boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
                       }}
                     />
-                    {/* Remove Video Button */}
                     <Tooltip title="Xóa video">
                       <IconButton
                         onClick={handleRemoveVideo}
@@ -803,23 +813,41 @@ const LectureItem: React.FC<LectureProps> = React.memo(
           {/* Article Description Section */}
           {lecture.type === "article" && (
             <Grid item xs={12}>
-              <TextField
-                label="Mô tả"
-                name={`content[${sectionIndex}].lectures[${lectureIndex}].description`}
+              <Typography variant="subtitle1" gutterBottom>
+                Mô tả
+              </Typography>
+              <ReactQuill
+                theme="snow"
                 value={lecture.description || ""}
-                onChange={handleChange}
-                fullWidth
-                multiline
-                rows={3}
-                required
-                error={
-                  lectureTouched.description &&
-                  Boolean(lectureErrors.description)
-                }
-                helperText={
-                  lectureTouched.description && lectureErrors.description
-                }
+                onChange={handleDescriptionChange}
+                modules={{
+                  toolbar: [
+                    [{ header: [1, 2, 3, false] }],
+                    ["bold", "italic", "underline", "strike", "blockquote"],
+                    [{ list: "ordered" }, { list: "bullet" }],
+                    ["link", "image"],
+                    ["clean"],
+                  ],
+                }}
+                formats={[
+                  "header",
+                  "bold",
+                  "italic",
+                  "underline",
+                  "strike",
+                  "blockquote",
+                  "list",
+                  "bullet",
+                  "link",
+                  "image",
+                ]}
+                style={{ height: "200px", marginBottom: "40px" }}
               />
+              {lectureTouched.description && lectureErrors.description && (
+                <Typography variant="caption" color="error">
+                  {lectureErrors.description}
+                </Typography>
+              )}
             </Grid>
           )}
 
@@ -1048,7 +1076,7 @@ const CourseContent: React.FC = React.memo(() => {
                   ],
                 })
               }
-              type="button" // Ensures button does not submit the form
+              type="button"
             >
               Thêm Phần
             </Button>
@@ -1059,12 +1087,13 @@ const CourseContent: React.FC = React.memo(() => {
   );
 });
 
-// Main CreateCourseView Component
+// CreateCourseView Component
 const CreateCourseView: React.FC<CreateCourseViewProps> = ({
   initialValues,
   isEditMode = false,
   courseId,
 }) => {
+  console.log("hehe", initialValues);
   const router = useRouter();
   const { notifySuccess, notifyError } = useToastNotification();
   const [existingThumbnailUrl, setExistingThumbnailUrl] = useState<
@@ -1075,7 +1104,6 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
       : undefined
   );
 
-  // Handle Form Submission
   const handleSubmit = useCallback(
     async (values: CourseData, actions: FormikHelpers<CourseData>) => {
       try {
@@ -1084,7 +1112,6 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
           throw new Error("Không tìm thấy token xác thực. Vui lòng đăng nhập.");
         }
 
-        // Upload Thumbnail if it's a file
         let thumbnailUrl = "";
         if (values.thumbnail instanceof File) {
           const uploadImageResponse = await uploadApi.uploadImages(
@@ -1108,7 +1135,6 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
           throw new Error("Thumbnail is required.");
         }
 
-        // Upload Videos
         const videoFiles: File[] = [];
 
         values.content.forEach((section) => {
@@ -1153,7 +1179,7 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
               return {
                 ...lecture,
                 videoUrl: "", // Optional: handle as needed
-                description: lecture.description,
+                description: lecture.description, // Rich text (HTML)
               };
             }
             return lecture;
@@ -1165,8 +1191,8 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
         const completeCourseData: CreateCourseData = {
           ...values,
           thumbnail: thumbnailUrl,
-          sale: values.sale / 100, // Convert to 0-1 scale
-          salePrice: (values.price * (1 - values.sale / 100)).toLocaleString(
+          sale: values.sale, // Already in decimal (0-1)
+          salePrice: (values.price * (1 - values.sale)).toLocaleString(
             "vi-VN",
             {
               style: "currency",
@@ -1227,7 +1253,7 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
     ]
   );
 
-  // Initial Form Values with Sale Percentage and Sale Price
+  // Initial Form Values with Sale as Decimal (0-1) and Sale Price
   const initialFormValues: CourseData = useMemo(
     () =>
       initialValues || {
@@ -1235,7 +1261,7 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
         description: "",
         category: "",
         price: 0,
-        sale: 0,
+        sale: 0, // Initialize as decimal
         salePrice: "₫0",
         language: "Vietnamese",
         level: "",
@@ -1269,7 +1295,7 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
         initialValues={initialFormValues}
         validationSchema={getValidationSchema(isEditMode)}
         onSubmit={handleSubmit}
-        enableReinitialize // Allows Formik to update initialValues when props change
+        enableReinitialize
         context={{ isEditMode }}
       >
         {({
@@ -1385,7 +1411,6 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
                 {activeTab === 2 && <CourseContent />}
               </Box>
 
-              {/* Navigation Buttons */}
               <Box
                 sx={{
                   display: "flex",
@@ -1397,7 +1422,7 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
                   variant="contained"
                   onClick={handlePrevious}
                   disabled={activeTab === 0}
-                  type="button" // Ensures button does not submit the form
+                  type="button"
                 >
                   Trước
                 </Button>

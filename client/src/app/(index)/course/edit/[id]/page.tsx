@@ -11,7 +11,7 @@ import CreateCourseView, {
 import { getAuthToken } from "@/utils/auth";
 
 const EditCoursePage: React.FC = () => {
-  const { id } = useParams(); // Lấy ID từ URL
+  const { id } = useParams();
   const [initialValues, setInitialValues] = useState<CourseData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
@@ -38,6 +38,8 @@ const EditCoursePage: React.FC = () => {
             thumbnail: courseDetail.thumbnail,
             requirements: courseDetail.requirements || [""],
             whatYouWillLearn: courseDetail.whatYouWillLearn || [""],
+            sale: courseDetail.sale,
+            salePrice: courseDetail.salePrice,
             content: courseDetail.content.map((section: any) => ({
               sectionTitle: section.sectionTitle,
               lectures: section.lectures.map((lecture: any) => ({
