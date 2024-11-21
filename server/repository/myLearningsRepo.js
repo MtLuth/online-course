@@ -43,9 +43,11 @@ class MyLearning {
     courses = courses.filter(
       (item) => !rmCoursesId.some((id) => id === item.courseId)
     );
+    console.log(courses);
     await this.dbRef
       .doc(uid)
       .update({ courses: courses, total: courses.length });
+    console.log("remove course");
   }
 
   async checkIsValidStudent(uid, courseId) {
@@ -66,7 +68,7 @@ class MyLearning {
   async getAllCourses(uid) {
     const doc = await this.dbRef.doc(uid).get();
     if (!doc.exists) {
-      return null;
+      return [];
     }
     const data = doc.data();
     return data.courses;

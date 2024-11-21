@@ -8,6 +8,7 @@ import courseRepo from "../repository/courseRepo.js";
 import incomeRepo from "../repository/incomeRepo.js";
 import Income, { IncomeStatus } from "../model/incomeModel.js";
 import walletRepo from "../repository/walletRepo.js";
+import cartRepo from "../repository/cartRepo.js";
 class PaymentService {
   constructor() {
     const clientId = "e6eed2dd-86ea-4758-b0ab-f49b28057aae";
@@ -29,13 +30,18 @@ class PaymentService {
     setTimeout(
       async () => {
         try {
+          const strOrderCode = String(orderCode);
+          while (strOrderCode.length < 6) {
+            strOrderCode = "0" + strOrderCode;
+          }
           const purchaseHistory =
-            await purchaseHistoryRepo.getPurchaseByCode(orderCode);
+            await purchaseHistoryRepo.getPurchaseByCode(strOrderCode);
           if (purchaseHistory.status === PurchaseStatus.pending) {
-            await purchaseHistoryRepo.deletePurchase(orderCode);
+            await purchaseHistoryRepo.deletePurchase(strOrderCode);
           }
           return;
         } catch (error) {
+          console.log(error);
           throw new AppError(`Lỗi khi loại bỏ đơn hàng không thanh toán`);
         }
       },
@@ -76,11 +82,14 @@ class PaymentService {
         }
         const uid = purchase.uid;
         const sku = purchase.sku;
-        await Promise.all(
-          sku.map((course) => {
+        await Promise.allSettled(
+          sku.map(async (course) => {
             courseRepo.increaseEnrollment(course.courseId).catch((err) => {
               throw new AppError(`Error in courseId ${course.courseId}:`, err);
             });
+            console.log("delete", course.courseId);
+            await cartRepo.removeCourse(uid, course.courseId);
+
             let amount = course.salePrice * 0.94;
             amount = Math.round(amount);
 
@@ -136,13 +145,6 @@ class PaymentService {
           incomeRepo.updateStatusIncome(id, IncomeStatus.Complete),
           walletRepo.updateWallet(uid, {
             withdrawable: amount,
-            inProgress: -amount,
-          }),
-        ]);
-      } else {
-        await Promise.all([
-          incomeRepo.updateStatusIncome(id, IncomeStatus.Refund),
-          walletRepo.updateWallet(uid, {
             inProgress: -amount,
           }),
         ]);

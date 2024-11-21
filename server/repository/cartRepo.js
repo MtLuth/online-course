@@ -54,10 +54,12 @@ class Cart {
     const data = snapshot.data();
     let courses = data.courses;
     if (courses && courses[courseId]) {
+      console.log("hiiii");
       delete courses[courseId];
     }
     const total = data.total - 1;
     await this.dbRef.doc(uid).update({ courses: { ...courses }, total: total });
+    console.log("Đã xóa sản phẩm khỏi cửa hàng");
     return "Đã xóa sản phẩm khỏi cửa hàng!";
   }
 }
