@@ -30,7 +30,7 @@ class PaymentService {
     setTimeout(
       async () => {
         try {
-          const strOrderCode = String(orderCode);
+          let strOrderCode = String(orderCode);
           while (strOrderCode.length < 6) {
             strOrderCode = "0" + strOrderCode;
           }
@@ -42,7 +42,7 @@ class PaymentService {
           return;
         } catch (error) {
           console.log(error);
-          throw new AppError(`Lỗi khi loại bỏ đơn hàng không thanh toán`);
+          throw new AppError(`Lỗi khi loại bỏ đơn hàng không thanh toán`, 500);
         }
       },
       1000 * 60 * 3

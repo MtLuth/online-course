@@ -7,7 +7,7 @@ class Cart {
   async addCourse(uid, course) {
     const snapshot = await this.dbRef.doc(uid).get();
     const data = snapshot.data();
-    let courses = data.courses;
+    let courses = data.courses || {};
     const id = course.id;
 
     courses[id] = {
