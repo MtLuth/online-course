@@ -51,9 +51,13 @@ class PurchaseService {
 
   async getAllPurchases(uid) {
     try {
-      const results = await purchaseHistoryRepo.getAllPurchases(uid);
+      let results = await purchaseHistoryRepo.getAllPurchases(uid);
+      results.prchases = results.prchases.sort(
+        (a, b) => b.boughtAt - a.boughtAt
+      );
       return results;
     } catch (error) {
+      console.log(error);
       throw new AppError("Đã xảy ra lỗi khi tải lịch sử!", 500);
     }
   }

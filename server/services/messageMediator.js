@@ -9,23 +9,23 @@ class MessageMediator {
     this.db = firebaseAdmin.database();
   }
 
-  loadMessagesRealtime(onMessagesLoaded, onNewMessage) {
+  loadMessagesRealtime(onNewMessage) {
     const conversationId = this.getConversationKey();
     const ref = this.db.ref(`conversations/${conversationId}/messages`);
 
-    ref.once("value", (snapshot) => {
-      const results = [];
-      snapshot.forEach((childSnapshot) => {
-        const message = childSnapshot.val();
-        const messageWithKey = {
-          key: childSnapshot.key,
-          ...message,
-        };
-        results.push(messageWithKey);
-      });
+    // ref.once("value", (snapshot) => {
+    //   const results = [];
+    //   snapshot.forEach((childSnapshot) => {
+    //     const message = childSnapshot.val();
+    //     const messageWithKey = {
+    //       key: childSnapshot.key,
+    //       ...message,
+    //     };
+    //     results.push(messageWithKey);
+    //   });
 
-      onMessagesLoaded(results);
-    });
+    //   onMessagesLoaded(results);
+    // });
 
     this.listener = ref.on("child_added", (childSnapshot) => {
       const newMessage = {

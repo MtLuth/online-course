@@ -62,14 +62,23 @@ class IncomeRepo {
     };
   }
 
+  async getIncomeByOrderCode(code) {
+    const snapshot = await this.dbRef
+      .where("orderCode", "==", Number(code))
+      .get();
+    if (snapshot.empty) {
+      return null;
+    }
+    const results = snapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
+    return results[0];
+  }
+
   async updateRefundStatus(orderCode, refundStatus) {
     console.log(orderCode);
     let query = this.dbRef;
     query = query.where("orderCode", "==", Number(orderCode));
     const snapshot = await query.get();
-    console.log(snapshot);
     const results = snapshot.docs.map((item) => item.id);
-    console.log(results);
     if (results.length <= 0) {
       throw new AppError("Không tìm thấy thông tin thu nhập");
     }

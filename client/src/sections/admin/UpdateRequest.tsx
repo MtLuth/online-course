@@ -1,22 +1,22 @@
-import React, { useEffect, useState } from "react";
+import { useAppContext } from "@/context/AppContext";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Typography,
-  Grid,
-  Divider,
   Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
   FormControl,
+  Grid,
   InputLabel,
-  Select,
   MenuItem,
+  Select,
   SelectChangeEvent,
   TextField,
+  Typography,
 } from "@mui/material";
-import { useAppContext } from "@/context/AppContext";
+import React, { useEffect, useState } from "react";
 
 type UpdateRequestProps = {
   open: boolean;
@@ -44,7 +44,7 @@ const UpdateRequestDialog: React.FC<UpdateRequestProps> = ({
   useEffect(() => {
     if (requestStatus === "Đang xử lý") {
       setActionUpdate([
-        { key: "Accepted", value: "Đã chấp nhận" },
+        { key: "Accepted", value: "Chấp nhận" },
         { key: "Reject", value: "Từ chối" },
       ]);
     } else if (requestStatus === "Đã chấp nhận") {
@@ -134,7 +134,6 @@ const UpdateRequestDialog: React.FC<UpdateRequestProps> = ({
               </FormControl>
             </Grid>
 
-            {/* Hiển thị ô nhập lý do nếu trạng thái là "Reject" */}
             {updatedStatus === "Reject" && (
               <Grid item xs={12}>
                 <TextField

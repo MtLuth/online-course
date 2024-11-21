@@ -1,6 +1,8 @@
 import ErrorMessage from "../messages/errorMessage.js";
 import Refund, { RefundStatus } from "../model/refundModel.js";
-import purchaseHistoryRepo from "../repository/purchaseHistoryRepo.js";
+import purchaseHistoryRepo, {
+  PurchaseStatus,
+} from "../repository/purchaseHistoryRepo.js";
 import refundRepo from "../repository/refundRepo.js";
 import AppError from "../utils/appError.js";
 import crypto from "crypto";
@@ -12,6 +14,8 @@ import {
 } from "./emailService.js";
 import incomeRepo from "../repository/incomeRepo.js";
 import myLearningsRepo from "../repository/myLearningsRepo.js";
+import walletRepo from "../repository/walletRepo.js";
+import { REFUSED } from "dns";
 
 class RefundService {
   async createRefund(uid, refundInformation) {
@@ -103,6 +107,14 @@ class RefundService {
       const refund = await refundRepo.viewDetailRefund(id);
       let templateEmail = null;
       if (status === "Accepted") {
+        const income = await incomeRepo.getIncomeByOrderCode(refund.orderCode);
+        if (income === null) {
+          throw new AppError(`Lỗi không tìm thấy thông tin thu nhập!`, 500);
+        }
+        await walletRepo.updateWallet(income.uid, {
+          inProgress: -income.amount,
+        });
+
         templateEmail = getTemplateAcceptRefund(
           refund.orderCode,
           refund.courses,
@@ -110,6 +122,32 @@ class RefundService {
         );
       }
       if (status === "Reject") {
+        const income = await incomeRepo.getIncomeByOrderCode(refund.orderCode);
+        if (income === null) {
+          throw new AppError(`Lỗi không tìm thấy thông tin thu nhập!`, 500);
+        }
+
+        await incomeRepo.updateRefundStatus(income.id, false);
+        if (Date.now() - income.date._seconds * 1000 > 1000 * 3600 * 24) {
+          await walletRepo.updateWallet(income.uid, {
+            inProgress: -income.amount,
+            withdrawable: income.amount,
+          });
+        }
+
+        const order = await purchaseHistoryRepo.getPurchaseByCode(refund.order);
+        const sku = order.sku;
+        await Promise.all(
+          sku.forEach(async (course) => {
+            myLearningsRepo.addCourses(order.uid, course).catch((err) => {
+              throw new AppError(
+                `Lỗi khi thêm khóa học vào myLearnings người dùng`,
+                500
+              );
+            });
+          })
+        );
+
         templateEmail = getTemplateRejectRefund(
           refund.orderCode,
           refund.courses,
@@ -151,7 +189,38 @@ class RefundService {
 
   async studentCancelRefund(id) {
     try {
-      await refundRepo.updateStatusRefund(id, "Cancel");
+      const refund = await refundRepo.viewDetailRefund(id);
+      if (refund === null) {
+        throw new AppError(`Lỗi khi lấy thông tin hoàn tiền!`, 500);
+      }
+      const purchase = await purchaseHistoryRepo.getPurchaseByCode(
+        refund.orderCode
+      );
+      if (Date.now() - purchase.boughtAt._seconds * 1000 > 1000 * 60 * 3) {
+        await Promise.all([
+          purchaseHistoryRepo.updateStatusPurchase(
+            refund.orderCode,
+            purchase.sku,
+            false
+          ),
+          purchase.sku.forEach((item) => {
+            walletRepo.updateWallet(item.instructor, {
+              inProgress: -item.salePrice * 0.94,
+              withdrawable: item.salePrice * 0.94,
+            });
+          }),
+        ]);
+      } else {
+        await purchaseHistoryRepo.updateRefundStatus(
+          refund.orderCode,
+          purchase.sku,
+          false
+        );
+      }
+      await Promise.all([
+        myLearningsRepo.addCourses(purchase.uid, purchase.sku),
+        await refundRepo.updateStatusRefund(id, "Cancel"),
+      ]);
       return "Bạn đã hủy hoàn tiền cho đơn hàng này!";
     } catch (error) {
       console.log(error);
