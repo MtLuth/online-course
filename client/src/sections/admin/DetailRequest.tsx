@@ -60,9 +60,6 @@ const DetailRequest: React.FC<DetailRequestProps> = ({ open, requestId, onClose 
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-            <DialogTitle sx={{ fontWeight: "bold", textAlign: "center" }}>
-                Xem chi tiết yêu cầu hoàn tiền
-            </DialogTitle>
             <DialogContent>
                 {loading ? (
                     <Grid
@@ -76,85 +73,160 @@ const DetailRequest: React.FC<DetailRequestProps> = ({ open, requestId, onClose 
                 ) : request ? (
                     <Box sx={{ padding: 3 }}>
                         <Divider sx={{ my: 2 }} />
-                        <Grid container spacing={2}>
-                            {/* Email */}
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    fullWidth
-                                    label="Email"
-                                    value={request.email}
-                                    variant="outlined"
-                                    InputProps={{ readOnly: true }}
-                                />
-                            </Grid>
-                            {/* Mã đơn hàng */}
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    fullWidth
-                                    label="Mã đơn hàng"
-                                    value={request.orderCode}
-                                    variant="outlined"
-                                    InputProps={{ readOnly: true }}
-                                />
-                            </Grid>
-                            {/* Số tiền */}
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    fullWidth
-                                    label="Số tiền"
-                                    value={`${request.amount.toLocaleString()} VND`}
-                                    variant="outlined"
-                                    InputProps={{ readOnly: true }}
-                                />
-                            </Grid>
-                            {/* Trạng thái */}
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    fullWidth
-                                    label="Trạng thái"
-                                    value={request.status}
-                                    variant="outlined"
-                                    InputProps={{
-                                        readOnly: true,
-                                        style: {
-                                            color:
-                                                request.status === "Đã hoàn tiền"
-                                                    ? "#28a745" // Xanh lá cây
-                                                    : request.status === "Đang xử lý"
-                                                        ? "#ff9800" // Cam
-                                                        : request.status === "Đã chấp nhận"
-                                                            ? "#007bff" // Xanh dương
-                                                            : request.status === "Từ chối"
-                                                                ? "#dc3545" // Đỏ
-                                                                : "#000", // Mặc định
-                                        },
+                        <Typography
+                            variant="h6"
+                            sx={{
+                                textAlign: "center",
+                                fontWeight: "bold",
+                                marginBottom: 3,
+                                color: "#1976d2",
+                            }}
+                        >
+                            Chi tiết yêu cầu hoàn tiền
+                        </Typography>
+
+                        <Grid container spacing={3}>
+                            {/* Thông tin tài khoản */}
+                            <Grid item xs={12}>
+                                <Box
+                                    sx={{
+                                        border: "1px solid #ddd",
+                                        borderRadius: "8px",
+                                        padding: 3,
+                                        backgroundColor: "#f5f5f5",
                                     }}
-                                />
+                                >
+                                    <Typography
+                                        variant="subtitle1"
+                                        sx={{ fontWeight: "bold", marginBottom: 2, color: "#1976d2" }}
+                                    >
+                                        Thông tin tài khoản
+                                    </Typography>
+                                    <Grid container spacing={2}>
+                                        <Grid item xs={12} md={4}>
+                                            <TextField
+                                                fullWidth
+                                                label="Số tài khoản"
+                                                value={request.payeeAccount.bankNumber}
+                                                variant="outlined"
+                                                InputProps={{ readOnly: true }}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12} md={4}>
+                                            <TextField
+                                                fullWidth
+                                                label="Tên ngân hàng"
+                                                value={request.payeeAccount.bankName}
+                                                variant="outlined"
+                                                InputProps={{ readOnly: true }}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12} md={4}>
+                                            <TextField
+                                                fullWidth
+                                                label="Tên người nhận"
+                                                value={request.payeeAccount.receiverName}
+                                                variant="outlined"
+                                                InputProps={{ readOnly: true }}
+                                            />
+                                        </Grid>
+                                    </Grid>
+                                </Box>
                             </Grid>
-                            {/* Lý do */}
+
+                            {/* Thông tin yêu cầu */}
                             <Grid item xs={12}>
-                                <TextField
-                                    fullWidth
-                                    label="Lý do"
-                                    value={request.reason}
-                                    variant="outlined"
-                                    InputProps={{ readOnly: true }}
-                                    multiline
-                                    minRows={2}
-                                />
-                            </Grid>
-                            {/* Ngày */}
-                            <Grid item xs={12}>
-                                <TextField
-                                    fullWidth
-                                    label="Ngày"
-                                    value={new Date(request.date).toLocaleDateString("vi-VN")}
-                                    variant="outlined"
-                                    InputProps={{ readOnly: true }}
-                                />
+                                <Box
+                                    sx={{
+                                        border: "1px solid #ddd",
+                                        borderRadius: "8px",
+                                        padding: 3,
+                                        backgroundColor: "#ffffff",
+                                    }}
+                                >
+                                    <Typography
+                                        variant="subtitle1"
+                                        sx={{ fontWeight: "bold", marginBottom: 2, color: "#1976d2" }}
+                                    >
+                                        Thông tin yêu cầu
+                                    </Typography>
+                                    <Grid container spacing={2}>
+                                        <Grid item xs={12} md={6}>
+                                            <TextField
+                                                fullWidth
+                                                label="Email"
+                                                value={request.email}
+                                                variant="outlined"
+                                                InputProps={{ readOnly: true }}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12} md={6}>
+                                            <TextField
+                                                fullWidth
+                                                label="Mã đơn hàng"
+                                                value={request.orderCode}
+                                                variant="outlined"
+                                                InputProps={{ readOnly: true }}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12} md={6}>
+                                            <TextField
+                                                fullWidth
+                                                label="Số tiền"
+                                                value={`${request.amount.toLocaleString()} VND`}
+                                                variant="outlined"
+                                                InputProps={{ readOnly: true }}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12} md={6}>
+                                            <TextField
+                                                fullWidth
+                                                label="Trạng thái"
+                                                value={request.status}
+                                                variant="outlined"
+                                                InputProps={{
+                                                    readOnly: true,
+                                                    style: {
+                                                        color:
+                                                            request.status === "Đã hoàn tiền"
+                                                                ? "#28a745" // Xanh lá cây
+                                                                : request.status === "Đang xử lý"
+                                                                    ? "#ff9800" // Cam
+                                                                    : request.status === "Đã chấp nhận"
+                                                                        ? "#007bff" // Xanh dương
+                                                                        : request.status === "Từ chối"
+                                                                            ? "#dc3545" // Đỏ
+                                                                            : "#000", // Mặc định
+                                                    },
+                                                }}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12} md={6}>
+                                            <TextField
+                                                fullWidth
+                                                label="Lý do"
+                                                value={request.reason}
+                                                variant="outlined"
+                                                InputProps={{ readOnly: true }}
+                                                multiline
+                                                minRows={2}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12} md={6}>
+                                            <TextField
+                                                fullWidth
+                                                label="Ngày"
+                                                value={new Date(request.date).toLocaleDateString("vi-VN")}
+                                                variant="outlined"
+                                                InputProps={{ readOnly: true }}
+                                            />
+                                        </Grid>
+                                    </Grid>
+                                </Box>
                             </Grid>
                         </Grid>
                     </Box>
+
                 ) : (
                     <Typography variant="body2" color="error">
                         Không tìm thấy chi tiết yêu cầu hoàn tiền.
