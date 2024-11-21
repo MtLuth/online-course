@@ -1,34 +1,34 @@
 "use client";
 
-import * as Yup from "yup";
-import { useForm, useWatch } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
+import { useForm, useWatch } from "react-hook-form";
+import * as Yup from "yup";
 
-import Link from "@mui/material/Link";
-import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
-import IconButton from "@mui/material/IconButton";
-import InputAdornment from "@mui/material/InputAdornment";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
+import CircularProgress from "@mui/material/CircularProgress";
 import Divider from "@mui/material/Divider";
-import Box from "@mui/material/Box";
+import IconButton from "@mui/material/IconButton";
+import InputAdornment from "@mui/material/InputAdornment";
+import Link from "@mui/material/Link";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
-import Button from "@mui/material/Button";
-import CircularProgress from "@mui/material/CircularProgress";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 
-import Iconify from "src/components/iconify";
-import { useBoolean } from "@/hook/useBoolean";
-import RouterLink from "@/routes/components/RouterLink";
-import { paths } from "@/routes/path";
 import FormProvider from "@/components/hook-form/FormProvider";
 import RHFTextField from "@/components/hook-form/RHFTextField";
+import { useBoolean } from "@/hook/useBoolean";
 import { useToastNotification } from "@/hook/useToastNotification";
+import RouterLink from "@/routes/components/RouterLink";
+import { paths } from "@/routes/path";
 import { authApi } from "@/server/Auth";
 import { useRouter } from "next/navigation";
+import Iconify from "src/components/iconify";
 
 export default function RegisterView() {
   const passwordShow = useBoolean();
@@ -40,19 +40,15 @@ export default function RegisterView() {
   const RegisterSchema = Yup.object().shape({
     fullName: Yup.string()
       .required("Vui lòng nhập họ và tên")
-      .min(6, "Tối thiểu 6 ký tự")
-      .max(50, "Tối đa 50 ký tự"),
+      .min(8, "Tối thiểu 8 ký tự")
+      .max(20, "Tối đa 20 ký tự"),
     email: Yup.string()
       .required("Vui lòng nhập email")
       .email("Email không hợp lệ"),
     phoneNumber: Yup.string().required("Vui lòng nhập số điện thoại"),
     password: Yup.string()
       .required("Vui lòng nhập mật khẩu")
-      .min(6, "Mật khẩu cần ít nhất 6 ký tự")
-      .matches(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).*$/,
-        "Mật khẩu phải chứa ít nhất một chữ hoa, một chữ thường, một chữ số và một ký tự đặc biệt"
-      ),
+      .min(8, "Mật khẩu cần ít nhất 8 ký tự"),
     confirmPassword: Yup.string()
       .required("Vui lòng xác nhận mật khẩu")
       .oneOf([Yup.ref("password")], "Mật khẩu không khớp"),
