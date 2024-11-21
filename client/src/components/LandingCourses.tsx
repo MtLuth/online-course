@@ -136,7 +136,6 @@ const LandingCourses: React.FC = () => {
         ))}
       </Grid>
 
-      {/* Nút "Xem Tất Cả Khóa Học" */}
       <Stack direction="row" justifyContent="center" sx={{ mt: 4 }}>
         <Button
           variant="contained"
