@@ -20,6 +20,7 @@ interface Course {
   courseId: string;
   title: string;
   price: number;
+  salePrice: number;
 }
 
 interface Purchase {
@@ -120,10 +121,27 @@ const PurchaseDetailsModal: React.FC<PurchaseDetailsModalProps> = ({
                 <TableRow key={course.courseId}>
                   <TableCell>{course.title}</TableCell>
                   <TableCell align="right">
-                    {course.price.toLocaleString("vi-VN", {
-                      style: "currency",
-                      currency: "VND",
-                    })}
+                    <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+                      <Typography
+                        variant="body1"
+                        sx={{ fontWeight: "bold", mr: 1 }}
+                      >
+                        {course.salePrice.toLocaleString("vi-VN", {
+                          style: "currency",
+                          currency: "VND",
+                        })}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        color="textSecondary"
+                        sx={{ textDecoration: "line-through" }}
+                      >
+                        {course.price.toLocaleString("vi-VN", {
+                          style: "currency",
+                          currency: "VND",
+                        })}
+                      </Typography>
+                    </Box>
                   </TableCell>
                 </TableRow>
               ))}

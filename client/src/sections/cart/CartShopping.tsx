@@ -18,6 +18,7 @@ import { useAppContext } from "@/context/AppContext";
 import { useCart } from "@/context/CartContext";
 import { useToastNotification } from "@/hook/useToastNotification";
 import { purchaseApi } from "@/server/Purchase";
+
 const getLevelLabel = (level: string) => {
   switch (level) {
     case "Beginner":
@@ -30,12 +31,14 @@ const getLevelLabel = (level: string) => {
       return "Chưa xác định";
   }
 };
+
 interface Course {
   id: string;
   title: string;
   instructor: string;
   level: string;
   price: number;
+  salePrice: number;
   thumbnail: string;
   createdAt: number;
 }
@@ -87,6 +90,7 @@ export default function CartShopping() {
             instructor: courseData.course.instructor,
             level: courseData.course.level,
             price: courseData.course.price,
+            salePrice: courseData.course.salePrice,
             thumbnail: courseData.course.thumbnail,
             createdAt: courseData.createdAt,
           };
@@ -155,9 +159,10 @@ export default function CartShopping() {
     }
   };
 
+  // Tính tổng dựa trên salePrice thay vì price
   const total = courses
     .filter((course) => selectedCourses.includes(course.id))
-    .reduce((sum, course) => sum + course.price, 0);
+    .reduce((sum, course) => sum + course.salePrice, 0);
 
   const handleCheckout = async () => {
     try {
@@ -328,11 +333,24 @@ export default function CartShopping() {
                   <Typography variant="body2" color="textSecondary">
                     Cấp độ: {getLevelLabel(course.level)}
                   </Typography>
-                  <Typography variant="body2">
-                    Giá: {course.price.toLocaleString()}₫
-                  </Typography>
+                  <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
+                    <Typography
+                      variant="body1"
+                      color="text.primary"
+                      sx={{ fontWeight: "bold", mr: 1 }}
+                    >
+                      {course.salePrice.toLocaleString()}₫
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      sx={{ textDecoration: "line-through" }}
+                    >
+                      {course.price.toLocaleString()}₫
+                    </Typography>
+                  </Box>
                   <Typography variant="body2" color="textSecondary">
-                    Thêm vào giỏ hàng vào lúc: {formatDate(course.createdAt)}
+                    Thêm vào giỏ hàng lúc: {formatDate(course.createdAt)}
                   </Typography>
                 </Box>
                 <IconButton
@@ -370,27 +388,6 @@ export default function CartShopping() {
                   disabled={selectedCourses.length === 0}
                 >
                   Thanh Toán
-                </Button>
-
-                <Divider sx={{ my: 2 }} />
-
-                <Typography variant="subtitle1" gutterBottom>
-                  Khuyến mãi
-                </Typography>
-                <TextField
-                  fullWidth
-                  placeholder="Nhập mã"
-                  value={coupon}
-                  onChange={(e) => setCoupon(e.target.value)}
-                  sx={{ mb: 2 }}
-                />
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  fullWidth
-                  onClick={handleApplyCoupon}
-                >
-                  Áp dụng
                 </Button>
               </Box>
             </Grid>

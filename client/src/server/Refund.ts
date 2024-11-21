@@ -18,7 +18,7 @@ class RefundApi extends BaseApi {
     super("/refund");
   }
 
-  public async refundUser(id: string, token: string): Promise<any> {
+  public async refundUser(token: string): Promise<any> {
     const response = await this.get(`/refund/student`, {
       headers: {
         "Content-Type": "application/json",
@@ -27,7 +27,15 @@ class RefundApi extends BaseApi {
     });
     return response;
   }
-
+  public async refundPutUser(id: string, token: string): Promise<any> {
+    const response = await this.put(`/refund/cancel/${id}`, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response;
+  }
   public async cRefundUser(
     payload: RefundPayload,
     token: string

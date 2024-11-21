@@ -20,6 +20,7 @@ import {
 import { instructorApi } from "@/server/Instructor";
 import { useToastNotification } from "@/hook/useToastNotification";
 import Link from "next/link";
+import { useAppContext } from "@/context/AppContext";
 
 const InstructorsPage = () => {
   const [instructors, setInstructors] = useState<any[]>([]);
@@ -30,7 +31,7 @@ const InstructorsPage = () => {
   const [itemsPerPage, setItemsPerPage] = useState<number>(10);
   const { notifyError } = useToastNotification();
 
-  // Fetch instructors from API
+  const { sessionToken } = useAppContext();
   const fetchInstructors = async () => {
     setLoading(true);
     try {
@@ -79,7 +80,6 @@ const InstructorsPage = () => {
   };
 
   const handleGoToChat = (instructorId: string) => {
-    // Chuyển đến trang trò chuyện của chuyên gia
     window.location.href = `/chat/${instructorId}`;
   };
 
@@ -268,20 +268,20 @@ const InstructorsPage = () => {
                         >
                           Trang Cá Nhân
                         </Button>
-
-                        {/* Nút nhắn tin chuyển đến trang trò chuyện */}
-                        <Button
-                          variant="contained"
-                          color="secondary"
-                          sx={{
-                            marginTop: 2,
-                            width: "100%",
-                            fontWeight: "bold",
-                          }}
-                          onClick={() => handleGoToChat(instructor.id)}
-                        >
-                          Nhắn Tin
-                        </Button>
+                        {sessionToken && (
+                          <Button
+                            variant="contained"
+                            color="secondary"
+                            sx={{
+                              marginTop: 2,
+                              width: "100%",
+                              fontWeight: "bold",
+                            }}
+                            onClick={() => handleGoToChat(instructor.id)}
+                          >
+                            Nhắn Tin
+                          </Button>
+                        )}
                       </CardContent>
                     </CardActionArea>
                   </Card>

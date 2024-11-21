@@ -26,25 +26,25 @@ import { useRouter } from "next/navigation";
 import { authApi } from "@/server/Auth";
 import { useAppContext } from "@/context/AppContext";
 import { useToastNotification } from "@/hook/useToastNotification";
+import Cookies from "js-cookie";
 
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState<null | HTMLElement>(null);
   const router = useRouter();
   const { setSessionToken, role } = useAppContext();
   const { notifySuccess, notifyError } = useToastNotification();
-
+  const { userRole } = useAppContext();
   const handleClick2 = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl2(event.currentTarget);
   };
-
   const handleClose2 = () => {
     setAnchorEl2(null);
   };
-
   const handleLogout = async () => {
     try {
       await authApi.logout();
       setSessionToken(null);
+      Cookies.remove("role");
       notifySuccess("Đã đăng xuất thành công!");
       router.push("/login");
     } catch (error) {
@@ -69,7 +69,7 @@ const Profile = () => {
         onClick={handleClick2}
       >
         <Avatar
-          src="" // Bạn có thể thêm src avatar người dùng nếu có
+          src=""
           alt="E"
           sx={{
             width: 35,
@@ -91,30 +91,37 @@ const Profile = () => {
           },
         }}
       >
-        <Link href="/my-courses" passHref legacyBehavior>
-          <MenuItem component="a" onClick={handleClose2}>
-            <ListItemIcon>
-              <IconCourses fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Khóa học của tôi</ListItemText>
-          </MenuItem>
-        </Link>
-        <Link href="/dashboard/admin/teacher" passHref legacyBehavior>
-          <MenuItem component="a" onClick={handleClose2}>
-            <ListItemIcon>
-              <IconDashboard fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Bảng điều khiển</ListItemText>
-          </MenuItem>
-        </Link>
-        <Link href="/mylearning" passHref legacyBehavior>
-          <MenuItem component="a" onClick={handleClose2}>
-            <ListItemIcon>
-              <IconLearning fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Học tập</ListItemText>
-          </MenuItem>
-        </Link>
+        {userRole === "teacher" && (
+          <>
+            <Link href="/dashboard/" passHref legacyBehavior>
+              <MenuItem component="a" onClick={handleClose2}>
+                <ListItemIcon>
+                  <IconDashboard fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>Bảng điều khiển</ListItemText>
+              </MenuItem>
+            </Link>
+            <Link href="/my-courses" passHref legacyBehavior>
+              <MenuItem component="a" onClick={handleClose2}>
+                <ListItemIcon>
+                  <IconCourses fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>Khóa học của tôi</ListItemText>
+              </MenuItem>
+            </Link>
+          </>
+        )}
+        {userRole === "admin" && (
+          <Link href="/dashboard/" passHref legacyBehavior>
+            <MenuItem component="a" onClick={handleClose2}>
+              <ListItemIcon>
+                <IconDashboard fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Bảng điều khiển</ListItemText>
+            </MenuItem>
+          </Link>
+        )}
+
         <Link href="/profile" passHref legacyBehavior>
           <MenuItem component="a" onClick={handleClose2}>
             <ListItemIcon>
@@ -123,6 +130,16 @@ const Profile = () => {
             <ListItemText>Hồ sơ cá nhân</ListItemText>
           </MenuItem>
         </Link>
+
+        <Link href="/mylearning" passHref legacyBehavior>
+          <MenuItem component="a" onClick={handleClose2}>
+            <ListItemIcon>
+              <IconLearning fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Học tập</ListItemText>
+          </MenuItem>
+        </Link>
+
         <Link href="/history" passHref legacyBehavior>
           <MenuItem component="a" onClick={handleClose2}>
             <ListItemIcon>

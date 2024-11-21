@@ -57,9 +57,8 @@ const ConversationsPage = () => {
     } else {
       setUid(undefined);
     }
-  }, [token, notifyError]);
+  }, [token]);
 
-  // Fetch conversation list khi component mount hoặc token thay đổi
   useEffect(() => {
     if (token) {
       fetchConversations();

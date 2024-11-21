@@ -240,7 +240,7 @@ export default function InstructorBecomeView() {
           />
           <RHFTextField
             name="bio"
-            label="Thông tin cá nhân"
+            label="Giới thiệu về bản thân (*)"
             multiline
             maxRows={4}
             fullWidth

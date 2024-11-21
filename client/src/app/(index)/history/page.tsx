@@ -24,10 +24,12 @@ import { historyApi } from "@/server/History";
 import HistoryIcon from "@mui/icons-material/History";
 import { useRouter } from "next/navigation";
 import RefundRequestDialog from "@/components/RefundRequestDialog";
+
 interface Course {
   courseId: string;
   title: string;
   price: number;
+  salePrice: number;
 }
 
 interface Purchase {
@@ -38,12 +40,13 @@ interface Purchase {
   };
   sku: Course[];
   total: number;
+  status: string;
 }
 
 interface HistoryResponse {
   status: string;
   message: {
-    purchase: Purchase[];
+    prchases: Purchase[];
     total: number;
   };
 }
@@ -178,14 +181,7 @@ const HistoryPage: React.FC = () => {
                   purchase.boughtAt._nanoseconds / 1e6
               );
 
-              // So sánh thời gian hiện tại và ngày mua, tính theo giờ
-              const isRefundable = dayjs().diff(purchaseDate, "hour") <= 24;
-
-              console.log(
-                "Ngày mua hàng:",
-                purchaseDate.format("DD/MM/YYYY HH:mm:ss")
-              );
-              console.log("Có đủ điều kiện hoàn tiền:", isRefundable);
+              const isRefundable = true;
 
               return (
                 <TableRow key={purchase.code}>

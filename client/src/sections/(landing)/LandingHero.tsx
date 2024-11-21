@@ -1,7 +1,8 @@
+"use client";
+import React, { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Fab from "@mui/material/Fab";
 import Stack from "@mui/material/Stack";
-import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
 import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
@@ -11,12 +12,7 @@ import Iconify from "@/components/iconify";
 import { useResponsive } from "@/hook/useResponsive";
 import { useBoolean } from "@/hook/useBoolean";
 import Image from "@/components/image";
-import { Grid2 } from "@mui/material";
-
-const SUMMARY = [
-  { value: 100, label: "Học viên", color: "warning" },
-  { value: 20, label: "Khóa học", color: "error" },
-] as const;
+import { dashboardApi } from "@/server/Dashboard";
 
 const formatNumber = (num: number) => Intl.NumberFormat().format(num);
 
@@ -24,6 +20,30 @@ export default function LandingHero() {
   const theme = useTheme();
   const mdUp = useResponsive("up", "md");
   const videoOpen = useBoolean();
+
+  const [summary, setSummary] = useState([
+    { value: 0, label: "Chuyên gia", color: "success" },
+    { value: 0, label: "Học viên", color: "warning" },
+    { value: 0, label: "Khóa học", color: "error" },
+  ]);
+
+  useEffect(() => {
+    const fetchSummary = async () => {
+      try {
+        const response = await dashboardApi.getAdmin();
+        if (response.status === "Successfully") {
+          const data = response.message;
+          setSummary([
+            { value: data.teacher, label: "Chuyên gia", color: "success" },
+            { value: data.student, label: "Học viên", color: "warning" },
+            { value: data.numberOfCourses, label: "Khóa học", color: "error" },
+          ]);
+        }
+      } catch (error) {}
+    };
+
+    fetchSummary();
+  }, []);
 
   return (
     <Box
@@ -78,10 +98,6 @@ export default function LandingHero() {
               spacing={3}
               alignItems="center"
             >
-              <Button color="inherit" size="large" variant="contained">
-                Bắt Đầu Ngay
-              </Button>
-
               <Stack
                 direction="row"
                 alignItems="center"
@@ -95,7 +111,7 @@ export default function LandingHero() {
                 >
                   <Iconify width={24} icon="carbon:play" />
                 </Fab>
-                Xem Video
+                Bắt Đầu Ngay
               </Stack>
             </Stack>
 
@@ -106,9 +122,9 @@ export default function LandingHero() {
               spacing={{ xs: 3, sm: 10 }}
               justifyContent={{ xs: "center", md: "flex-start" }}
             >
-              {SUMMARY.map((item) => (
+              {summary.map((item) => (
                 <Stack
-                  key={item.value}
+                  key={item.label}
                   spacing={0.5}
                   sx={{ position: "relative" }}
                 >

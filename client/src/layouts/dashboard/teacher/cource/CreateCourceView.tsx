@@ -1434,7 +1434,6 @@ const CreateCourseView: React.FC<CreateCourseViewProps> = ({
                 )}
               </Box>
 
-              {/* Back to My Courses Button in Edit Mode */}
               {isEditMode && (
                 <Box sx={{ mt: 2, textAlign: "right" }}>
                   <Button

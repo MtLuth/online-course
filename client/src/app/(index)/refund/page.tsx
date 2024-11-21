@@ -1,7 +1,4 @@
-// src/components/RefundList.tsx
-
 "use client";
-
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -18,6 +15,12 @@ import {
   Pagination,
   Avatar,
   Chip,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
 } from "@mui/material";
 import { refundApi } from "@/server/Refund";
 import { getAuthToken } from "@/utils/auth";
@@ -72,8 +75,11 @@ const RefundList: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageCount, setPageCount] = useState<number>(1);
   const [itemCount, setItemCount] = useState<number>(0);
+  const [cancelingId, setCancelingId] = useState<string | null>(null); // Trạng thái hủy
+  const [openDialog, setOpenDialog] = useState<boolean>(false); // Trạng thái Dialog
+  const [selectedRefund, setSelectedRefund] = useState<RefundItem | null>(null); // Yêu cầu được chọn để hủy
 
-  const { notifyError } = useToastNotification();
+  const { notifyError, notifySuccess } = useToastNotification();
 
   const refundsPerPage = 5;
 
@@ -88,7 +94,7 @@ const RefundList: React.FC = () => {
         return;
       }
 
-      const response: RefundResponse = await refundApi.refundUser("", token); // Bạn có thể cần điều chỉnh tham số nếu cần
+      const response: RefundResponse = await refundApi.refundUser(token);
 
       if (response.status === "Successfully") {
         setRefunds(response.message.results);
@@ -124,6 +130,45 @@ const RefundList: React.FC = () => {
         return "error";
       default:
         return "default";
+    }
+  };
+
+  // Mở Dialog xác nhận hủy yêu cầu
+  const handleOpenDialog = (refund: RefundItem) => {
+    setSelectedRefund(refund);
+    setOpenDialog(true);
+  };
+
+  // Đóng Dialog
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setSelectedRefund(null);
+  };
+
+  // Hàm hủy yêu cầu hoàn tiền
+  const handleCancelRefund = async () => {
+    if (!selectedRefund) return;
+    setCancelingId(selectedRefund.id);
+    try {
+      const token = getAuthToken();
+      if (!token) {
+        notifyError("Vui lòng đăng nhập để thực hiện hành động này.");
+        return;
+      }
+
+      const response = await refundApi.refundPutUser(selectedRefund.id, token);
+
+      if (response.status === "Successfully") {
+        notifySuccess("Hủy yêu cầu hoàn tiền thành công.");
+        fetchRefunds(currentPage);
+      } else {
+        notifyError(response.status || "Không thể hủy yêu cầu.");
+      }
+    } catch (err: any) {
+      notifyError(err.message || "Đã xảy ra lỗi khi hủy yêu cầu.");
+    } finally {
+      setCancelingId(null);
+      handleCloseDialog();
     }
   };
 
@@ -164,6 +209,7 @@ const RefundList: React.FC = () => {
                   <TableCell>Tài Khoản Nhận Tiền</TableCell>
                   <TableCell>Ngày Tạo</TableCell>
                   <TableCell>Trạng Thái</TableCell>
+                  <TableCell>Hành Động</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -213,6 +259,23 @@ const RefundList: React.FC = () => {
                         color={getStatusColor(refund.status)}
                       />
                     </TableCell>
+                    <TableCell>
+                      {refund.status === "Đang xử lý" && (
+                        <Button
+                          variant="contained"
+                          color="error"
+                          size="small"
+                          onClick={() => handleOpenDialog(refund)}
+                          disabled={cancelingId === refund.id}
+                        >
+                          {cancelingId === refund.id ? (
+                            <CircularProgress size={24} color="inherit" />
+                          ) : (
+                            "Hủy YC"
+                          )}
+                        </Button>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -232,6 +295,29 @@ const RefundList: React.FC = () => {
           )}
         </>
       )}
+
+      {/* Dialog xác nhận hủy yêu cầu */}
+      <Dialog
+        open={openDialog}
+        onClose={handleCloseDialog}
+        aria-labelledby="cancel-refund-dialog-title"
+        aria-describedby="cancel-refund-dialog-description"
+      >
+        <DialogTitle id="cancel-refund-dialog-title">
+          Xác Nhận Hủy Yêu Cầu Hoàn Tiền
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="cancel-refund-dialog-description">
+            Bạn có chắc chắn muốn hủy yêu cầu hoàn tiền này không?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>Hủy</Button>
+          <Button onClick={handleCancelRefund} color="error" autoFocus>
+            Xác Nhận
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
