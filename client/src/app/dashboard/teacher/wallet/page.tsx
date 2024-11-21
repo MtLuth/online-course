@@ -100,9 +100,9 @@ const Wallet: React.FC = () => {
     };
 
     fetchUserProfile();
-  }, [walletData, token]); // Trigger when walletData changes
+  }, [walletData, token]); // Trigger khi walletData thay đổi
 
-  // Fetch bank list when modal opens
+  // Fetch bank list khi modal mở
   useEffect(() => {
     const fetchBanks = async () => {
       try {
@@ -121,14 +121,14 @@ const Wallet: React.FC = () => {
     if (openWithdraw) {
       fetchBanks();
     }
-  }, [openWithdraw]);
+  }, [openWithdraw, notifyError]);
 
-  // Handle withdraw button click to open modal
+  // Handle withdraw button click để mở modal
   const handleWithdrawClick = () => {
     setOpenWithdraw(true);
   };
 
-  // Handle modal close
+  // Handle đóng modal
   const handleCloseWithdraw = () => {
     setOpenWithdraw(false);
     setWithdrawData({
@@ -138,18 +138,18 @@ const Wallet: React.FC = () => {
     });
   };
 
-  // Handle form input change
+  // Handle thay đổi input trong form
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>
   ) => {
     const { name, value } = e.target;
     setWithdrawData((prev) => ({
       ...prev,
-      [name as string]: value,
+      [name as string]: name === "amount" ? Number(value) : value,
     }));
   };
 
-  // Handle withdraw form submission
+  // Handle submit form rút tiền
   const handleWithdrawSubmit = async () => {
     const { bankName, bankNumber, amount } = withdrawData;
 
@@ -178,12 +178,13 @@ const Wallet: React.FC = () => {
 
       if (response.status === "Successfully") {
         notifySuccess(response.message);
-        // Update wallet data
+        // Cập nhật dữ liệu ví
         setWalletData((prev) => ({
           ...prev!,
           withdrawable: prev!.withdrawable - amount,
           withdrawnAmount: prev!.withdrawnAmount + amount,
           withdrawPending: (prev!.withdrawPending || 0) + amount,
+          inProgress: (prev!.inProgress || 0) + amount, // Thêm inProgress
         }));
         handleCloseWithdraw();
       } else {
@@ -226,7 +227,7 @@ const Wallet: React.FC = () => {
         Ví Của Tôi
       </Typography>
 
-      {/* Error Message */}
+      {/* Thông báo lỗi */}
       {error && (
         <Typography
           variant="body1"
@@ -278,7 +279,7 @@ const Wallet: React.FC = () => {
                 color="primary"
                 sx={{ fontWeight: "bold" }}
               >
-                {walletData.withdrawable.toLocaleString()} VND
+                {walletData.withdrawable} VND
               </Typography>
             </Box>
 
@@ -287,7 +288,17 @@ const Wallet: React.FC = () => {
                 Số Tiền Đã Rút:
               </Typography>
               <Typography variant="h6" color="textSecondary">
-                {walletData.withdrawnAmount.toLocaleString()} VND
+                {walletData.withdrawnAmount} VND
+              </Typography>
+            </Box>
+
+            {/* Thêm Tiền Đang Xử Lý */}
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+                Tiền Đang Xử Lý:
+              </Typography>
+              <Typography variant="h6" color="warning.main">
+                {walletData.inProgress} VND
               </Typography>
             </Box>
 
@@ -296,14 +307,14 @@ const Wallet: React.FC = () => {
                 Yêu Cầu Rút Tiền:
               </Typography>
               <Typography variant="h6" color="error">
-                {walletData.withdrawPending && walletData.withdrawPending > 0
-                  ? walletData.withdrawPending.toLocaleString()
-                  : "0"}{" "}
+                {walletData.withdrawPending > 0
+                  ? walletData.withdrawPending
+                  : 0}{" "}
                 VND
               </Typography>
             </Box>
 
-            {/* Withdraw Button */}
+            {/* Nút Rút Tiền */}
             <Button
               variant="contained"
               color="primary"
@@ -335,7 +346,7 @@ const Wallet: React.FC = () => {
         </Typography>
       )}
 
-      {/* Withdraw Modal */}
+      {/* Modal Rút Tiền */}
       <Dialog
         open={openWithdraw}
         onClose={handleCloseWithdraw}
@@ -411,7 +422,7 @@ const Wallet: React.FC = () => {
               value={withdrawData.amount}
               onChange={handleChange}
               helperText={`Tối đa: ${
-                walletData ? walletData.withdrawable.toLocaleString() : "0"
+                walletData ? walletData.withdrawable : 0
               } VND`}
             />
           </Box>

@@ -328,7 +328,7 @@ export default function CartShopping() {
                 <Box sx={{ ml: 2, flexGrow: 1 }}>
                   <Typography variant="h6">{course.title}</Typography>
                   <Typography variant="body2" color="textSecondary">
-                    Giảng viên: {course.instructor}
+                    Chuyên Gia: {course.instructor}
                   </Typography>
                   <Typography variant="body2" color="textSecondary">
                     Cấp độ: {getLevelLabel(course.level)}
