@@ -42,6 +42,22 @@ class Upload extends BaseApi {
 
     return response;
   }
+  public async uploadFile(
+    files: File[]
+  ): Promise<{ status: string; message: string[] }> {
+    const formData = new FormData();
+    files.forEach((file) => {
+      formData.append("files", file);
+    });
+
+    const response = await this.post(`/upload/resources`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    return response;
+  }
 }
 
 export const uploadApi = new Upload();

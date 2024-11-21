@@ -1,5 +1,3 @@
-"use client";
-
 import DashboardLayout from "@/layouts/dashboard/DashboardLayout";
 
 type Props = {

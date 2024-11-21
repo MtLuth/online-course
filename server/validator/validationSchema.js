@@ -71,12 +71,7 @@ const courseValidationSchema = yup.object({
     .number()
     .required("Giá của khóa học là bắt buộc")
     .min(0, "Giá không được nhỏ hơn 0"),
-  //   discount: yup.number()
-  //     .min(0, "Giảm giá không thể nhỏ hơn 0")
-  //     .max(100, "Giảm giá không thể lớn hơn 100"),
   language: yup.string().required("Ngôn ngữ của khóa học là bắt buộc"),
-  //   rating: yup.number().min(1).max(5),
-  //   numberOfRatings: yup.number().min(0),
   level: yup
     .string()
     .oneOf(["Beginner", "Intermediate", "Advanced"])
@@ -131,24 +126,96 @@ const courseValidationSchema = yup.object({
       })
     )
     .min(1, "Khóa học phải có ít nhất một phần nội dung"),
-
-  //   reviews: yup.array().of(
-  //     yup.object({
-  //       userId: yup.string().required("ID người dùng là bắt buộc"),
-  //       userName: yup.string().required("Tên người dùng là bắt buộc"),
-  //       rating: yup.number().min(1).max(5).required("Đánh giá là bắt buộc"),
-  //       comment: yup.string().max(500),
-  //       createdAt: yup.date().default(() => new Date()),
-  //     })
-  //   ),
-
-  //   studentsEnrolled: yup.array().of(yup.string()).min(1),
   isPublished: yup.boolean().default(false),
 });
 
-const paginationValidate = yup.object().shape({
-  limit: yup.number().min(1).max(20).required(),
-  page: yup.number().min(1).required(),
+const buyCoursesSchema = yup
+  .array()
+  .of(yup.string())
+  .required("Vui lòng chọn sản phẩm muốn mua!")
+  .min(1, "Phải có ít nhất 1 khóa học");
+
+const createPaymentLinkSchema = yup
+  .array()
+  .of(
+    yup.object({
+      name: yup.string().required("Tên sản phẩm là bắt buộc"),
+      quantity: yup
+        .number()
+        .required("Số lượng là bắt buộc")
+        .min(1, "Số lượng phải lớn hơn hoặc bằng 1"),
+      price: yup.number().required("Giá là bắt buộc"),
+    })
+  )
+  .required("items is required")
+  .min(1, "Vui lòng chọn ít nhất một sản phẩm muốn mua");
+
+const categorySchema = yup.object({
+  name: yup.string().required(),
+  url: yup.string().required(),
+  children: yup.array().of(
+    yup.object({
+      name: yup.string().required(),
+      url: yup.string().required(),
+      children: yup.array().of(
+        yup.object({
+          name: yup.string().required(),
+          url: yup.string().required(),
+        })
+      ),
+    })
+  ),
+});
+
+const ratingSchema = yup.object({
+  score: yup.number().required().min(1).max(5),
+  content: yup.string().required(),
+});
+
+const messageSchema = yup.object({
+  content: yup.string().required(),
+  contentType: yup
+    .string()
+    .required()
+    .oneOf(["text", "image", "icon", "sticker"]),
+});
+
+const newPasswordSchema = yup.object({
+  oldPassword: yup.string().password().required(),
+  newPassword: yup.string().password().required(),
+});
+
+const refundSchema = yup.object({
+  orderCode: yup.string().required(),
+  courses: yup
+    .array()
+    .of(yup.string().label("Mã khóa học").required())
+    .min(1)
+    .required(),
+  reason: yup.string().required().label("Lý do"),
+  payeeAccount: yup
+    .object({
+      receiverName: yup.string().required(),
+      bankNumber: yup.string().required(),
+      bankName: yup.string().required(),
+    })
+    .required(),
+});
+
+const withdrawRequestSchema = yup.object().shape({
+  amount: yup
+    .number()
+    .min(1000, "Số tiền phải lớn hơn 1000")
+    .required("Số tiền là bắt buộc")
+    .test("is-integer", "Số tiền phải là số nguyên", (value) =>
+      Number.isInteger(value)
+    ),
+  bankNumber: yup.string().required("Số tài khoản là bắt buộc"),
+  bankName: yup
+    .string()
+    .required("Tên ngân hàng là bắt buộc")
+    .min(3, "Tên ngân hàng phải có ít nhất 3 ký tự")
+    .max(100, "Tên ngân hàng không được quá 100 ký tự"),
 });
 
 export {
@@ -156,5 +223,12 @@ export {
   registerParam,
   becomeInstructorParam,
   courseValidationSchema,
-  paginationValidate,
+  buyCoursesSchema,
+  createPaymentLinkSchema,
+  categorySchema,
+  ratingSchema,
+  messageSchema,
+  newPasswordSchema,
+  refundSchema,
+  withdrawRequestSchema,
 };

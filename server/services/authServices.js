@@ -17,6 +17,8 @@ import {
   sendEmail,
 } from "./emailService.js";
 import Instructor, { InstructorStatus } from "../model/instructorModel.js";
+import userRepo from "../repository/userRepo.js";
+import instructorRepo from "../repository/instructorRepo.js";
 
 class AuthService {
   constructor() {
@@ -31,10 +33,21 @@ class AuthService {
         email,
         password
       );
-      if (!userCredential.user.emailVerified) {
+
+      const user = userCredential.user;
+      if (!user.emailVerified) {
         throw new AppError("Email chưa được xác minh", 400);
       }
-      return userCredential;
+      const dbRef = this.firestore.collection("users");
+      const doc = await dbRef.doc(user.uid).get();
+      const role = doc.data().role;
+      const result = {
+        uid: user.uid,
+        email: user.email,
+        role: role,
+        tokenPairs: user.stsTokenManager,
+      };
+      return result;
     } catch (error) {
       if (error.code === "auth/wrong-password") {
         throw new AppError(ErrorMessage.InvalidCredential, 401);
@@ -63,7 +76,7 @@ class AuthService {
       account.role = UserRole.Student;
       account.password = password;
 
-      await account.createAccout(false);
+      await userRepo.createAccount(account, false);
 
       const emailLink =
         await this.authAdmin.generateEmailVerificationLink(email);
@@ -77,7 +90,6 @@ class AuthService {
       if (error.code === "auth/email-already-exists") {
         throw new AppError(ErrorMessage.EmailAlreadyExist, 500);
       }
-      console.log(error);
       throw new AppError(error, 500);
     }
   }
@@ -102,7 +114,7 @@ class AuthService {
       account.avt = avt;
       account.fullName = fullName;
       account.role = UserRole.Teacher;
-      const uid = await account.createAccout(true);
+      const uid = await userRepo.createAccount(account);
       const newInstructor = new Instructor(
         uid,
         email,
@@ -138,6 +150,7 @@ class AuthService {
       const content = getEmailTemplateResetPassword(
         `http://localhost:3000/resetpassword/${resetToken.value}`
       );
+      console.log(resetToken);
       const mailDialup = mailOptions(email, "Reset Password", content);
       await sendEmail(mailDialup);
       return ErrorMessage.SendEmailPasswordSuccessfully;
@@ -145,7 +158,6 @@ class AuthService {
       if (error.code === "auth/user-not-found") {
         throw new AppError(ErrorMessage.EmailNotFound, 400);
       }
-      console.log(error);
       throw new AppError(`${ErrorMessage.Internal}: ${error}`, 500);
     }
   }
@@ -182,10 +194,7 @@ class AuthService {
           this.authAdmin.updateUser(uid, {
             disabled: false,
           }),
-          this.firestore
-            .collection("instructors")
-            .doc(uid)
-            .set({ status: InstructorStatus.Active }),
+          instructorRepo.updateStatus(uid, InstructorStatus.Inactive),
         ]);
         const emailLink = await this.authAdmin.generateEmailVerificationLink(
           instructor.email
@@ -209,7 +218,21 @@ class AuthService {
       await sendEmail(mailDialup);
       return "Thành công!";
     } catch (error) {
-      console.log(error);
+      if (error.code === "auth/user-not-found") {
+        throw new AppError("Không tìm thấy tài khoản này trên hệ thống!", 500);
+      }
+      throw new AppError(error, 500);
+    }
+  }
+
+  async newPassword(uid, oldPassword, newPassword) {
+    try {
+      const message = await userRepo.newPassword(uid, oldPassword, newPassword);
+      return message;
+    } catch (error) {
+      if (error.code === "auth/invalid-credential") {
+        throw new AppError("Mật khẩu cũ không chính xác!", 400);
+      }
       throw new AppError(error, 500);
     }
   }

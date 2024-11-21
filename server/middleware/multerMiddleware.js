@@ -25,6 +25,28 @@ const videoFilter = (req, file, cb) => {
   }
 };
 
+const resourceFilter = (req, file, cb) => {
+  const allowedMimeTypes = [
+    "application/zip",
+    "application/x-rar-compressed",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/pdf",
+    "application/msword",
+  ];
+
+  if (allowedMimeTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(
+      new Error(
+        "Chỉ những file ZIP, RAR, DOC, DOCX, XLSX, PDF là được chấp nhận"
+      ),
+      false
+    );
+  }
+};
+
 const storage = multer.memoryStorage();
 
 const uploadImage = multer({
@@ -37,4 +59,9 @@ const uploadVideo = multer({
   fileFilter: videoFilter,
 });
 
-export { uploadImage, uploadVideo };
+const uploadResource = multer({
+  storage: storage,
+  fileFilter: resourceFilter,
+});
+
+export { uploadImage, uploadVideo, uploadResource };

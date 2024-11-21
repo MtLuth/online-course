@@ -1,6 +1,8 @@
+// src/components/InstructorBecomeView.tsx
 "use client";
+
 import * as Yup from "yup";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
@@ -21,14 +23,19 @@ import RHFTextField from "@/components/hook-form/RHFTextField";
 import { useState } from "react";
 import { useToastNotification } from "@/hook/useToastNotification";
 import { authApi } from "@/server/Auth";
+import { uploadApi } from "@/server/Upload";
+import { Box, Paper } from "@mui/material";
+import { useDropzone } from "react-dropzone";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 export default function InstructorBecomeView() {
   const passwordShow = useBoolean();
   const confirmPasswordShow = useBoolean();
 
   const { notifySuccess, notifyError } = useToastNotification();
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [certificateFile, setCertificateFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const RegisterSchema = Yup.object().shape({
     fullName: Yup.string()
@@ -45,21 +52,13 @@ export default function InstructorBecomeView() {
       .required("Vui lòng xác nhận mật khẩu")
       .oneOf([Yup.ref("password")], "Mật khẩu không khớp"),
     experience: Yup.number()
-      .transform((value, originalValue) =>
-        typeof originalValue === "string" && originalValue.trim() === ""
-          ? null
-          : value
-      )
-      .nullable()
+      .typeError("Vui lòng nhập số năm kinh nghiệm")
       .required("Vui lòng nhập số năm kinh nghiệm")
       .min(0, "Số năm kinh nghiệm không thể nhỏ hơn 0")
       .max(100, "Số năm kinh nghiệm không thể quá 100 năm"),
     expertise: Yup.string().required("Vui lòng nhập chuyên môn"),
     education: Yup.string().required("Vui lòng nhập trình độ học vấn"),
     bio: Yup.string().max(300, "Thông tin cá nhân không được quá 300 ký tự"),
-    certificate: Yup.string()
-      .url("Vui lòng nhập URL hợp lệ")
-      .required("Vui lòng nhập URL chứng chỉ"),
   });
 
   const defaultValues = {
@@ -72,7 +71,6 @@ export default function InstructorBecomeView() {
     expertise: "",
     education: "",
     bio: "",
-    certificate: "",
   };
 
   const methods = useForm({
@@ -83,38 +81,86 @@ export default function InstructorBecomeView() {
   const {
     reset,
     handleSubmit,
+    control,
     formState: { isSubmitting },
+    setError,
   } = methods;
 
-  const onSubmit = handleSubmit((data) => {
-    data.avt =
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Breezeicons-actions-22-im-user.svg/1200px-Breezeicons-actions-22-im-user.svg.png";
+  const onDrop = (acceptedFiles: File[]) => {
+    if (acceptedFiles.length > 0) {
+      setCertificateFile(acceptedFiles[0]);
+    }
+  };
 
-    authApi
-      .becomeInstructor(data)
-      .then((res) => {
-        notifySuccess("Thông tin của bạn đã được gửi admin và chờ kiểm duyệt!");
-        reset();
-      })
-      .catch((error) => {
-        const errorMessage =
-          error?.response?.data?.message ||
-          error?.message ||
-          "Có lỗi xảy ra. Vui lòng thử lại sau.";
-        notifyError(errorMessage);
-      });
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      "application/pdf": [".pdf"],
+      "application/msword": [".doc"],
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+        [".docx"],
+    },
+    multiple: false,
   });
 
+  const onSubmit = async (data: any) => {
+    if (!certificateFile) {
+      setError("certificate", {
+        type: "manual",
+        message: "Vui lòng tải lên chứng chỉ",
+      });
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      const uploadResponse = await uploadApi.uploadFile([certificateFile]);
+
+      if (uploadResponse.status !== "Successfully") {
+        throw new Error("Upload chứng chỉ thất bại");
+      }
+
+      const certificateUrl = uploadResponse.message[0];
+      if (!certificateUrl) {
+        throw new Error("Không thể lấy URL của chứng chỉ tải lên.");
+      }
+      const payload = {
+        ...data,
+        avt: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Breezeicons-actions-22-im-user.svg/1200px-Breezeicons-actions-22-im-user.svg.png",
+        certificate: certificateUrl,
+      };
+      console.log(certificateUrl);
+      console.log(payload);
+
+      await authApi.becomeInstructor(payload);
+
+      notifySuccess("Thông tin của bạn đã được gửi admin và chờ kiểm duyệt!");
+      reset();
+      setCertificateFile(null);
+    } catch (error: any) {
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Có lỗi xảy ra. Vui lòng thử lại sau.";
+      notifyError(errorMessage);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Render phần đầu trang
   const renderHead = (
     <Stack spacing={1} alignItems="center">
       <Typography variant="h3" paragraph>
-        Bắt đầu trở thành Chuyên
+        Bắt đầu trở thành Chuyên Gia
       </Typography>
     </Stack>
   );
 
+  // Render phần form
   const renderForm = (
-    <FormProvider methods={methods} onSubmit={onSubmit}>
+    <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
       <Grid container spacing={4}>
         <Grid item xs={12} md={6}>
           <RHFTextField
@@ -194,7 +240,7 @@ export default function InstructorBecomeView() {
           />
           <RHFTextField
             name="bio"
-            label="Thông tin cá nhân"
+            label="Giới thiệu về bản thân (*)"
             multiline
             maxRows={4}
             fullWidth
@@ -202,27 +248,96 @@ export default function InstructorBecomeView() {
           />
         </Grid>
       </Grid>
-      <Card sx={{ mt: 3 }}>
+
+      {/* Khu vực kéo thả file chứng chỉ */}
+      <Card sx={{ mt: 3, p: 2 }}>
         <CardContent>
           <Typography variant="h6" gutterBottom>
             Thông tin chứng chỉ (*)
           </Typography>
-          <RHFTextField
+          <Controller
             name="certificate"
-            label="URL chứng chỉ ở dạng .doc .docx .pdf"
-            fullWidth
-            sx={{ mb: 3 }}
+            control={control}
+            defaultValue={null}
+            render={({ field, fieldState }) => (
+              <>
+                <Paper
+                  {...getRootProps()}
+                  elevation={isDragActive ? 8 : 2}
+                  sx={{
+                    p: 2,
+                    textAlign: "center",
+                    color: isDragActive ? "primary.main" : "text.secondary",
+                    border: "2px dashed",
+                    borderColor: isDragActive ? "primary.main" : "divider",
+                    backgroundColor: isDragActive
+                      ? "action.hover"
+                      : "background.paper",
+                    transition: "all 0.3s ease",
+                    cursor: "pointer",
+                    "&:hover": {
+                      backgroundColor: "action.hover",
+                    },
+                  }}
+                >
+                  <input {...getInputProps()} />
+                  <Stack spacing={1} alignItems="center">
+                    <UploadFileIcon
+                      color={isDragActive ? "primary" : "action"}
+                      fontSize="large"
+                    />
+                    {isDragActive ? (
+                      <Typography>Thả file tại đây...</Typography>
+                    ) : (
+                      <Typography>
+                        Kéo thả file tại đây hoặc nhấp để chọn file
+                      </Typography>
+                    )}
+                    <Typography variant="caption" color="textSecondary">
+                      Chỉ chấp nhận file .pdf, .doc, .docx
+                    </Typography>
+                  </Stack>
+                </Paper>
+                {certificateFile && (
+                  <Box mt={2} display="flex" alignItems="center">
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      alignItems="center"
+                      flexGrow={1}
+                    >
+                      <UploadFileIcon color="action" />
+                      <Typography variant="body2">
+                        {certificateFile.name}
+                      </Typography>
+                    </Stack>
+                    <IconButton
+                      color="error"
+                      onClick={() => setCertificateFile(null)}
+                      size="small"
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </Box>
+                )}
+                {fieldState.error && (
+                  <Typography variant="caption" color="error">
+                    {fieldState.error.message}
+                  </Typography>
+                )}
+              </>
+            )}
           />
         </CardContent>
       </Card>
 
       <LoadingButton
         fullWidth
-        color="inherit"
+        color="primary"
         size="large"
         type="submit"
         variant="contained"
-        loading={isSubmitting}
+        loading={isSubmitting || uploading}
         sx={{ mt: 3 }}
       >
         Đăng ký
@@ -231,7 +346,7 @@ export default function InstructorBecomeView() {
   );
 
   return (
-    <Card sx={{ maxWidth: 800, mx: "auto", mt: 16, mb: 4, boxShadow: 3 }}>
+    <Card sx={{ maxWidth: 800, mx: "auto", mt: 2, mb: 4, boxShadow: 3 }}>
       <CardContent>
         {renderHead}
         <Divider sx={{ my: 4 }} />

@@ -5,6 +5,7 @@ const dbRef = firebaseAdmin.firestore().collection("instructors");
 const InstructorStatus = {
   Active: "active",
   Pending: "pending",
+  Inactive: "inactive",
 };
 class Instructor {
   constructor(
@@ -25,7 +26,9 @@ class Instructor {
     this.fullName = fullName || null;
     this.email = email || null;
     this.status = status || InstructorStatus.Pending;
-    this.avt = avt || null;
+    this.avt =
+      avt ||
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Breezeicons-actions-22-im-user.svg/1200px-Breezeicons-actions-22-im-user.svg.png";
     this.bio = bio || null;
     this.expertise = expertise || null;
     this.experience = experience || 0;
@@ -78,6 +81,7 @@ class Instructor {
   async getById(id) {
     const snapshot = await dbRef.doc(id).get();
     const data = snapshot.data();
+    console.log(data);
     return new Instructor(
       snapshot.id,
       data.email,

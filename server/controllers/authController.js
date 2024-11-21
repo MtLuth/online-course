@@ -6,6 +6,7 @@ import yup from "yup";
 import {
   becomeInstructorParam,
   loginParam,
+  newPasswordSchema,
   registerParam,
 } from "../validator/validationSchema.js";
 
@@ -16,15 +17,10 @@ class AuthController {
       strict: true,
     });
     const result = await authService.validateUser(email, password);
-    const user = result.user;
-    const data = {
-      uid: user.uid,
-      email: user.email,
-      tokenPairs: user.stsTokenManager,
-    };
+
     res.status(200).json({
       status: "success",
-      message: data,
+      message: result,
     });
   });
 
@@ -143,6 +139,25 @@ class AuthController {
     res.status(200).json({
       status: "Successfully",
       message: result,
+    });
+  });
+
+  newPassword = catchAsync(async (req, res, next) => {
+    const uid = req.uid;
+    const { oldPassword, newPassword } = await newPasswordSchema.validate(
+      req.body,
+      {
+        abortEarly: true,
+      }
+    );
+    const message = await authService.newPassword(
+      uid,
+      oldPassword,
+      newPassword
+    );
+    res.status(200).json({
+      status: "Successfully",
+      message: message,
     });
   });
 }

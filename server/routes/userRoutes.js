@@ -8,4 +8,8 @@ userRouter
   .route("/profile/:uid")
   .get(authMiddleware.validateUser, userController.getProfile);
 
+userRouter
+  .route("/profile")
+  .post(authMiddleware.validateUser, userController.updateProfile);
+
 export default userRouter;

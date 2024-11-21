@@ -30,7 +30,11 @@ class Auth extends BaseApi {
   }
 
   public async becomeInstructor(data: InstructorData) {
-    const response = await this.post(`/auth/become-instructor`, data);
+    const response = await authApi.post(`/auth/become-instructor`, data, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
     return response?.data;
   }
 
@@ -61,6 +65,15 @@ class Auth extends BaseApi {
     } catch (error) {
       throw error;
     }
+  }
+
+  public logout() {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("uid");
+    localStorage.removeItem("expirationTime");
+    Cookies.remove("accessToken");
+    Cookies.remove("expirationTime");
+    return true;
   }
 }
 

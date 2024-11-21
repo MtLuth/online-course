@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
@@ -9,7 +10,6 @@ import { useTheme } from "@mui/material/styles";
 import { bgBlur } from "src/theme/css";
 import { HEADER } from "../config-layout";
 import { navConfig } from "@/layouts/main/data";
-import Label from "@/components/label";
 import HeaderShadow from "@/layouts/common/HeaderShadow";
 import Searchbar from "@/layouts/common/Searchbar";
 import Logo from "@/components/logo/Logo";
@@ -21,6 +21,8 @@ import NavMobile from "@/layouts/main/nav/mobile/NavMobile";
 import { useAppContext } from "@/context/AppContext";
 import { Avatar } from "@mui/material";
 import Profile from "@/components/profile/Profile";
+import Cart from "@/components/cart/Cart";
+import { useCart } from "@/context/CartContext";
 
 type Props = {
   headerOnDark: boolean;
@@ -28,16 +30,17 @@ type Props = {
 
 export default function Header({ headerOnDark }: Props) {
   const theme = useTheme();
+  const { cartCount } = useCart();
   const { sessionToken } = useAppContext();
   const offset = useOffSetTop();
-
   const mdUp = useResponsive("up", "md");
-
+  const filteredNavConfig = navConfig.filter(
+    (item) => !(item.title === "Trở Thành Chuyên Gia" && sessionToken)
+  );
   const renderContent = (
     <>
       <Box sx={{ lineHeight: 0, position: "relative" }}>
         <Logo />
-
         <Link
           href="https://zone-docs.vercel.app/changelog"
           target="_blank"
@@ -45,20 +48,18 @@ export default function Header({ headerOnDark }: Props) {
         ></Link>
       </Box>
 
-      <>
-        <Stack
-          flexGrow={1}
-          alignItems="center"
-          sx={{
-            height: 1,
-            display: { xs: "none", md: "flex" },
-          }}
-        >
-          <NavDesktop data={navConfig} />
-        </Stack>
+      <Stack
+        flexGrow={1}
+        alignItems="center"
+        sx={{
+          height: 1,
+          display: { xs: "none", md: "flex" },
+        }}
+      >
+        <NavDesktop data={filteredNavConfig} />
+      </Stack>
 
-        <Box sx={{ flexGrow: { xs: 1, md: "unset" } }} />
-      </>
+      <Box sx={{ flexGrow: { xs: 1, md: "unset" } }} />
 
       <Stack
         spacing={2}
@@ -69,7 +70,7 @@ export default function Header({ headerOnDark }: Props) {
         <Stack spacing={1} direction="row" alignItems="center">
           <Searchbar />
         </Stack>
-        {!sessionToken && (
+        {!sessionToken ? (
           <>
             <Button
               variant="contained"
@@ -94,8 +95,12 @@ export default function Header({ headerOnDark }: Props) {
               Đăng Nhập
             </Button>
           </>
+        ) : (
+          <>
+            <Cart cartCount={cartCount} />
+            <Profile />
+          </>
         )}
-        {sessionToken && <Profile />}
       </Stack>
 
       {!mdUp && <NavMobile data={navConfig} />}

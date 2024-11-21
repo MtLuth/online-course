@@ -10,6 +10,19 @@ import userRouter from "../routes/userRoutes.js";
 import uploadRouter from "../routes/uploadRoutes.js";
 import courseRouter from "../routes/courseRoutes.js";
 import instructorRouter from "../routes/instructorRoutes.js";
+import paginate from "express-paginate";
+import cartRouter from "../routes/cartRoutes.js";
+import purchaseRouter from "../routes/purchaseRoutes.js";
+import paymentRoutes from "../routes/paymentRoutes.js";
+import categoryRouter from "../routes/categoryRoutes.js";
+import myLearningsRouter from "../routes/myLearningsRoutes.js";
+import messageRouter, { conversationRouter } from "../routes/messageRoutes.js";
+import incomeRouter from "../routes/incomeRoutes.js";
+import walletRouter from "../routes/walletRoutes.js";
+import refundRouter from "../routes/refundRoutes.js";
+import withdrawRouter from "../routes/withdrawRoutes.js";
+import bankRouter from "../routes/bankRoutes.js";
+import dashboardRouter from "../routes/dashboardRoutes.js";
 
 dotenv.config("./../config.env");
 
@@ -26,6 +39,8 @@ app.use(
   })
 );
 
+app.use(paginate.middleware(5, 50));
+
 const apiUrlGroup = "/api/v1";
 
 app.use(`${apiUrlGroup}/auth`, authRouter);
@@ -33,6 +48,19 @@ app.use(`${apiUrlGroup}/user`, userRouter);
 app.use(`${apiUrlGroup}/upload`, uploadRouter);
 app.use(`${apiUrlGroup}/course`, courseRouter);
 app.use(`${apiUrlGroup}/instructor`, instructorRouter);
+app.use(`${apiUrlGroup}/cart`, cartRouter);
+app.use(`${apiUrlGroup}/purchase`, purchaseRouter);
+app.use(`${apiUrlGroup}/payment`, paymentRoutes);
+app.use(`${apiUrlGroup}/category`, categoryRouter);
+app.use(`${apiUrlGroup}/mylearnings`, myLearningsRouter);
+app.use(`${apiUrlGroup}/message`, messageRouter);
+app.use(`${apiUrlGroup}/income`, incomeRouter);
+app.use(`${apiUrlGroup}/wallet`, walletRouter);
+app.use(`${apiUrlGroup}/refund`, refundRouter);
+app.use(`${apiUrlGroup}/withdraw`, withdrawRouter);
+app.use(`${apiUrlGroup}/conversation`, conversationRouter);
+app.use(`${apiUrlGroup}/bank`, bankRouter);
+app.use(`${apiUrlGroup}/dashboard`, dashboardRouter);
 
 app.all("*", (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));

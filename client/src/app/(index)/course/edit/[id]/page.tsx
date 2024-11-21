@@ -5,43 +5,56 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { courseApi } from "@/server/Cource";
 import { CircularProgress, Box, Typography } from "@mui/material";
-import CreateCourseView from "@/layouts/dashboard/teacher/cource/CreateCourceView";
+import CreateCourseView, {
+  CourseData,
+} from "@/layouts/dashboard/teacher/cource/CreateCourceView";
+import { getAuthToken } from "@/utils/auth";
 
 const EditCoursePage: React.FC = () => {
   const { id } = useParams();
-  const [initialValues, setInitialValues] = useState<any | null>(null);
+  const [initialValues, setInitialValues] = useState<CourseData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
-
+  const token = getAuthToken();
   useEffect(() => {
     const fetchCourse = async () => {
       if (!id) return;
+
       try {
-        const response = await courseApi.getCourseDetail(id as string);
-        if (response.status === "Successfully") {
+        const response = await courseApi.getCourseDetailIns(
+          id as string,
+          token
+        );
+        if (response.status === "Successfully" && response.message) {
           const courseDetail = response.message;
-          const formattedCourse: any = {
+
+          const formattedCourse: CourseData = {
             title: courseDetail.title,
             description: courseDetail.description,
             category: courseDetail.category,
             price: courseDetail.price,
             language: courseDetail.language,
             level: courseDetail.level,
-            thumbnail: null,
-            requirements: courseDetail.requirements,
-            whatYouWillLearn: courseDetail.whatYouWillLearn,
-            content: courseDetail.content.map((section) => ({
+            thumbnail: courseDetail.thumbnail,
+            requirements: courseDetail.requirements || [""],
+            whatYouWillLearn: courseDetail.whatYouWillLearn || [""],
+            sale: courseDetail.sale,
+            salePrice: courseDetail.salePrice,
+            content: courseDetail.content.map((section: any) => ({
               sectionTitle: section.sectionTitle,
-              lectures: section.lectures.map((lecture) => ({
+              lectures: section.lectures.map((lecture: any) => ({
                 title: lecture.title,
                 duration: lecture.duration,
                 type: lecture.type,
                 videoUrl: lecture.videoUrl,
+                videoFile: null,
+                description: lecture.description || "",
                 resources: lecture.resources || [],
               })),
             })),
             isPublished: courseDetail.isPublished,
           };
+
           setInitialValues(formattedCourse);
         } else {
           setError(response.message || "Không thể tải chi tiết khóa học.");
@@ -80,7 +93,13 @@ const EditCoursePage: React.FC = () => {
       isEditMode={true}
       courseId={id as string}
     />
-  ) : null;
+  ) : (
+    <Box sx={{ flexGrow: 1, padding: 16 }}>
+      <Typography variant="h6" align="center">
+        Không tìm thấy khóa học.
+      </Typography>
+    </Box>
+  );
 };
 
 export default EditCoursePage;
