@@ -96,14 +96,6 @@ class PaymentService {
               stringOrderCode,
               new Date()
             );
-
-            const income = new Income(
-              amount,
-              course,
-              IncomeStatus.InProgress,
-              orderCode,
-              new Date()
-            );
             const newId = await this.addIncome(course.instructor, income);
             newIncomes.push(newId);
           })
