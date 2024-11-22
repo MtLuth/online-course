@@ -45,7 +45,7 @@ class PaymentService {
           throw new AppError(`Lỗi khi loại bỏ đơn hàng không thanh toán`, 500);
         }
       },
-      1000 * 60 * 3
+      1000 * 60 * 10
     );
     try {
       const paymentLinkResponse = await this.payOs.createPaymentLink(body);
@@ -91,6 +91,8 @@ class PaymentService {
 
             let amount = course.salePrice * 0.94;
             amount = Math.round(amount);
+            console.log(course.salePrice);
+            console.log(amount);
 
             const income = new Income(
               amount,

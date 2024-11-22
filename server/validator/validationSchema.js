@@ -82,6 +82,7 @@ const courseValidationSchema = yup.object({
     .required("Ảnh đại diện của khóa học là bắt buộc"),
   createdAt: yup.date().default(() => new Date()),
   updatedAt: yup.date().default(() => new Date()),
+  sale: yup.number(),
 
   requirements: yup
     .array()
