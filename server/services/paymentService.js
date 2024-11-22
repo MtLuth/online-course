@@ -1,14 +1,14 @@
 import PayOs from "@payos/node";
-import AppError from "../utils/appError.js";
+import Income, { IncomeStatus } from "../model/incomeModel.js";
+import cartRepo from "../repository/cartRepo.js";
+import courseRepo from "../repository/courseRepo.js";
+import incomeRepo from "../repository/incomeRepo.js";
+import myLearningsRepo from "../repository/myLearningsRepo.js";
 import purchaseHistoryRepo, {
   PurchaseStatus,
 } from "../repository/purchaseHistoryRepo.js";
-import myLearningsRepo from "../repository/myLearningsRepo.js";
-import courseRepo from "../repository/courseRepo.js";
-import incomeRepo from "../repository/incomeRepo.js";
-import Income, { IncomeStatus } from "../model/incomeModel.js";
 import walletRepo from "../repository/walletRepo.js";
-import cartRepo from "../repository/cartRepo.js";
+import AppError from "../utils/appError.js";
 class PaymentService {
   constructor() {
     const clientId = "e6eed2dd-86ea-4758-b0ab-f49b28057aae";
@@ -67,14 +67,13 @@ class PaymentService {
   async successPayment(statusCode, orderCode) {
     try {
       if (statusCode === "00") {
-        let stringOrderCode = String(orderCode);
-        while (stringOrderCode.length < 6) {
-          stringOrderCode = "0" + stringOrderCode;
-        }
+        const stringOrderCode = String(orderCode).padStart(6, "0");
+
         await purchaseHistoryRepo.updateStatusPurchase(
           stringOrderCode,
           PurchaseStatus.succeed
         );
+
         const purchase =
           await purchaseHistoryRepo.getPurchaseByCode(stringOrderCode);
         if (purchase === null) {
@@ -114,7 +113,7 @@ class PaymentService {
         return message;
       }
     } catch (error) {
-      throw new AppError(`Lỗi khi thêm khóa học: ${error}`);
+      throw new AppError(`Lỗi khi thêm khóa học: ${error.message}`, 500);
     }
   }
 
@@ -127,7 +126,8 @@ class PaymentService {
       });
       return newId;
     } catch (error) {
-      throw new AppError(error, 500);
+      console.error(`Lỗi khi thêm thu nhập cho uid ${uid}: ${error.message}`);
+      throw new AppError(error.message, 500);
     }
   }
 
