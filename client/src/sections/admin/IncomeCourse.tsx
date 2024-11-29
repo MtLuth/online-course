@@ -59,9 +59,10 @@ const IncomeTable = () => {
     null
   );
   const [openDialog, setOpenDialog] = useState(false);
-  const [loading, setLoading] = useState(false);
-
+  const [loading, setLoading] = useState(true);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const { notifySuccess, notifyError } = useToastNotification();
+
 
   const fetchIncomeData = async () => {
     setLoading(true);
@@ -100,6 +101,9 @@ const IncomeTable = () => {
       }
     } catch (error) {
       console.error("Error fetching income data:", error);
+    } finally {
+      setLoading(false);
+      setHasLoaded(true);
     }
   };
 
@@ -125,127 +129,129 @@ const IncomeTable = () => {
 
   return (
     <BaseCard>
-      <Box sx={{ textAlign: "center", py: 2 }}>
-        <Typography variant="h4" component="h1" fontWeight="bold">
-          Thống kê Doanh Thu
-        </Typography>
-      </Box>
-
-      <Box mb={2} display="flex" justifyContent="flex-end" alignItems="center">
-        {showSearch ? (
-          <TextField
-            label="Tìm kiếm"
-            variant="outlined"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Tìm theo tên khóa học hoặc mã đơn hàng"
-            sx={{ width: { xs: "100%", sm: "60%" }, mr: 1 }}
-            InputProps={{
-              endAdornment: (
-                <IconButton
-                  onClick={() => {
-                    setShowSearch(false);
-                    setSearchTerm("");
-                    setPage(1);
-                  }}
-                  aria-label="Clear search"
-                >
-                  <Close />
-                </IconButton>
-              ),
-            }}
-          />
-        ) : (
-          <IconButton
-            onClick={() => setShowSearch(true)}
-            aria-label="Open search"
-            color="primary"
-          >
-            <Search />
-          </IconButton>
-        )}
-      </Box>
-
-      {loading ? (
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            minHeight: "200px",
-          }}
-        >
-          <CircularProgress />
+      <>
+        <Box sx={{ textAlign: "center", py: 2 }}>
+          <Typography variant="h4" component="h1" fontWeight="bold">
+            Thống kê Doanh Thu
+          </Typography>
         </Box>
-      ) : incomeData.length > 0 ? (
-        <>
-          <TableContainer component={Paper} elevation={3}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <StyledTableCell>Khóa học</StyledTableCell>
-                  <StyledTableCell>Mã đơn hàng</StyledTableCell>
-                  <StyledTableCell>Số tiền (VND)</StyledTableCell>
-                  <StyledTableCell>Ngày</StyledTableCell>
-                  <StyledTableCell>Trạng thái</StyledTableCell>
-                  <StyledTableCell align="center">Hành động</StyledTableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {incomeData.map((record) => (
-                  <TableRow key={record.uid} hover>
-                    <TableCell>{record.courseTitle}</TableCell>
-                    <TableCell>{record.orderCode}</TableCell>
-                    <TableCell>{record.amount.toLocaleString()}</TableCell>
-                    <TableCell>{record.date}</TableCell>
-                    <TableCell
-                      sx={{
-                        color:
-                          record.status === "Hoàn thành"
-                            ? "success.main"
-                            : record.status === "Đang chờ"
-                            ? "warning.main"
-                            : "error.main",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      {record.status}
-                    </TableCell>
-                    <TableCell align="center">
-                      <IconButton
-                        onClick={() => handleViewDetails(record)}
-                        aria-label="Xem chi tiết"
-                        color="primary"
-                      >
-                        <Visibility />
-                      </IconButton>
-                    </TableCell>
+
+        <Box mb={2} display="flex" justifyContent="flex-end" alignItems="center">
+          {showSearch ? (
+            <TextField
+              label="Tìm kiếm"
+              variant="outlined"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Tìm theo tên khóa học hoặc mã đơn hàng"
+              sx={{ width: { xs: "100%", sm: "60%" }, mr: 1 }}
+              InputProps={{
+                endAdornment: (
+                  <IconButton
+                    onClick={() => {
+                      setShowSearch(false);
+                      setSearchTerm("");
+                      setPage(1);
+                    }}
+                    aria-label="Clear search"
+                  >
+                    <Close />
+                  </IconButton>
+                ),
+              }}
+            />
+          ) : (
+            <IconButton
+              onClick={() => setShowSearch(true)}
+              aria-label="Open search"
+              color="primary"
+            >
+              <Search />
+            </IconButton>
+          )}
+        </Box>
+
+        {loading && !hasLoaded ? (
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              minHeight: "200px",
+            }}
+          >
+            <CircularProgress />
+          </Box>
+        ) : incomeData.length > 0 ? (
+          <>
+            <TableContainer component={Paper} elevation={3}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <StyledTableCell>Khóa học</StyledTableCell>
+                    <StyledTableCell>Mã đơn hàng</StyledTableCell>
+                    <StyledTableCell>Số tiền (VND)</StyledTableCell>
+                    <StyledTableCell>Ngày</StyledTableCell>
+                    <StyledTableCell>Trạng thái</StyledTableCell>
+                    <StyledTableCell align="center">Hành động</StyledTableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                </TableHead>
+                <TableBody>
+                  {incomeData.map((record) => (
+                    <TableRow key={record.uid} hover>
+                      <TableCell>{record.courseTitle}</TableCell>
+                      <TableCell>{record.orderCode}</TableCell>
+                      <TableCell>{record.amount.toLocaleString()}</TableCell>
+                      <TableCell>{record.date}</TableCell>
+                      <TableCell
+                        sx={{
+                          color:
+                            record.status === "Hoàn thành"
+                              ? "success.main"
+                              : record.status === "Đang chờ"
+                                ? "warning.main"
+                                : "error.main",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        {record.status}
+                      </TableCell>
+                      <TableCell align="center">
+                        <IconButton
+                          onClick={() => handleViewDetails(record)}
+                          aria-label="Xem chi tiết"
+                          color="primary"
+                        >
+                          <Visibility />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
 
-          <TablePagination
-            component="div"
-            count={total}
-            page={page - 1}
-            onPageChange={(e, newPage) => setPage(newPage + 1)}
-            rowsPerPage={limit}
-            onRowsPerPageChange={(e) => setLimit(parseInt(e.target.value, 10))}
-          />
-        </>
-      ) : (
-        <Typography variant="body1" textAlign="center">
-          Không có dữ liệu.
-        </Typography>
-      )}
+            <TablePagination
+              component="div"
+              count={total}
+              page={page - 1}
+              onPageChange={(e, newPage) => setPage(newPage + 1)}
+              rowsPerPage={limit}
+              onRowsPerPageChange={(e) => setLimit(parseInt(e.target.value, 10))}
+            />
+          </>
+        ) : (
+          <Typography variant="body1" textAlign="center">
+            Không có dữ liệu.
+          </Typography>
+        )}
 
-      <DetailIncomeDialog
-        open={openDialog}
-        onClose={handleCloseDialog}
-        record={selectedRecord}
-      />
+        <DetailIncomeDialog
+          open={openDialog}
+          onClose={handleCloseDialog}
+          record={selectedRecord}
+        />
+      </>
     </BaseCard>
   );
 };
