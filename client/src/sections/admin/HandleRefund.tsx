@@ -239,7 +239,6 @@ const RefundRequestTable = () => {
               label="Trạng thái"
             >
               <MenuItem value="all">Tất cả</MenuItem>
-              <MenuItem value="Accepted">Đã chấp nhận</MenuItem>
               <MenuItem value="InProgress">Đang xử lý</MenuItem>
               <MenuItem value="Complete">Đã hoàn tiền</MenuItem>
               <MenuItem value="Reject">Từ chối</MenuItem>
@@ -247,7 +246,6 @@ const RefundRequestTable = () => {
           </FormControl>
         </Box>
 
-        {/* Hiển thị Spinner khi đang tải dữ liệu */}
         {loading ? (
           <Box
             sx={{

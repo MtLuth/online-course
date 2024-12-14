@@ -16,6 +16,7 @@ import {
 import Sidebar from "@/components/sidebar-profile/Sidebar-Profile";
 import { useProfileContext } from "@/context/ProfileContext";
 import { useAppContext } from "@/context/AppContext";
+import { useToastNotification } from "@/hook/useToastNotification";
 
 const ProfilePage = () => {
   const { profileData, setProfileData } = useProfileContext();
@@ -27,9 +28,12 @@ const ProfilePage = () => {
   const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">(
     "success"
   );
-
+  const { notifySuccess, notifyError } = useToastNotification();
   const { sessionToken } = useAppContext();
   const uid = localStorage.getItem("uid");
+
+  // Trạng thái theo dõi sự thay đổi trong các trường
+  const [isChanged, setIsChanged] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -44,18 +48,20 @@ const ProfilePage = () => {
             },
           }
         );
-
         if (!response.ok) {
           throw new Error("Failed to fetch profile data");
         }
 
         const data = await response.json();
-        console.log(data.message);
+        if (data.message.avt) {
+          localStorage.setItem("avatar", data.message.avt);
+        }
+
         setProfileData({
           email: data.message.email || "",
           fullName: data.message.fullName || "",
-          phoneNumber: data.message.phoneNumber || "",
-          avt: data.message.avt || "https://via.placeholder.com/100",
+          phoneNumber: data.message.phoneNumber || "+84",
+          avt: data.message.avt || localStorage.getItem("avatar"),
         });
       } catch (err: any) {
         setError(
@@ -67,17 +73,48 @@ const ProfilePage = () => {
     };
 
     fetchProfile();
-  }, [uid, sessionToken, setProfileData]);
+  }, []);
 
   const handleInputChange =
     (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
-      setProfileData((prevData) => ({
-        ...prevData,
-        [field]: event.target.value,
-      }));
+      let value = event.target.value;
+
+      // If the field is phoneNumber, format it with +84
+      if (field === "phoneNumber") {
+        // Remove any non-numeric characters
+        value = value.replace(/[^0-9]/g, "");
+
+        // Add +84 if it doesn't start with it
+        if (!value.startsWith("84")) {
+          value = "+84" + value;
+        } else {
+          value = "+84" + value.slice(2); // Ensure it always starts with +84
+        }
+      }
+
+      setProfileData((prevData) => {
+        const updatedData = { ...prevData, [field]: value };
+
+        // Check if any data has changed
+        const hasChanges =
+          updatedData.fullName !== prevData.fullName ||
+          updatedData.phoneNumber !== prevData.phoneNumber ||
+          updatedData.avt !== prevData.avt;
+
+        setIsChanged(hasChanges); // Set the change status
+
+        return updatedData;
+      });
     };
 
   const handleSave = async () => {
+    if (!profileData.phoneNumber || profileData.phoneNumber.length <= 4) {
+      notifyError("Số điện thoại là bắt buộc!");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+      return;
+    }
+
     try {
       const updatedData = {
         displayName: profileData.fullName,
@@ -102,9 +139,12 @@ const ProfilePage = () => {
       }
 
       const result = await response.json();
-      setSnackbarMessage(result.message || "Profile updated successfully!");
+      notifySuccess("Đã cập nhật thông tin hồ sơ thành công!");
       setSnackbarSeverity("success");
       setSnackbarOpen(true);
+
+      // Save avatar URL after successful profile update
+      localStorage.setItem("avatar", profileData.avt);
     } catch (err: any) {
       setSnackbarMessage(
         err.message || "An error occurred while updating the profile."
@@ -184,10 +224,11 @@ const ProfilePage = () => {
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Số điện thoại"
+                  label="Số điện thoại (*)"
                   value={profileData.phoneNumber}
                   onChange={handleInputChange("phoneNumber")}
                   variant="outlined"
+                  type="text" // Ensure the field accepts the `+84` prefix
                 />
               </Grid>
             </Grid>
@@ -197,8 +238,9 @@ const ProfilePage = () => {
               color="primary"
               sx={{ mt: 3, display: "block", marginLeft: "auto" }}
               onClick={handleSave}
+              disabled={!isChanged} // Disable Save button when no change is detected
             >
-              Save
+              Lưu
             </Button>
           </Box>
         </Box>

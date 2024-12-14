@@ -563,7 +563,7 @@ const ChatPage = () => {
             <input
               type="file"
               hidden
-              accept="image/*"
+              accept=".png, .jpg, .jpeg"
               onChange={handleImageUpload}
             />
           </Button>

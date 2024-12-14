@@ -32,6 +32,8 @@ const InstructorsPage = () => {
   const { notifyError } = useToastNotification();
 
   const { sessionToken } = useAppContext();
+
+  // Fetch data from API
   const fetchInstructors = async () => {
     setLoading(true);
     try {
@@ -56,8 +58,12 @@ const InstructorsPage = () => {
   };
 
   useEffect(() => {
-    fetchInstructors();
-  }, [page, searchParam, itemsPerPage]);
+    const timer = setTimeout(() => {
+      fetchInstructors();
+    }, 1000);
+
+    return () => clearTimeout(timer); // Cleanup to avoid memory leaks
+  }, [page, itemsPerPage, searchParam]); // Dependency array
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,7 +82,7 @@ const InstructorsPage = () => {
     event: React.ChangeEvent<{ value: unknown }>
   ) => {
     setItemsPerPage(event.target.value as number);
-    setPage(1);
+    setPage(1); // Reset to the first page when changing items per page
   };
 
   const handleGoToChat = (instructorId: string) => {
@@ -101,6 +107,7 @@ const InstructorsPage = () => {
         Tất Cả Các Chuyên Gia
       </Typography>
 
+      {/* Tìm kiếm */}
       <Box
         component="form"
         onSubmit={handleSearchSubmit}
@@ -111,11 +118,8 @@ const InstructorsPage = () => {
           variant="outlined"
           fullWidth
           value={searchParam}
-          onChange={(e) => setSearchParam(e.target.value)}
+          onChange={(e) => setSearchParam(e.target.value)} // Update search param on input change
           margin="normal"
-          onKeyDown={(e) => {
-            if (e.key === "Enter") handleSearchSubmit(e);
-          }}
           sx={{
             borderRadius: 2,
             boxShadow: 3,
@@ -125,23 +129,6 @@ const InstructorsPage = () => {
             marginRight: 2,
           }}
         />
-        <Button
-          type="submit"
-          variant="contained"
-          color="primary"
-          sx={{
-            padding: "14px 24px",
-            borderRadius: 2,
-            boxShadow: 3,
-            fontSize: "1rem",
-            height: "100%",
-            width: "150px",
-            alignSelf: "center",
-            marginTop: 1,
-          }}
-        >
-          Tìm kiếm
-        </Button>
       </Box>
 
       {loading ? (

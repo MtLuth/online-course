@@ -27,11 +27,12 @@ import { authApi } from "@/server/Auth";
 import { useAppContext } from "@/context/AppContext";
 import { useToastNotification } from "@/hook/useToastNotification";
 import Cookies from "js-cookie";
+import { jwtDecode } from "jwt-decode";
 
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState<null | HTMLElement>(null);
   const router = useRouter();
-  const { setSessionToken, role } = useAppContext();
+  const { setSessionToken, sessionToken } = useAppContext();
   const { notifySuccess, notifyError } = useToastNotification();
   const { userRole } = useAppContext();
   const handleClick2 = (event: React.MouseEvent<HTMLElement>) => {
@@ -40,6 +41,8 @@ const Profile = () => {
   const handleClose2 = () => {
     setAnchorEl2(null);
   };
+  const decode = jwtDecode(sessionToken);
+  const avt = decode.picture || "";
   const handleLogout = async () => {
     try {
       await authApi.logout();
@@ -69,7 +72,7 @@ const Profile = () => {
         onClick={handleClick2}
       >
         <Avatar
-          src=""
+          src={avt}
           alt="E"
           sx={{
             width: 35,

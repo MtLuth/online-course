@@ -57,9 +57,11 @@ export default function Footer() {
             <Typography variant="h6">Mạng xã hội</Typography>
             <Stack direction="row" alignItems="center">
               {_socials.map((social) => (
-                <IconButton key={social.value} color="primary">
-                  <Iconify icon={social.icon} />
-                </IconButton>
+                <Link key={social.value} href={social.url} target="_blank">
+                  <IconButton color="primary">
+                    <Iconify icon={social.icon} />
+                  </IconButton>
+                </Link>
               ))}
             </Stack>
           </Stack>

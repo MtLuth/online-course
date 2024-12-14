@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -14,6 +14,7 @@ import {
 import Sidebar from "@/components/sidebar-profile/Sidebar-Profile";
 import { useProfileContext } from "@/context/ProfileContext";
 import { useAppContext } from "@/context/AppContext";
+import { useToastNotification } from "@/hook/useToastNotification";
 
 const UpdatePhoto = () => {
   const { profileData, setProfileData } = useProfileContext();
@@ -21,7 +22,7 @@ const UpdatePhoto = () => {
   const [preview, setPreview] = useState<string | null>(profileData.avt);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSaveEnabled, setIsSaveEnabled] = useState<boolean>(false);
-
+  const { notifyError, notifySuccess } = useToastNotification();
   // Snackbar states
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
   const [snackbarMessage, setSnackbarMessage] = useState<string>("");
@@ -31,12 +32,58 @@ const UpdatePhoto = () => {
 
   const { sessionToken } = useAppContext();
 
+  const uid = localStorage.getItem("uid");
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:8080/api/v1/user/profile/${uid}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${sessionToken}`,
+            },
+          }
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch profile data");
+        }
+
+        const data = await response.json();
+        if (data.message.avt) {
+          localStorage.setItem("avatar", data.message.avt);
+        }
+
+        setProfileData({
+          email: data.message.email || "",
+          fullName: data.message.fullName || "",
+          phoneNumber: data.message.phoneNumber || "+84",
+          avt: data.message.avt || localStorage.getItem("avatar"),
+        });
+      } catch (err: any) {
+        setError(
+          err.message || "An error occurred while fetching profile data."
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    const savedAvatar = localStorage.getItem("avatar");
+    if (savedAvatar) {
+      setPreview(savedAvatar); // Update the preview from localStorage
+    }
+    fetchProfile();
+  }, []);
+
   const handleUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
-      setSnackbarMessage("Vui lòng chọn tệp hình ảnh hợp lệ.");
+    const validTypes = ["image/png", "image/jpeg", "image/jpg"];
+    if (!validTypes.includes(file.type)) {
+      notifyError("Vui lòng chọn tệp hình ảnh hợp lệ (PNG, JPEG, JPG).");
       setSnackbarSeverity("error");
       setSnackbarOpen(true);
       return;
@@ -49,7 +96,7 @@ const UpdatePhoto = () => {
 
   const handleSave = async () => {
     if (!image || !sessionToken) {
-      setSnackbarMessage("Không có ảnh để lưu hoặc bạn chưa đăng nhập.");
+      notifyError("Không có ảnh để lưu hoặc bạn chưa đăng nhập.");
       setSnackbarSeverity("error");
       setSnackbarOpen(true);
       return;
@@ -105,17 +152,21 @@ const UpdatePhoto = () => {
       const saveResult = await saveResponse.json();
 
       // Hiển thị thông báo thành công
-      setSnackbarMessage(
-        saveResult.message || "Cập nhật thông tin thành công!"
+      notifySuccess(
+        "Cập nhật thông tin thành công! Vui lòng đăng nhập lại để thấy ảnh avatar mới"
       );
       setSnackbarSeverity("success");
       setSnackbarOpen(true);
 
-      // Cập nhật ảnh đại diện
+      // Cập nhật avatar
       setProfileData((prevData) => ({
         ...prevData,
         avt: uploadedUrl,
       }));
+
+      // Store the updated avatar URL in localStorage
+      localStorage.setItem("avatar", uploadedUrl);
+
       setPreview(uploadedUrl);
       setIsSaveEnabled(false);
     } catch (error: any) {
@@ -161,7 +212,11 @@ const UpdatePhoto = () => {
             {/* Avatar */}
             <Box sx={{ textAlign: "center", mb: 5 }}>
               <Avatar
-                src={preview || "https://via.placeholder.com/150"}
+                src={
+                  preview ||
+                  localStorage.getItem("avatar") ||
+                  "https://via.placeholder.com/150"
+                }
                 alt="Profile Preview"
                 sx={{
                   width: 150,
@@ -189,10 +244,10 @@ const UpdatePhoto = () => {
                 }}
                 disabled={isLoading}
               >
-                Tải lên
+                Tải ảnh lên
                 <input
                   type="file"
-                  accept="image/*"
+                  accept=".png, .jpg, .jpeg"
                   hidden
                   onChange={handleUpload}
                 />

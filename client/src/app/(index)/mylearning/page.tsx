@@ -169,9 +169,11 @@ const MyLearning: React.FC = () => {
         onSubmit={handleSearchSubmit}
         sx={{
           display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
           mb: 4,
           gap: 2,
-          justifyContent: "center",
+          flexWrap: "wrap",
         }}
       >
         <TextField
@@ -187,11 +189,18 @@ const MyLearning: React.FC = () => {
           }}
           sx={{
             maxWidth: "500px",
+            width: "100%",
             boxShadow: 3,
             borderRadius: 2,
             transition: "all 0.3s ease",
             "&:hover": {
               boxShadow: 6,
+            },
+            "& .MuiOutlinedInput-root": {
+              transition: "all 0.3s ease",
+              "&:hover fieldset": {
+                borderColor: "#1976d2", // Màu border khi hover
+              },
             },
           }}
         />
@@ -204,10 +213,11 @@ const MyLearning: React.FC = () => {
             borderRadius: 2,
             boxShadow: 3,
             fontSize: "1rem",
-            padding: 1,
-            margin: 1,
+            padding: "12px 20px",
+            transition: "all 0.3s ease",
             "&:hover": {
               boxShadow: 6,
+              transform: "scale(1.05)",
             },
           }}
         >
